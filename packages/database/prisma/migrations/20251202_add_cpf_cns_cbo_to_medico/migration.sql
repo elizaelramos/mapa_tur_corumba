@@ -1,0 +1,7 @@
+-- AlterTable
+ALTER TABLE `PROD_Medico` ADD COLUMN `cpf` VARCHAR(14) NULL;
+ALTER TABLE `PROD_Medico` ADD COLUMN `cns` VARCHAR(15) NULL;
+ALTER TABLE `PROD_Medico` ADD COLUMN `cbo` VARCHAR(10) NULL;
+
+-- CreateIndex
+CREATE INDEX `PROD_Medico_cpf_idx` ON `PROD_Medico`(`cpf`);

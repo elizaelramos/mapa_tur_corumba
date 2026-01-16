@@ -1,0 +1,6 @@
+Input PDF: C:\dev\Mapa_Saude_Corumba\uploads\profissionais_por_unidade_do_municipio.pdf
+Exists: True
+Pages: 35
+Pages with text: 34
+Tables found: 0
+Tables files:

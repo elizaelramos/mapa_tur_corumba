@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: sigls-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-sigls_db}
+      MYSQL_USER: ${MYSQL_USER:-sigls_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-sigls_password}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./packages/database/prisma/triggers.sql:/docker-entrypoint-initdb.d/triggers.sql
+    networks:
+      - sigls-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # API Backend
+  api:
+    build:
+      context: .
+      dockerfile: ./apps/api/Dockerfile
+    container_name: sigls-api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: mysql://${MYSQL_USER:-sigls_user}:${MYSQL_PASSWORD:-sigls_password}@mysql:3306/${MYSQL_DATABASE:-sigls_db}
+      JWT_SECRET: ${JWT_SECRET}
+      API_PORT: 3001
+      NODE_ENV: production
+    ports:
+      - "3001:3001"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - sigls-network
+    volumes:
+      - ./logs:/app/logs
+
+  # ETL Worker
+  etl-worker:
+    build:
+      context: .
+      dockerfile: ./apps/etl-worker/Dockerfile
+    container_name: sigls-etl-worker
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: mysql://${MYSQL_USER:-sigls_user}:${MYSQL_PASSWORD:-sigls_password}@mysql:3306/${MYSQL_DATABASE:-sigls_db}
+      SOURCE_DATABASE_URL: ${SOURCE_DATABASE_URL}
+      ETL_SCHEDULE_CRON: ${ETL_SCHEDULE_CRON:-0 2 * * *}
+      NODE_ENV: production
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - sigls-network
+    volumes:
+      - ./logs:/app/logs
+
+  # Frontend (Nginx)
+  web:
+    build:
+      context: .
+      dockerfile: ./apps/web/Dockerfile
+    container_name: sigls-web
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    networks:
+      - sigls-network
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  sigls-network:
+    driver: bridge

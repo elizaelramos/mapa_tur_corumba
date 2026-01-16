@@ -1,0 +1,606 @@
+<!--***************************************************************
+// Desenvolvido Por  - DATASUS/CNES - RIO
+// Equipe ...........: CNES 
+// Endereço .........: CNES.DATSUS.GOV.BR 
+// Descricao.........: FICHA ESTABELECIMENTO
+// Criado  por.......: WASHINGTON BELLOTI    
+//  ***************************************************************-->
+
+
+<html>
+	<head>
+		<title>Ficha Estabelecimento - Modulo Básico</title>	
+		<meta name="robots" content="noindex, nofollow">
+	</head>
+
+
+
+<table align=left border=0 width=780 cellspacing="0" cellpadding="0">
+<tr>
+ <td>
+
+<!--***************************************************************
+// Desenvolvido Por  - DATASUS/CNES - RIO
+// Equipe ...........: CNES 
+// Endereço .........: CNES.DATSUS.GOV.BR 
+// Descricao.........: MENU PRINCIPAL  
+// Criado  por.......: WASHINGTON BELLOTI    
+//  ***************************************************************-->
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="pt-BR">
+
+<head>
+  <title>CnesWeb - Cadastro Nacional de Estabelecimentos de Saúde</title>
+
+<style TYPE="text/css">
+<!--
+A:link    {text-decoration: none; font-weight:normal; color:#333333; }
+A:visited {text-decoration: none; font-weight:normal; color:#333333; }
+A:active  {text-decoration: none; color: #333333; }
+A:hover	  {color: #000066; }
+A.ff      {text-decoration: none; color: #333333; }
+A.ff:visited {text-decoration: none; color: #333333; }
+A.ff:hover	 {text-decoration: none; color:#000066; }
+A.ff:active  {text-decoration: none; color: #333333; }
+-->
+</style>
+
+<SCRIPT LANGUAGE="JavaScript">
+
+function Abre_Janela2()
+{
+	window.open('Mod_Email.asp','Links','toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,copyhistory=no,width=650,height=480, top=180, left=280');
+}
+
+// Recuperando a configuracao de Video
+
+Tela = screen.width;  
+
+if (Tela == '1024')
+  Posicao = '180'
+else
+  Posicao = '13'
+
+//document.FrmPosicao.Posicao.value = screen.width;    
+
+// -------------------- Funcão para mostrar data e Hora --------------------------- 
+
+ hoje = new Date()
+ dia = hoje.getDate()
+ dias = hoje.getDay()
+ mes = hoje.getMonth()
+ ano = hoje.getYear()
+ if (dia < 10)
+    dia = "0" + dia
+ if (ano < 2000)
+    ano = "19" + ano
+
+ function CriaArray (n) 
+ {
+  this.length = n 
+ }
+
+ NomeDia = new CriaArray(7)
+ NomeDia[0] = "Domingo"
+ NomeDia[1] = "Segunda-feira"
+ NomeDia[2] = "Ter&ccedil;a-feira"
+ NomeDia[3] = "Quarta-feira"
+ NomeDia[4] = "Quinta-feira"
+ NomeDia[5] = "Sexta-feira"
+ NomeDia[6] = "S&aacute;bado"
+
+ NomeMes = new CriaArray(12)
+ NomeMes[0] = "Janeiro"
+ NomeMes[1] = "Fevereiro"
+ NomeMes[2] = "Mar&ccedil;o"
+ NomeMes[3] = "Abril"
+ NomeMes[4] = "Maio"
+ NomeMes[5] = "Junho"
+ NomeMes[6] = "Julho"
+ NomeMes[7] = "Agosto"
+ NomeMes[8] = "Setembro"
+ NomeMes[9] = "Outubro"
+ NomeMes[10] = "Novembro"
+ NomeMes[11] = "Dezembro"
+
+ function EscreveData() 
+
+ {
+ document.write ("<center>" + NomeDia[dias] + ", " + dia + " de " + NomeMes[mes] + " de " + ano + "</center>")
+ }
+ 
+ function Data_Atualizacao() 
+ {
+ dia = hoje.getDate();
+ dia = parseInt(dia);
+ dia = dia - 2 
+ mes = hoje.getMonth()
+ mes = parseInt(mes)
+ mes = mes + 1
+ ano = hoje.getYear()
+ document.write (dia + "/" + mes + "/"  + ano)
+ }
+
+// ---------------------- Fim da Funçaõ Data Hora ----------------------------------
+ 
+  NS4 = (document.layers);
+  IE4 = (document.all);
+  ver4 = (NS4 || IE4);
+  isMac = (navigator.appVersion.indexOf("Mac") != -1);
+  isMenu = (NS4 || (IE4 && !isMac));
+  function popUp(){return};
+  function popDown(){return};
+  function startIt(){return};
+  if (!ver4) event = null;
+
+  if (isMenu)
+   {
+    menuVersion = 3;
+    menuWidth = 150;
+    borWid = 2;
+    borSty = "double";
+    borCol = "#003366";
+    separator = 1;
+    separatorCol = "#003366";
+    fntFam = "sans-serif";
+    fntBold = false;
+    fntItal = false;
+    fntSiz = 8;
+    fntCol = "#003366";
+    overFnt = "#000080";
+    itemPad = 3;
+    backCol = "#cccccc";
+    overCol = "#ADD8E6";
+    
+    imgSrc = "tri.gif";
+    imgSiz = 10;
+
+    childOffset = 6;
+    childOverlap = 60;
+    perCentOver = null;
+
+    clickStart = false;
+    clickKill = false;
+    secondsVisible = 0.5;
+
+    keepHilite = false;
+    NSfontOver = false;
+
+    isFrames = false;
+    navFrLoc = "top";
+    mainFrName = "main";
+  }
+
+</SCRIPT>
+</head>
+  <script type='text/javascript'>
+
+      function Go(){return}
+  </script>
+  <script type='text/javascript' src='exmplmenu_var.js'></script>
+  <script type='text/javascript' src='menu_com.js'></script>
+
+<body leftmargin="0" topmargin="0" marginwidth="0" marginheight="0">
+
+<table  border=0 width=781 cellspacing="0" cellpadding="0">
+	<tr>
+ 		<td>
+  			<table  border="0" cellspacing="0" cellpadding="0">
+   				<tr>
+     				<!--<td width="781"><IMG  src="img/topo_novo4.jpg" alt="imagem do topo cnes" height=90 width=781 border=0></td>--> 
+     				<td width="781"><IMG  src="img/topo_novo_2014.jpg" alt="imagem do topo cnes" height=90 width=781 border=0></td> 
+     			</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+<br><br>
+</body>
+
+
+<body>
+
+<p align=center><font color="#ffcc99" size=2 face=verdana,arial><b>Estabelecimento de Saúde</B></font></p>        
+
+
+<body>
+<!--***************************************************************
+// Desenvolvido Por  - DATASUS/CNES - RIO
+// Equipe ...........: CNES 
+// Endereço .........: CNES.DATSUS.GOV.BR 
+// Descricao.........: Informações Gerais Estabelecimentos
+// Criado  por.......: WASHINGTON BELLOTI    
+//  ***************************************************************-->
+<!doctype html>
+<html>
+  <head>
+    <Title>Cnes - Cadastro Nacional de Estabelecimentos de Sáude</title>
+	
+	<link rel="stylesheet" href="css/jquery-ui-modal.css">
+	<!--<link href="css/jquery-ui.css" rel="stylesheet" type="text/css" />-->
+	<link href="css/dhtmlwindow.css" rel="stylesheet" type="text/css" />
+	<link href="css/demo_table_jui.css" rel="stylesheet" type="text/css" />
+
+	<script type="text/javascript" src="js/jquery.js"></script>
+	<script src="js/jquery-ui.js"></script>
+	<script type="text/javascript" src="js/dhtmlwindow.js"></script>
+
+		<style>
+			#conteudot{
+				text-align:left;
+				color:#FFFFFF;
+				font: 10px Arial, Helvetica, sans-serif;
+			}
+			#dialog2{
+				text-align:left;
+				color:#FFFFFF;
+				font: 10px Arial, Helvetica, sans-serif;
+			}
+			
+			#dialogo99{
+				display: block !important;
+				height: auto !important;
+				left: 806px !important;
+				position: absolute !important;
+				top: 247px !important;
+				width: 300px !important;
+			}
+			
+		</style>
+
+	<script>
+		$(document).ready(function() {
+			$('#opener').click(function(event){
+				event.preventDefault();
+				$("#conteudo").show();
+			});
+			
+			$('#btnc_cancel').click(function(event){
+				event.preventDefault();
+				$("#conteudo").hide();
+			});
+
+			$("#info").mouseover(function(){	
+				$("#dialogo").dialog({
+					modal:true,
+					position: { my: "left-650 top-150" }				
+				});  
+			});
+		});
+	</script>	
+	
+    <script language=javascript>
+      function Mostrar(Unidade)
+      {
+        window.open('geo.asp?VUnidade=' + Unidade,'Links','toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,copyhistory=no,width=780,height=480, top=110, left=210');
+      }
+
+      function Abre_Janela1(Unidade)
+      {
+        //alert("Municipio");
+        window.open('Mod_Municipio_Situacao.asp?VMunicipio=' + Unidade,'Links','toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,copyhistory=no,width=640,height=140, top=110, left=310');
+      }
+
+      function Abre_Janela()
+      {
+        VCod_Unidade = document.cabecalho.Cod_Unidade.value;
+        VNome = document.cabecalho.Nome.value;
+        window.open('Inconsistencia.asp?VCod_Unidade=' + VCod_Unidade  + '&VNome=' + VNome,'Links','toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,copyhistory=no,width=450,height=300, top=110, left=310');
+      }
+  
+      function Ficha_Reduzida()
+      {
+        VCod_Unidade = document.cabecalho.Cod_Unidade.value;
+        document.location = 'cabecalho_reduzido.asp?VCod_Unidade=' + VCod_Unidade
+        //window.open('cabecalho_reduzido.asp?VCod_Unidade=' + VCod_Unidade);
+      }
+  
+      function Ficha_Reduzida_Cmpt()
+      {
+        VCod_Unidade = document.cabecalho.Cod_Unidade.value;
+        document.location = 'Cabecalho_Reduzido_Competencia.asp?VCod_Unidade=' + VCod_Unidade
+        //window.open('cabecalho_reduzido.asp?VCod_Unidade=' + VCod_Unidade);
+      }  
+    </script> 
+  </head>
+  
+  <form name=cabecalho>
+    <Input type=hidden name="Cod_Unidade" value="5003200148636">
+  </form>
+  
+    <body background="img/Fundo-28-01-2003.gif" link="white">
+      <table border="1" align="center" cellpadding="1" cellspacing="0" width="760">
+        <tr>
+          <td colspan=4 ALIGN=CENTER width="90%">
+          
+            <hr>
+            <font size=2 face=verdan,arial color="#ffcc99">Identificação<BR><font color="yellow" face=verdana,arial size=1>&nbsp&nbspCADASTRADO NO CNES EM:&nbsp;7/6/2020&nbsp;
+              <!--ATUALIZADO EM:19/9/2025-->
+              &nbsp;
+              ULTIMA ATUALIZAÇÃO EM:&nbsp;28/11/2025
+              &nbsp;
+              
+			  DATA DE ATUALIZAÇÃO LOCAL:&nbsp;19/9/2025 
+            </font>
+          </td>
+        </tr>
+        <tr>
+          <td ALIGN=center width=17%>
+            <font color="yellow" face=verdana,arial size=1><b>Veja onde se localiza:</b></font>
+          </td>
+          <td ALIGN=center width=7%>
+              <img src="img/globo_anim.gif" border="0" width="30px" height="30px"  alt="Exibir no Mapa" onClick="Mostrar('5003200148636')">
+          </td>  
+          <td ALIGN=left width=20%>
+            <input type="button" value="Exibir Ficha Reduzida por Competência" onclick="Ficha_Reduzida_Cmpt()" style="CURSOR:hand" style="color:#ffcc99; background:#003366; font-size:10px" id="button1" name="button1">
+          </td>  
+          <td ALIGN=RIGHT width=20%>
+            <input type="button" value="Exibir Ficha Reduzida Atual" onclick="Ficha_Reduzida()" style="CURSOR:hand" style="color:#ffcc99;background:#003366;font-size:10px" id="button1" name="button1">
+          </td>
+        </tr>
+         
+        <!--</tr>-->
+      </table>
+      <table bgcolor="white" border="0" align="center" cellpadding=1 cellspacing=0 width="760">
+        <tr>
+          <td bgcolor="#cccccc" colspan=3><font size=1 face=Verdana,arial color=#003366><b>Nome:</b></font></td>
+          <td bgcolor="#cccccc"><font size=1 face=Verdana,arial color=#003366><b>CNES:</b></font></td>
+          <td bgcolor="#cccccc"><font size=1 face=Verdana,arial color=#003366><b>CNPJ:</b></font></td>
+        </tr>
+        <tr>
+          <td colspan=3><font size=1 face=Verdana,arial color=#003366>UNIDADE BASICA DE SAUDE DR BONIFACIO TIKAYOSHI TIAEN</font></td>
+          <td><font size=1 face=Verdana,arial color=red>0148636</td>               
+          <td><font size=1 face=Verdana,arial color=#003366> </td>           
+        </tr>
+        <tr>
+          <td bgcolor="#cccccc" colspan=3><font size=1 face=Verdana,arial color=#003366><b>Nome Empresarial:</b></font></td>
+          <td bgcolor="#cccccc"><font size=1 face=Verdana,arial color=#003366><b>CPF:</b></font></td>
+          <td bgcolor="#cccccc"><font size=1 face=Verdana,arial color=#003366><b>Personalidade:</b></font></td>
+        </tr>
+        <tr>
+          <td colspan=3><font size=1 face=Verdana,arial color=#003366>MUNICIPIO DE CORUMBA</font></td>
+             
+              <td><font size=1 face=Verdana,arial color=#003366>--</font></td>
+             
+          <td>   
+            
+              <font size=1 face=Verdana,arial color=#003366>JURÍDICA</font> 
+            
+          </td>  
+        </tr>
+        <!-- ----------------------------------------- -->
+        <tr>
+          <td bgcolor="#cccccc" colspan=3><font size=1 face=Verdana,arial color=#003366><b>Logradouro:</b></font></td>
+          <td bgcolor="#cccccc" colspan=1><font size=1 face=Verdana,arial color=#003366><b>Número:</b></font></td>
+          <td bgcolor="#cccccc" colspan=1><font size=1 face=Verdana,arial color=#003366><b>Telefone:</b></font></td>
+        </tr>
+        <tr>
+          <td colspan=3><font size=1 face=Verdana,arial color=#003366>NOSSA SRA DAS MERCES</font></td> 
+          <td colspan=1><font size=1 face=Verdana,arial color=#003366>01</font></td>
+          <td colspan=1><font size=1 face=Verdana,arial color=#003366></font></td>
+        </tr>
+        <tr height=10>
+          <td bgcolor="#cccccc"><font size=1 face=Verdana,arial color=#003366><b>Complemento:</b></font></td>
+          <td bgcolor="#cccccc"><font size=1 face=Verdana,arial color=#003366><b>Bairro:</b></font></td>
+          <td bgcolor="#cccccc"><font size=1 face=Verdana,arial color=#003366><b>CEP:</b></font></td>
+          <td bgcolor="#cccccc"><font size=1 face=Verdana,arial color=#003366><b>Município:</b></font></td></td>
+          <td bgcolor="#cccccc"><font size=1 face=Verdana,arial color=#003366><b>UF:</b></font></td></td>
+        </tr>
+        <tr height=10>
+          <td><font size=1 face=Verdana,arial color=#003366></font></td>
+          <td><font size=1 face=Verdana,arial color=#003366>PADRE ERNESTO SASSID</font></td>
+          <td><font size=1 face=Verdana,arial color=#003366>79310780</font></td>
+          
+            <td><a href="javascript:Abre_Janela1('500320');"><font color='#003366' face=verdana,arial size=1>CORUMBA - IBGE - 500320</font></a></td> 
+            <td><font size=1 face=Verdana,arial color=#003366>MS</font></td>
+        </tr>
+         <!-- ----------------------------------------- -->
+        <tr>
+          <td colspan=1 bgcolor="#cccccc"><font size=1 face=Verdana,arial color=#003366><b>Tipo Estabelecimento:</b></font></td>
+          <td colspan=1 bgcolor="#cccccc"><font size=1 face=Verdana,arial color=#003366><b>Sub Tipo Estabelecimento:</b></font></td>
+          <td colspan=2 bgcolor="#cccccc"><font size=1 face=Verdana,arial color=#003366><b>Gestão:</b></font></td>
+		  <td colspan=2 bgcolor="#cccccc"><font size=1 face=Verdana,arial color=#003366><b>Dependência:</b></font></td>
+		</tr> 
+        
+		<tr>
+			<td colspan=1><font size=1 face=Verdana,arial color=#003366>CENTRO DE SAUDE/UNIDADE BASICA</font></td>  
+			<td colspan=1><font size=1 face=Verdana,arial color=#003366></font></td>  
+    
+			 
+		<td colspan=2><font size=1 face=Verdana,arial color=red>MUNICIPAL</font></td>    
+		<td colspan=2>
+		  
+			  <font size=1 face=Verdana,arial color=#003366>MANTIDA</font>
+			         
+		</td>
+	</tr>
+		
+    <tr>
+       <td colspan=1 bgcolor="#cccccc"><font size=1 face=Verdana,arial color=#003366><b>Número Alvará:</b></font></td>
+       <td colspan=2 bgcolor="#cccccc"><font size=1 face=Verdana,arial color=#003366><b>Órgão Expedidor:</b></font></td>
+       <td colspan=2 bgcolor="#cccccc"><font size=1 face=Verdana,arial color=#003366><b>Data Expedição:</b></font></td>
+    </tr>
+    <tr height="15px">
+       <td colspan=1><font size=1 face=Verdana,arial color=#003366>166/2020</font></td>
+       <td colspan=2><font size=1 face=Verdana,arial color=#003366>SMS</font></td>
+       <td colspan=2><font size=1 face=Verdana,arial color=#003366>04/05/2020</font></td>
+    </tr>
+
+    
+		<tr height="15px">
+			<td colspan="5" bgcolor="#cccccc"><font size=1 face=Verdana,arial color=#003366><b>Horário de Funcionamento:</b></font></td>
+		</tr>
+		<tr height="15px">
+			<td colspan="2">
+				<a id="info" href="#"><font size=1 face=Verdana,arial color=red>VISUALIZAR HORÁRIO</font></a>
+			</td>
+		</tr>
+
+	  
+</table>
+
+
+			
+			
+		<div id="dialogo" title="Horário Funcionamento" style="display:none;">
+			<table border="0" align="center" cellpadding=1 cellspacing=0 width="100%">
+				<tr height="15px">
+					<td bgcolor="#cccccc"><font size=1 face=Verdana,arial color=#003366><b>Dia semana</b></font></td>
+					<td bgcolor="#cccccc"><font size=1 face=Verdana,arial color=#003366><b>Horário</b></font></td>
+				</tr>
+			
+	
+
+				<tr height="15px">
+					<td><font size=1 face=Verdana,arial color=#003366>Segunda-Feira </font></td>
+					<td><font size=1 face=Verdana,arial color=#003366>07:00 às 11:00 </font></td>
+				</tr>
+
+	
+
+				<tr height="15px">
+					<td><font size=1 face=Verdana,arial color=#003366>Segunda-Feira </font></td>
+					<td><font size=1 face=Verdana,arial color=#003366>13:00 às 17:00 </font></td>
+				</tr>
+
+	
+
+				<tr height="15px">
+					<td><font size=1 face=Verdana,arial color=#003366>Terça-Feira </font></td>
+					<td><font size=1 face=Verdana,arial color=#003366>07:00 às 11:00 </font></td>
+				</tr>
+
+	
+
+				<tr height="15px">
+					<td><font size=1 face=Verdana,arial color=#003366>Terça-Feira </font></td>
+					<td><font size=1 face=Verdana,arial color=#003366>13:00 às 17:00 </font></td>
+				</tr>
+
+	
+
+				<tr height="15px">
+					<td><font size=1 face=Verdana,arial color=#003366>Quarta-Feira </font></td>
+					<td><font size=1 face=Verdana,arial color=#003366>07:00 às 11:00 </font></td>
+				</tr>
+
+	
+
+				<tr height="15px">
+					<td><font size=1 face=Verdana,arial color=#003366>Quarta-Feira </font></td>
+					<td><font size=1 face=Verdana,arial color=#003366>13:00 às 17:00 </font></td>
+				</tr>
+
+	
+
+				<tr height="15px">
+					<td><font size=1 face=Verdana,arial color=#003366>Quinta-Feira </font></td>
+					<td><font size=1 face=Verdana,arial color=#003366>07:00 às 11:00 </font></td>
+				</tr>
+
+	
+
+				<tr height="15px">
+					<td><font size=1 face=Verdana,arial color=#003366>Quinta-Feira </font></td>
+					<td><font size=1 face=Verdana,arial color=#003366>13:00 às 17:00 </font></td>
+				</tr>
+
+	
+
+				<tr height="15px">
+					<td><font size=1 face=Verdana,arial color=#003366>Sexta-Feira </font></td>
+					<td><font size=1 face=Verdana,arial color=#003366>07:00 às 11:00 </font></td>
+				</tr>
+
+	
+
+				<tr height="15px">
+					<td><font size=1 face=Verdana,arial color=#003366>Sexta-Feira </font></td>
+					<td><font size=1 face=Verdana,arial color=#003366>13:00 às 17:00 </font></td>
+				</tr>
+
+	
+
+				<tr height="15px">
+					<td><font size=1 face=Verdana,arial color=#003366>Sábado </font></td>
+					<td><font size=1 face=Verdana,arial color=#003366>13:00 às 17:00 </font></td>
+				</tr>
+
+	
+			</table>
+		</div>		
+
+
+
+</body>
+
+</html>
+
+</body>
+<HTML>
+<HEAD>
+</HEAD>
+<BODY>
+
+     
+  
+   <! --------------------------   Rodape com img  ------------------------------->
+     <table border="1" align="center" cellpadding="1" cellspacing="0" width="760">
+      <tr>
+       <td colspan=6><font size=2 face=Verdana,arial color="#ffcc99">Módulos:<font color="#0099cc"></font></font></td>
+      </tr>    
+      <tr>
+       <td align=middle><a href="Mod_Basico.asp?VCo_Unidade=5003200148636"><IMG border=0 src="img/Mod_Basico.gif" ></A></td>
+       <td align=middle><a href="Mod_Conjunto.asp?VCo_Unidade=5003200148636"><IMG border=0 src="img/Mod_Conjunto.gif" ></A></td>
+       <td align=middle><a href="Mod_Ambulatorial.asp?VCo_Unidade=5003200148636"><IMG border=0 src="img/Mod_Ambulatorial.gif" ></A></td>
+       <td align=middle><a href="Mod_Hospitalar.asp?VCo_Unidade=5003200148636"><IMG border=0 src="img/Mod_Hospitalar.gif" ></A></td>
+       <td align=middle><a href="Mod_Mantenedora.asp?VCo_Unidade=5003200148636"><IMG border=0 src="img/Mod_Mantenedora.gif" ></A></td>
+       <td align=middle><a href="Mod_Profissional.asp?VCo_Unidade=5003200148636"><IMG border=0 src="img/Mod_Profissionais.gif" ></A></td>
+      </tr>
+      <tr>
+       <td align=middle><a href="Mod_Sipac.asp?VCo_Unidade=5003200148636"><IMG border=0 src="img/Mod_Habilitacoes.gif" ></A></td>
+       <td align=middle><a href="Mod_Regras.asp?VCo_Unidade=5003200148636"><IMG border=0 src="img/Mod_regras.gif"></A></td>
+       <td align=middle><a href="Mod_Contrato.asp?VCo_Unidade=5003200148636"><IMG border=0 src="img/Mod_Contrato.gif"></A></td>
+       <td align=middle><a href="Mod_IntegraSUS.asp?VCo_Unidade=5003200148636"><IMG border=0 src="img/Incentivos.gif"></A></td>
+       <td align=middle><a href="Mod_Equipes.asp?VCo_Unidade=5003200148636"><IMG border=0 src="img/Mod_Equipes.gif"></A></td>
+       <td align=middle><a href="Mod_Residencia.asp?VCo_Unidade=5003200148636"><IMG border=0 src="img/Mod_Residencia.gif"></A></td>
+      </tr>
+      <tr>
+       <td align=middle><a href="Mod_Telesaude.asp?VCo_Unidade=5003200148636&VCo_Cnes=0148636"><IMG border=0 src="img/telesaude.gif"></A></td>
+       <td align=middle><a href="Mod_Org_Parceiras.asp?VCo_Unidade=5003200148636"><IMG border=0 src="img/Orgparceiras.gif" ></A></td>
+       <td align=middle><a href="Mod_Ger_Terceiro.asp?VCo_Unidade=5003200148636"><IMG border=0 src="img/GerenciaTerceiro.gif" ></A></td>
+       <td align=middle></td>
+       <td align=middle></td>
+       <td align=middle></td>
+      </tr>
+       
+       
+       
+       
+ 	   
+     </table>
+       
+    <!--    <p align=center><a href="Lista_Es_Municipio.asp?VEstado=&VCodMunicipio="><img src=img/Voltar.gif border=0></a></p> -->
+      
+        <!--<p align=center><a href="Lista_Es_Nome.asp?VCo_Unidade=5003200148636"><img src=img/Voltar.gif border=0></a></p>-->
+      
+  <!--  <table border="1" align="center" width="700" cellpadding="1" cellspacing="0">
+       <tr>
+         <td><font size=1 face=verdana,arial color=yellow>Estabelecimemto com Inconsistência</font></td>
+       </tr>    
+ </table>-->
+
+     <!--<p align=center><a href="Lista_Tot_Es_Municipio.asp?Estado=NULO"><img src=img/Voltar.gif border=0></a></p>-->  
+
+  
+
+<! --------------------------   Rodape com img  ------------------------------->
+</BODY>
+</HTML>
+
+</td>
+</tr>
+</table>
+</body>
+</html>

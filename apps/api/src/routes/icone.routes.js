@@ -1,0 +1,242 @@
+const express = require('express');
+const { prisma } = require('@mapatur/database');
+const { logger } = require('@mapatur/logger');
+const { authenticate, requireAdmin } = require('../middleware/auth.middleware');
+const { asyncHandler } = require('../middleware/error.middleware');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+const router = express.Router();
+
+// Configurar upload de ícones
+const iconStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(__dirname, '../../../../uploads/icones');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, 'icone-' + uniqueSuffix + ext);
+  }
+});
+
+const uploadIcon = multer({
+  storage: iconStorage,
+  limits: { fileSize: 500 * 1024 }, // 500KB
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['image/png', 'image/svg+xml', 'image/jpeg'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Apenas PNG, SVG e JPG são permitidos'), false);
+    }
+  }
+});
+
+// ============================================================================
+// ICONE ROUTES
+// ============================================================================
+
+/**
+ * GET /api/icones
+ * Lista todos os ícones (público para legenda)
+ */
+router.get('/', asyncHandler(async (req, res) => {
+  const { ativo = 'true' } = req.query;
+  
+  const where = {};
+  if (ativo === 'true') {
+    where.ativo = true;
+  }
+  
+  const icones = await prisma.pROD_Icone.findMany({
+    where,
+    orderBy: [
+      { ordem: 'asc' },
+      { nome: 'asc' }
+    ],
+  });
+  
+  res.json({
+    success: true,
+    data: icones,
+  });
+}));
+
+/**
+ * GET /api/icones/:id
+ * Obter ícone por ID
+ */
+router.get('/:id', asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  
+  const icone = await prisma.pROD_Icone.findUnique({
+    where: { id: parseInt(id) },
+  });
+  
+  if (!icone) {
+    return res.status(404).json({
+      success: false,
+      error: 'Ícone não encontrado',
+    });
+  }
+  
+  res.json({
+    success: true,
+    data: icone,
+  });
+}));
+
+/**
+ * POST /api/icones
+ * Criar novo ícone (Admin)
+ */
+router.post('/', authenticate, requireAdmin, asyncHandler(async (req, res) => {
+  const { nome, url, ordem = 0 } = req.body;
+  
+  if (!nome || !url) {
+    return res.status(400).json({
+      success: false,
+      error: 'Nome e URL são obrigatórios',
+    });
+  }
+  
+  const icone = await prisma.pROD_Icone.create({
+    data: {
+      nome,
+      url,
+      ordem: parseInt(ordem),
+      ativo: true,
+    },
+  });
+  
+  logger.info(`Ícone criado: ${icone.nome} (ID ${icone.id})`);
+  
+  res.status(201).json({
+    success: true,
+    data: icone,
+  });
+}));
+
+/**
+ * POST /api/icones/upload
+ * Upload de arquivo de ícone (Admin)
+ */
+router.post('/upload', authenticate, requireAdmin, uploadIcon.single('icone'), asyncHandler(async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({
+      success: false,
+      error: 'Nenhum arquivo enviado',
+    });
+  }
+  
+  const url = `/uploads/icones/${req.file.filename}`;
+  
+  logger.info('Ícone uploaded', {
+    filename: req.file.filename,
+    path: req.file.path,
+    size: req.file.size,
+    url: url,
+  });
+  
+  res.json({
+    success: true,
+    data: { url },
+  });
+}));
+
+/**
+ * PUT /api/icones/:id
+ * Atualizar ícone (Admin)
+ */
+router.put('/:id', authenticate, requireAdmin, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { nome, url, ordem, ativo } = req.body;
+  
+  const updateData = {};
+  if (nome !== undefined) updateData.nome = nome;
+  if (url !== undefined) updateData.url = url;
+  if (ordem !== undefined) updateData.ordem = parseInt(ordem);
+  if (typeof ativo === 'boolean') updateData.ativo = ativo;
+  
+  const icone = await prisma.pROD_Icone.update({
+    where: { id: parseInt(id) },
+    data: updateData,
+  });
+  
+  logger.info(`Ícone atualizado: ${icone.nome} (ID ${icone.id})`);
+  
+  res.json({
+    success: true,
+    data: icone,
+  });
+}));
+
+/**
+ * DELETE /api/icones/:id
+ * Deletar ícone (Admin) - soft delete
+ */
+router.delete('/:id', authenticate, requireAdmin, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  
+  // Verificar se há escolas usando este ícone
+  const escolasUsando = await prisma.pROD_Escola.count({
+    where: { icone_url: { contains: req.params.id } },
+  });
+
+  if (escolasUsando > 0) {
+    return res.status(400).json({
+      success: false,
+      error: `Não é possível excluir. ${escolasUsando} escola(s) está(ão) usando este ícone.`,
+    });
+  }
+  
+  await prisma.pROD_Icone.update({
+    where: { id: parseInt(id) },
+    data: { ativo: false },
+  });
+  
+  logger.info(`Ícone desativado: ID ${id}`);
+  
+  res.json({
+    success: true,
+    message: 'Ícone desativado com sucesso',
+  });
+}));
+
+/**
+ * PUT /api/icones/:id/reordenar
+ * Reordenar ícones (Admin)
+ */
+router.put('/reordenar/batch', authenticate, requireAdmin, asyncHandler(async (req, res) => {
+  const { icones } = req.body; // Array de { id, ordem }
+  
+  if (!Array.isArray(icones)) {
+    return res.status(400).json({
+      success: false,
+      error: 'Formato inválido',
+    });
+  }
+  
+  // Atualizar ordem de cada ícone
+  for (const item of icones) {
+    await prisma.pROD_Icone.update({
+      where: { id: item.id },
+      data: { ordem: item.ordem },
+    });
+  }
+  
+  logger.info(`Ícones reordenados: ${icones.length} itens`);
+  
+  res.json({
+    success: true,
+    message: 'Ícones reordenados com sucesso',
+  });
+}));
+
+module.exports = router;

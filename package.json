@@ -1,0 +1,42 @@
+{
+  "name": "mapatur-monorepo",
+  "version": "1.0.0",
+  "description": "Monorepo do Mapa Turismo (MapaTur) — Guia de Turismo",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev --workspace=@mapatur/api",
+    "dev:worker": "npm run dev --workspace=@mapatur/etl-worker",
+    "dev:web": "npm run dev --workspace=@mapatur/web",
+    "build:api": "npm run build --workspace=@mapatur/api",
+    "build:worker": "npm run build --workspace=@mapatur/etl-worker",
+    "build:web": "npm run build --workspace=@mapatur/web",
+    "prisma:generate": "npm run prisma:generate --workspace=@mapatur/database",
+    "prisma:migrate": "npm run prisma:migrate --workspace=@mapatur/database",
+    "prisma:studio": "npm run prisma:studio --workspace=@mapatur/database",
+    "prisma:triggers": "node scripts/apply-triggers.js",
+    "setup:db": "npm run prisma:migrate && npm run prisma:triggers",
+    "test:mysql": "node scripts/test-mysql-connection.js",
+    "test:postgres": "node scripts/test-postgres-connection.js",
+    "create:superadmin": "node scripts/create-superadmin.js"
+  },
+  "keywords": [
+    "health",
+    "gis",
+    "etl",
+    "corumba"
+  ],
+  "author": "Prefeitura de Corumbá",
+  "license": "MIT",
+  "devDependencies": {
+    "cross-env": "^10.1.0",
+    "dotenv-cli": "^11.0.0"
+  },
+  "dependencies": {
+    "mysql2": "^3.15.3",
+    "xlsx": "^0.18.5"
+  }
+}

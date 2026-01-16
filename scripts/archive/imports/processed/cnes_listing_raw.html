@@ -1,0 +1,365 @@
+<!-- saved from url=(0022)http://internet.e-mail -->
+<table  colspan=2 lign=left border=0 width=780 cellspacing="0" cellpadding="0">
+ <tr>
+  <td>
+
+<!--***************************************************************
+// Desenvolvido Por  - DATASUS/CNES - RIO
+// Equipe ...........: CNES 
+// Endereço .........: CNES.DATSUS.GOV.BR 
+// Descricao.........: MENU PRINCIPAL  
+// Criado  por.......: WASHINGTON BELLOTI    
+//  ***************************************************************-->
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="pt-BR">
+
+<head>
+  <title>CnesWeb - Cadastro Nacional de Estabelecimentos de Saúde</title>
+
+<style TYPE="text/css">
+<!--
+A:link    {text-decoration: none; font-weight:normal; color:#333333; }
+A:visited {text-decoration: none; font-weight:normal; color:#333333; }
+A:active  {text-decoration: none; color: #333333; }
+A:hover	  {color: #000066; }
+A.ff      {text-decoration: none; color: #333333; }
+A.ff:visited {text-decoration: none; color: #333333; }
+A.ff:hover	 {text-decoration: none; color:#000066; }
+A.ff:active  {text-decoration: none; color: #333333; }
+-->
+</style>
+
+<SCRIPT LANGUAGE="JavaScript">
+
+function Abre_Janela2()
+{
+	window.open('Mod_Email.asp','Links','toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,copyhistory=no,width=650,height=480, top=180, left=280');
+}
+
+// Recuperando a configuracao de Video
+
+Tela = screen.width;  
+
+if (Tela == '1024')
+  Posicao = '180'
+else
+  Posicao = '13'
+
+//document.FrmPosicao.Posicao.value = screen.width;    
+
+// -------------------- Funcão para mostrar data e Hora --------------------------- 
+
+ hoje = new Date()
+ dia = hoje.getDate()
+ dias = hoje.getDay()
+ mes = hoje.getMonth()
+ ano = hoje.getYear()
+ if (dia < 10)
+    dia = "0" + dia
+ if (ano < 2000)
+    ano = "19" + ano
+
+ function CriaArray (n) 
+ {
+  this.length = n 
+ }
+
+ NomeDia = new CriaArray(7)
+ NomeDia[0] = "Domingo"
+ NomeDia[1] = "Segunda-feira"
+ NomeDia[2] = "Ter&ccedil;a-feira"
+ NomeDia[3] = "Quarta-feira"
+ NomeDia[4] = "Quinta-feira"
+ NomeDia[5] = "Sexta-feira"
+ NomeDia[6] = "S&aacute;bado"
+
+ NomeMes = new CriaArray(12)
+ NomeMes[0] = "Janeiro"
+ NomeMes[1] = "Fevereiro"
+ NomeMes[2] = "Mar&ccedil;o"
+ NomeMes[3] = "Abril"
+ NomeMes[4] = "Maio"
+ NomeMes[5] = "Junho"
+ NomeMes[6] = "Julho"
+ NomeMes[7] = "Agosto"
+ NomeMes[8] = "Setembro"
+ NomeMes[9] = "Outubro"
+ NomeMes[10] = "Novembro"
+ NomeMes[11] = "Dezembro"
+
+ function EscreveData() 
+
+ {
+ document.write ("<center>" + NomeDia[dias] + ", " + dia + " de " + NomeMes[mes] + " de " + ano + "</center>")
+ }
+ 
+ function Data_Atualizacao() 
+ {
+ dia = hoje.getDate();
+ dia = parseInt(dia);
+ dia = dia - 2 
+ mes = hoje.getMonth()
+ mes = parseInt(mes)
+ mes = mes + 1
+ ano = hoje.getYear()
+ document.write (dia + "/" + mes + "/"  + ano)
+ }
+
+// ---------------------- Fim da Funçaõ Data Hora ----------------------------------
+ 
+  NS4 = (document.layers);
+  IE4 = (document.all);
+  ver4 = (NS4 || IE4);
+  isMac = (navigator.appVersion.indexOf("Mac") != -1);
+  isMenu = (NS4 || (IE4 && !isMac));
+  function popUp(){return};
+  function popDown(){return};
+  function startIt(){return};
+  if (!ver4) event = null;
+
+  if (isMenu)
+   {
+    menuVersion = 3;
+    menuWidth = 150;
+    borWid = 2;
+    borSty = "double";
+    borCol = "#003366";
+    separator = 1;
+    separatorCol = "#003366";
+    fntFam = "sans-serif";
+    fntBold = false;
+    fntItal = false;
+    fntSiz = 8;
+    fntCol = "#003366";
+    overFnt = "#000080";
+    itemPad = 3;
+    backCol = "#cccccc";
+    overCol = "#ADD8E6";
+    
+    imgSrc = "tri.gif";
+    imgSiz = 10;
+
+    childOffset = 6;
+    childOverlap = 60;
+    perCentOver = null;
+
+    clickStart = false;
+    clickKill = false;
+    secondsVisible = 0.5;
+
+    keepHilite = false;
+    NSfontOver = false;
+
+    isFrames = false;
+    navFrLoc = "top";
+    mainFrName = "main";
+  }
+
+</SCRIPT>
+</head>
+  <script type='text/javascript'>
+
+      function Go(){return}
+  </script>
+  <script type='text/javascript' src='exmplmenu_var.js'></script>
+  <script type='text/javascript' src='menu_com.js'></script>
+
+<body leftmargin="0" topmargin="0" marginwidth="0" marginheight="0">
+
+<table  border=0 width=781 cellspacing="0" cellpadding="0">
+	<tr>
+ 		<td>
+  			<table  border="0" cellspacing="0" cellpadding="0">
+   				<tr>
+     				<!--<td width="781"><IMG  src="img/topo_novo4.jpg" alt="imagem do topo cnes" height=90 width=781 border=0></td>--> 
+     				<td width="781"><IMG  src="img/topo_novo_2014.jpg" alt="imagem do topo cnes" height=90 width=781 border=0></td> 
+     			</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+<br><br>
+</body>
+
+<html>
+	<head>
+		<title>Indicadores - Cnes</title>
+	</head>
+	
+	
+    <body background="img/Fundo-28-01-2003.gif">
+	<p align="center"> 
+ 		<font color="#ffcc99" face="verdana,arial" size="2">
+        	<b>Dados da Mantenedora</b>
+      	</font>
+	</p>
+	
+	
+		<table border="1" align="center" cellpadding="1" cellspacing="0" width="700">
+   			<tr>
+     			<td colspan=1>
+                	<font size=2 face=Verdana,arial color="#ffcc99"><b>Mantenedora:</b></font>
+                </td>
+     			<td colspan=1 align=right>
+                	<font size=1 face=Verdana,arial color="yellow">Responsável - CORUMBA</font>
+                </td>
+   			</tr>    
+		</table>
+		<table bgcolor="white" border="0" align="center" cellpadding=1 cellspacing=0 width="700">
+   			<tr>
+     			<td bgcolor="#cccccc" colspan=2>
+                	<font size=1 face=Verdana,arial color=#003366><b>Nome Empresarial</b></font>
+              	</td>
+     			<td bgcolor="#cccccc" colspan=3>
+                	<font size=1 face=Verdana,arial color=#003366><b>CNPJ:</b></font>
+               	</td>
+    			</tr>
+   			<tr>
+    	 		<td colspan=2>
+                	<font size=1 face=Verdana,arial color=#003366>PREFEITURA MUNICIPAL DE CORUMBA</font>
+               	</td>
+     			<td colspan=3>
+                	<font size=1 face=Verdana,arial color=#003366>03330461000110</font>
+               	</td>     
+   			</tr>
+   			<tr>
+    			<td bgcolor="#cccccc" colspan=2>
+                	<font size=1 face=Verdana,arial color=#003366><b>Logradouro:</b></font>
+             	</td>
+    			<td bgcolor="#cccccc">
+                	<font size=1 face=Verdana,arial color=#003366><b>Número:</b></font>
+              	</td>
+    			<td bgcolor="#cccccc">
+                	<font size=1 face=Verdana,arial color=#003366><b>Complemento:</b></font>
+               	</td>
+    			<td bgcolor="#cccccc">
+                	<font size=1 face=Verdana,arial color=#003366><b>Bairro:</b></font>
+             	</td>
+          	</tr>
+   			<tr>
+     			<td colspan=2>
+                	<font size=1 face=Verdana,arial color=#003366>RUA GABRIEL VANDONI DE BARROS</font>
+                </td>     
+     			<td>
+                	<font size=1 face=Verdana,arial color=#003366>S/N</font>
+              	</td>
+     			<td>
+                	<font size=1 face=Verdana,arial color=#003366></font>
+              	</td>
+     			<td>
+                	<font size=1 face=Verdana,arial color=#003366>DOM BOSCO</font>
+              	</td>
+  			</tr>
+  			<tr>
+    			<td bgcolor="#cccccc">
+                	<font size=1 face=Verdana,arial color=#003366><b>Município:</b></font>
+                </td>
+    			<td bgcolor="#cccccc">
+                	<font size=1 face=Verdana,arial color=#003366><b>CEP:</b></font>
+               	</td>
+    			<td bgcolor="#cccccc">
+                	<font size=1 face=Verdana,arial color=#003366><b>UF:</b></font>
+              	</td>
+    			<td bgcolor="#cccccc">
+                	<font size=1 face=Verdana,arial color=#003366><b>Região de Saude:</b></font>
+              	</td>
+    			<td bgcolor="#cccccc">
+                	<font size=1 face=Verdana,arial color=#003366><b>Telefone:</b></font>
+              	</td>
+  			</tr> 
+  			<tr>
+    			<td>
+                	<font size=1 face=Verdana,arial color=#003366>CORUMBA</font>
+               	</td>
+    			<td>
+                	<font size=1 face=Verdana,arial color=#003366>79333140</font>
+              	</td>
+    			<td>
+                	<font size=1 face=Verdana,arial color=#003366>MS</font>
+              	</td>
+    			<td>
+                	<font size=1 face=Verdana,arial color=#003366>011</font>
+              	</td>
+    			<td>
+                	<font size=1 face=Verdana,arial color=#003366>672311133</font>
+               	</td> 
+  			</tr>
+  			<tr>
+    			<td bgcolor="#cccccc">
+                	<font color=#003366 face=Verdana,arial size=1><b>Agência:</b></font>
+               	</td>
+    			<td bgcolor="#cccccc">
+                	<font color=#003366 face=Verdana,arial size=1><b>Conta Corrente:</b></font>
+               	</td>
+    			<td bgcolor="#cccccc">
+                	<font color=#003366 face=Verdana,arial size=1><b>Natureza Jurídica:</b></font>
+               	</td>
+    			<td bgcolor="#cccccc"></td>
+    			<td bgcolor="#cccccc"></td>
+  			</tr>
+  			<tr>
+   				<td>
+                	<font size=1 face=Verdana,arial color=#003366>00140</font>
+              	</td>
+   				<td>
+                	<font size=1 face=Verdana,arial color=#003366>153753</font>
+               	</td>
+   				<td>
+                	<font size=1 face=Verdana,arial color=#003366>MUNICIPIO</font>
+              	</td>
+   				<td></td>
+   				<td></td>
+ 			</tr> 
+			
+  			<tr>
+    			<td bgcolor="#cccccc">
+                   	<font color=#003366 face=Verdana,arial size=1><b>Tipo do Fundo:</b></font>
+              	</td>
+    			<td bgcolor="#cccccc">
+                	<font color=#003366 face=Verdana,arial size=1><b>CNPJ do Fundo:</b></font>
+              	</td>
+    			<td bgcolor="#cccccc"></td>
+    			<td bgcolor="#cccccc"></td>
+    			<td bgcolor="#cccccc"></td>
+  			</tr>
+  			<tr>
+   				<td>
+                	<font size=1 face=Verdana,arial color=#003366>Estadual</font>
+              	</td>
+   				<td>
+                	<font size=1 face=Verdana,arial color=#003366></font>
+              	</td>
+   				<td></td>
+   				<td></td>
+   				<td></td>
+ 			</tr>    
+		</table>
+	
+		<table width=700 border='1' align='center' cellpadding='1' cellspacing='0'>
+			<tr>
+ 				<td colspan=3 align=center>
+   					<font color=#ffcc99 face=verdana,arial size=2><b>Mantidos</b></font><br> 
+ 				</td>
+			</tr>
+			<tr>
+  				<td width='8%' align=center> 
+    				<font size='1' color='#ffcc99' face='verdana,arial'>CNES</font> 
+  				</td>
+  				<td width='45%' align=center> 
+    				<font size='1' color='#ffcc99' face='verdana,arial'>Nome Fantasia</font> 
+  				</td>
+  				<td width='48%' align=center> 
+    				<font size='1' color='#ffcc99' face='verdana,arial'>Razão Social</font> 
+  				</td>
+			</tr>
+			<tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>2559498</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202559498'>UNIDADE BASICA DE SAUDE GASTAO DE OLIVEIRA</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202559498'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>7836546</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003207836546'>UNIDADE BASICA DE SAUDE RANULFO DE JESUS VASCONCELLOS</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003207836546'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>0148636</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003200148636'>UNIDADE BASICA DE SAUDE DR BONIFACIO TIKAYOSHI TIAEN</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003200148636'>MUNICIPIO DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>9191801</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003209191801'>UNIDADE BASICA DE SAUDE JARDIM DOS ESTADOS</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003209191801'>MUNICIPIO DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>6356486</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003206356486'>CENTRO DE ATENCAO PSICOSSOCIAL ALCOOL E DROGAS</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003206356486'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>2536676</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202536676'>UNIDADE BASICA DE SAUDE ROSIMEIRE DOS SANTOS AJALA</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202536676'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>7665199</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003207665199'>UNIDADE DE PRONTO ATENDIMENTO DR JOSE ABILIO M DE BARROS</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003207665199'>MUNICIPIO DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>7789386</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003207789386'>ACADEMIA DA SAUDE CRISTO REDENTOR</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003207789386'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>2676818</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202676818'>CENTRO DE SAUDE DR MOYSES DOS REIS AMARAL</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202676818'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>2376156</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202376156'>CENTRO DE ATENCAO PSICOSSOCIAL JOSE FRAGELLI</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202376156'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>2376520</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202376520'>CENTRO DE REFERENCIA EM IST AIDS DR JOAO DE BRITO</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202376520'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>2599511</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202599511'>LABORATORIO MUNICIPAL DE CORUMBA DR NELSON LEITE DE BARROS</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202599511'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>2603470</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202603470'>UNIDADE BASICA DE SAUDE RURAL TAQUARAL</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202603470'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>2591553</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202591553'>UNIDADE BASICA DE SAUDE RURAL MATO GRANDE</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202591553'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>6921124</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003206921124'>CEM CENTRO DE ESPECIALIDADES MEDICAS DR FADAH SCAFF GATASS</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003206921124'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>6585426</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003206585426'>UNIDADE BASICA DE SAUDE LUIS FRAGELLI</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003206585426'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>6587720</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003206587720'>CENTRO DE ATENCAO PSICOSSOCIAL INFANTIL DE CORUMBA</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003206587720'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>2376121</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202376121'>UNIDADE BASICA DE SAUDE PADRE ERNESTO SASSIDA</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202376121'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>2376105</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202376105'>UNIDADE BASICA DE SAUDE BRENO DE MEDEIROS</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202376105'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>2376148</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202376148'>UNIDADE BASICA DE SAUDE FERNANDO MOUTINHO</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202376148'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>2376512</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202376512'>UNIDADE BASICA DE SAUDE DR ENIO CUNHA</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202376512'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>2536684</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202536684'>UNIDADE BASICA DE SAUDE NOVA CORUMBA</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202536684'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>2558815</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202558815'>PRONTO SOCORRO MUNICIPAL DR ROGERIO TAKAKI BENTO</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202558815'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>2591405</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202591405'>UNIDADE BASICA DE SAUDE DRA LUCIA MARIA PEREIRA DE CARVALHO</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202591405'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>2676796</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202676796'>UNIDADE BASICA DE SAUDE SAO BARTOLOMEU</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202676796'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>7570643</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003207570643'>ACADEMIA DA SAUDE ARTHUR MARINHO</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003207570643'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>7573170</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003207573170'>UNIDADE BASICA DE SAUDE DR ENIO CUNHA II</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003207573170'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>7575297</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003207575297'>CENTRO DE REABILITACAO MUNICIPAL LUIZ MAURICIO PAPA</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003207575297'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>7575300</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003207575300'>FARMACIA MUNICIPAL</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003207575300'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>6091458</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003206091458'>UNIDADE BASICA DE SAUDE DR HUMBERTO PEREIRA</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003206091458'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>6410812</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003206410812'>SECRETARIA MUNICIPAL DE SAUDE DE CORUMBA</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003206410812'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>6029043</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003206029043'>CENTRO DE REFERENCIA REGIONAL EM SAUDE DO TRABALHADOR</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003206029043'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>6564070</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003206564070'>UNIDADE BASICA DE SAUDE ANGELICA ANACHE</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003206564070'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>2558742</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202558742'>CENTRO DE SAUDE DA MULHER DR NICOLAU FRAGELLI</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202558742'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>7311141</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003207311141'>SAMU 1</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003207311141'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>7311672</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003207311672'>SAMU 2</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003207311672'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>7311680</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003207311680'>SAMU 3</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003207311680'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>7320108</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003207320108'>UNIDADE BASICA DE SAUDE DR PEDRO PAULO DE BARROS II</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003207320108'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>0456462</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003200456462'>UNIDADE BASICA DE SAUDE DR WALTER VICTORIO</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003200456462'>CIDADE DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>6590209</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003206590209'>UNIDADE BASICA DE SAUDE DR PEDRO PAULO DE BARROS</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003206590209'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>6450946</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003206450946'>CENTRAL DE REGULACAO DE SERVICOS DE SAUDE</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003206450946'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>6201385</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003206201385'>CENTRO DE CONTROLE DE ZOONOSES DE CORUMBA</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003206201385'>CENTRO DE CONTROLE DE ZOONOSES DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>3043770</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003203043770'>UNIDADE BASICA DE SAUDE JOAO FERNANDES</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003203043770'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>2558726</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202558726'>UNIDADE BASICA DE SAUDE POPULAR VELHA</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003202558726'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>3733300</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003203733300'>CENTRO DE ESPECIALIDADES ODONTOLOGICAS AZIS TAJHER IUNES</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003203733300'>PREFEITURA MUNICIPAL DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>5721121</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003205721121'>UNIDADE BASICA DE SAUDE RIBEIRINHA</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003205721121'>MUNICIPIO DE CORUMBA</a></font></td></tr><tr bgcolor='#cccccc'><td width='8%'><font size='1' face=verdana,arial color='003366'>4844858</font></td><td width='45%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003204844858'>REDE DE FRIO DE CORUMBA</a></font></td><td width='48%'><font size='1' face=verdana,arial color='003366'><a href='Exibe_Ficha_Estabelecimento.asp?VCo_Unidade=5003204844858'>MUNICIPIO DE CORUMBA</a></font></td></tr><tr><td align=left colspan=2><font size='1' color='white' face='verdana,arial'>TOTAL</font></td><td align=right><font size='1' color='white' face='verdana,arial'>47</font></td></tr>
+		</table>
+		<br><br>
+		<!-- saved from url=(0022)http://internet.e-mail -->
+</td>
+</tr>
+</table>
+
+	</body>
+</html>
