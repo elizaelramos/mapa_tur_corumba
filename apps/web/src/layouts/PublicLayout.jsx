@@ -19,83 +19,92 @@ export default function PublicLayout() {
   }, [])
 
   return (
-    <Layout style={{ minHeight: '100vh', height: '100vh' }}>
+    <Layout style={{ minHeight: '100vh', height: '100vh', overflow: 'hidden' }}>
       <Header style={{
         background: '#1F3473',
         color: '#40A1E6',
-        fontSize: isMobile ? '14px' : '20px',
+        fontSize: isMobile ? '12px' : '20px',
         fontWeight: 'bold',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: isMobile ? '0 12px' : '0 40px',
+        padding: isMobile ? '0 8px' : '0 40px',
         height: isMobile ? '56px' : '64px',
         lineHeight: isMobile ? '56px' : '64px',
+        flexShrink: 0,
       }}>
-        <a href="https://corumba.ms.gov.br/" aria-label="Ir para Prefeitura de Corumbá" title="Ir para Prefeitura de Corumbá" style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-          <img
-            src="/uploads/logo__horizontal_monocromatica.png"
-            alt="Logo Prefeitura"
+        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '16px', flex: isMobile ? '0 0 auto' : '0 1 auto' }}>
+          <a href="https://corumba.ms.gov.br/" aria-label="Ir para Prefeitura de Corumbá" title="Ir para Prefeitura de Corumbá" style={{ display: 'flex', alignItems: 'center', height: '100%', flexShrink: 0 }}>
+            <img
+              src="/uploads/logo__horizontal_monocromatica.png"
+              alt="Logo Prefeitura"
+              style={{
+                display: 'block',
+                alignSelf: 'center',
+                height: isMobile ? '24px' : '40px',
+                maxWidth: isMobile ? '60px' : '120px',
+                objectFit: 'contain'
+              }}
+            />
+          </a>
+          <a
+            href="https://wa.me/556732312886"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Guia Interativo Digital - WhatsApp"
+            title="Guia Interativo Digital - WhatsApp"
             style={{
-              display: 'block',
-              alignSelf: 'center',
-              height: isMobile ? '28px' : '40px',
-              maxWidth: isMobile ? '80px' : 'none',
-              objectFit: 'contain'
+              display: 'flex',
+              alignItems: 'center',
+              height: '100%',
+              transition: 'transform 0.2s ease',
+              flexShrink: 0
             }}
-          />
-        </a>
-        <a
-          href="https://wa.me/556732312886"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Guia Interativo Digital - WhatsApp"
-          title="Guia Interativo Digital - WhatsApp"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            height: '100%',
-            marginLeft: isMobile ? '8px' : '16px',
-            transition: 'transform 0.2s ease'
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-        >
-          <img
-            src="/img_guia_interativo_tur.png"
-            alt="Guia Interativo Digital"
-            style={{
-              display: 'block',
-              alignSelf: 'center',
-              height: isMobile ? '32px' : '48px',
-              objectFit: 'contain',
-              cursor: 'pointer'
-            }}
-          />
-        </a>
+            onMouseEnter={(e) => !isMobile && (e.currentTarget.style.transform = 'scale(1.05)')}
+            onMouseLeave={(e) => !isMobile && (e.currentTarget.style.transform = 'scale(1)')}
+          >
+            <img
+              src="/img_guia_interativo_tur.png"
+              alt="Guia Interativo Digital"
+              style={{
+                display: 'block',
+                alignSelf: 'center',
+                height: isMobile ? '28px' : '48px',
+                objectFit: 'contain',
+                cursor: 'pointer'
+              }}
+            />
+          </a>
+        </div>
         <span style={{
           color: 'white',
-          fontSize: isMobile ? '12px' : '20px',
+          fontSize: isMobile ? '10px' : '20px',
           whiteSpace: 'nowrap',
-          flex: isMobile ? 1 : 'initial',
           textAlign: 'center',
-          margin: isMobile ? '0 8px' : '0'
+          flex: '1 1 auto',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          padding: isMobile ? '0 4px' : '0 16px'
         }}>
           MAPA TURISMO
         </span>
-        <img 
-          src="/uploads/arte__horizontal_monocromatica.png" 
-          alt="Arte Horizontal" 
-          style={{ 
-            display: 'block',
+        <img
+          src="/uploads/arte__horizontal_monocromatica.png"
+          alt="Arte Horizontal"
+          style={{
+            display: isMobile ? 'none' : 'block',
             alignSelf: 'center',
-            height: isMobile ? '40px' : '60px',
-            maxWidth: isMobile ? '80px' : 'none',
-            objectFit: 'contain'
-          }} 
+            height: '60px',
+            maxWidth: '120px',
+            objectFit: 'contain',
+            flexShrink: 0
+          }}
         />
       </Header>
-      <Content style={{ height: isMobile ? 'calc(100vh - 56px)' : 'calc(100vh - 64px)' }}>
+      <Content style={{
+        height: isMobile ? 'calc(100vh - 56px)' : 'calc(100vh - 64px)',
+        overflow: 'hidden'
+      }}>
         <Outlet />
       </Content>
     </Layout>
