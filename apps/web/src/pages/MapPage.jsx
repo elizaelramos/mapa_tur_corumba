@@ -335,7 +335,6 @@ export default function MapPage() {
   // Extrair dados antes dos early returns
   const unidades = data?.data || []
   const medicos = medicosData?.data || []
-  const ofertas = ofertasData?.data || []
   const lastUpdate = lastUpdateData?.data?.lastUpdate || null
   const categoriasGrouped = categoriasGroupedData?.data || []
   
