@@ -1310,7 +1310,7 @@ export default function MapPage() {
                     borderTop: '1px solid #f0f0f0'
                   }}>
                     <div style={{ marginBottom: '4px' }}>
-                      Fonte de dados: <strong>Secretaria Municipal de Educação de Corumbá</strong>
+                      Fonte de dados: <strong>Fundação de Turismo do Pantanal</strong>
                     </div>
                     <div style={{ marginTop: '6px', fontSize: '10px', color: '#888' }}>
                       Última atualização: N/A
@@ -1319,7 +1319,7 @@ export default function MapPage() {
 
                   {unidades.length === 0 && !isLoading && (
                     <Alert
-                      message="Nenhuma escola encontrada para exibir no mapa."
+                      message="Nenhuma unidade encontrada para exibir no mapa."
                       type="warning"
                       showIcon
                       style={{ marginTop: '24px', textAlign: 'left' }}
