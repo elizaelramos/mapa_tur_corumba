@@ -922,7 +922,7 @@ export default function MapPage() {
 
                       {/* Campo de busca unificada por texto */}
                       <Input
-                        placeholder="Digite para buscar ponto turístico, bairro ou categoria (ex.: museu, praça, restaurante)"
+                        placeholder="Digite para buscar local, bairro ou categoria (ex.: museu, praça, restaurante)"
                         prefix={<SearchOutlined style={{ color: '#999' }} />}
                         suffix={
                           searchText ? (
@@ -1057,7 +1057,7 @@ export default function MapPage() {
                       {!searchText && (
                         <>
                           <Select
-                            placeholder="Buscar por ponto turístico"
+                            placeholder="Buscar local"
                             className="custom-select"
                             style={{
                               width: '100%',
