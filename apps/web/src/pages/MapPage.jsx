@@ -992,7 +992,7 @@ export default function MapPage() {
                         color: '#1890ff'
                       }}>
                         <SearchOutlined style={{ marginRight: '8px', fontSize: '18px' }} />
-                        O que você precisa encontrar?
+                        O que você procura?
                       </div>
 
                       {/* Campo de busca unificada por texto */}
