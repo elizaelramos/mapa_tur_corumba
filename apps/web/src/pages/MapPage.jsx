@@ -46,7 +46,7 @@ const normalizeText = (text) => {
     .replace(/[\u0300-\u036f]/g, '')
     .trim()
 }
-import { useGetUnidadesQuery, useGetUnidadeMedicosQuery, useGetLastUpdateQuery, useGetIconesQuery, useGetCategoriasGroupedQuery } from '../store/slices/apiSlice' 
+import { useGetUnidadesQuery, useGetLastUpdateQuery, useGetIconesQuery, useGetCategoriasGroupedQuery } from '../store/slices/apiSlice' 
 import MapLegend from '../components/MapLegend'
 import 'leaflet/dist/leaflet.css'
 import { trackBusca, trackVisualizacaoUnidade, trackCliqueMapaUnidade, trackContatoUnidade, trackRedeSocialUnidade, trackFiltroMapa } from '../utils/analytics'
@@ -313,13 +313,6 @@ export default function MapPage() {
     refetchOnMountOrArgChange: 300, // Refetch apenas se dados tiverem mais de 5 minutos
     refetchOnFocus: false, // Não refetch ao voltar para a aba
   })
-  const { data: medicosData, isLoading: medicosLoading } = useGetUnidadeMedicosQuery(
-    selectedUnidade?.id,
-    { 
-      skip: !selectedUnidade,
-      refetchOnMountOrArgChange: false, // Usa cache sempre que possível
-    }
-  )
   const { data: lastUpdateData } = useGetLastUpdateQuery(undefined, {
     refetchOnMountOrArgChange: 300, // Refetch apenas após 5 minutos
   })
@@ -334,7 +327,6 @@ export default function MapPage() {
 
   // Extrair dados antes dos early returns
   const unidades = data?.data || []
-  const medicos = medicosData?.data || []
   const lastUpdate = lastUpdateData?.data?.lastUpdate || null
   const categoriasGrouped = categoriasGroupedData?.data || []
   
@@ -825,51 +817,6 @@ export default function MapPage() {
                       </div>
                     </div>
                   )}
-
-                  {/* Equipe de Coordenação */}
-                  <div style={{ marginBottom: '24px' }}>
-                    <h3 style={{
-                      fontSize: '16px',
-                      fontWeight: 'bold',
-                      marginBottom: '12px',
-                      display: 'flex',
-                      alignItems: 'center',
-                    }}>
-                      <MedicineBoxOutlined style={{ marginRight: '8px', color: '#1890ff' }} />
-                      Equipe de Coordenação
-                    </h3>
-                    {selectedUnidade.professores && selectedUnidade.professores.length > 0 ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {selectedUnidade.professores.map((prof) => (
-                          <div
-                            key={prof.id}
-                            style={{
-                              padding: '8px 12px',
-                              backgroundColor: '#f0f5ff',
-                              borderRadius: '6px',
-                              border: '1px solid #d6e4ff',
-                            }}
-                          >
-                            <div style={{ fontWeight: 'bold', color: '#1890ff' }}>
-                              {prof.nome}
-                            </div>
-                            {prof.cargo && (
-                              <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
-                                {prof.cargo}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <Empty
-                        image={Empty.PRESENTED_IMAGE_SIMPLE}
-                        description="Nenhum membro da equipe cadastrado"
-                        style={{ margin: '16px 0' }}
-                      />
-                    )}
-                  </div>
-
                   <Divider />
 
                   {/* Redes Sociais */}
@@ -1460,146 +1407,6 @@ export default function MapPage() {
         </div>
 
 
-        {/* Modal de Médicos por Especialidade */}
-        <Modal
-          title={
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <MedicineBoxOutlined style={{ color: '#1890ff', fontSize: '20px' }} />
-              <span>Médicos - {selectedEspecialidade?.nome}</span>
-            </div>
-          }
-          open={especialidadeModalVisible}
-          onCancel={() => {
-            setEspecialidadeModalVisible(false)
-            setSelectedEspecialidade(null)
-          }}
-          footer={[
-            <Button
-              key="close"
-              type="primary"
-              onClick={() => {
-                setEspecialidadeModalVisible(false)
-                setSelectedEspecialidade(null)
-              }}
-            >
-              Fechar
-            </Button>,
-          ]}
-          width={600}
-        >
-          {selectedUnidade && selectedEspecialidade && (
-            <div>
-              <div style={{
-                backgroundColor: '#f0f7ff',
-                padding: '12px 16px',
-                borderRadius: '8px',
-                marginBottom: '16px',
-                borderLeft: '4px solid #1890ff',
-              }}>
-                <div style={{ fontWeight: 'bold', color: '#1890ff', marginBottom: '4px' }}>
-                  {selectedUnidade.nome}
-                </div>
-                {(selectedUnidade.endereco || selectedUnidade.bairro) && (
-                  <div style={{ fontSize: '13px', color: '#666' }}>
-                    <EnvironmentOutlined style={{ marginRight: '6px' }} />
-                    {formatarEnderecoCompleto(selectedUnidade)}
-                  </div>
-                )}
-              </div>
-
-              {medicosLoading ? (
-                <div style={{ textAlign: 'center', padding: '40px' }}>
-                  <Spin size="large" />
-                  <div style={{ marginTop: '16px', color: '#666' }}>
-                    Carregando médicos...
-                  </div>
-                </div>
-              ) : (() => {
-                // Filtrar médicos que têm a especialidade selecionada
-                const medicosFiltrados = medicos.filter(medico =>
-                  medico.especialidades?.some(esp => esp.id === selectedEspecialidade.id)
-                )
-
-                return medicosFiltrados.length > 0 ? (
-                  <div>
-                    <div style={{
-                      marginBottom: '12px',
-                      fontSize: '14px',
-                      color: '#666',
-                      fontWeight: '500',
-                    }}>
-                      {medicosFiltrados.length} {medicosFiltrados.length === 1 ? 'médico encontrado' : 'médicos encontrados'}
-                    </div>
-                    <div style={{
-                      maxHeight: '400px',
-                      overflowY: 'auto',
-                      paddingRight: '8px',
-                    }}>
-                      {medicosFiltrados.map((medico) => (
-                        <div
-                          key={medico.id}
-                          style={{
-                            padding: '16px',
-                            marginBottom: '12px',
-                            backgroundColor: '#fafafa',
-                            borderRadius: '8px',
-                            border: '1px solid #e8e8e8',
-                            transition: 'all 0.3s',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = '#f0f7ff'
-                            e.currentTarget.style.borderColor = '#1890ff'
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = '#fafafa'
-                            e.currentTarget.style.borderColor = '#e8e8e8'
-                          }}
-                        >
-                          <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            marginBottom: '8px',
-                          }}>
-                            <UserOutlined style={{ color: '#1890ff', fontSize: '16px' }} />
-                            <div style={{ fontWeight: '600', fontSize: '15px', color: '#262626' }}>
-                              {medico.nome}
-                            </div>
-                          </div>
-                          {medico.especialidades && medico.especialidades.length > 0 && (
-                            <div style={{
-                              display: 'flex',
-                              flexWrap: 'wrap',
-                              gap: '6px',
-                              marginTop: '8px',
-                            }}>
-                              {medico.especialidades.map(esp => (
-                                <Tag
-                                  key={esp.id}
-                                  color={esp.id === selectedEspecialidade.id ? 'blue' : 'default'}
-                                  icon={<MedicineBoxOutlined />}
-                                  style={{ margin: 0, fontSize: '12px' }}
-                                >
-                                  {esp.nome}
-                                </Tag>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <Empty
-                    image={Empty.PRESENTED_IMAGE_SIMPLE}
-                    description={`Nenhum médico encontrado para a especialidade "${selectedEspecialidade.nome}"`}
-                    style={{ padding: '40px 0' }}
-                  />
-                )
-              })()}
-            </div>
-          )}
-        </Modal>
       </div>
     </>
   )
