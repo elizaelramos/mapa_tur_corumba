@@ -19,6 +19,7 @@ import {
   CompassOutlined,
   MailOutlined,
   BookOutlined,
+  TagOutlined,
 } from '@ant-design/icons'
 import L from 'leaflet'
 
@@ -45,7 +46,7 @@ const normalizeText = (text) => {
     .replace(/[\u0300-\u036f]/g, '')
     .trim()
 }
-import { useGetUnidadesQuery, useGetUnidadeMedicosQuery, useGetLastUpdateQuery, useGetIconesQuery, useGetOfertasEnsinoQuery } from '../store/slices/apiSlice'
+import { useGetUnidadesQuery, useGetUnidadeMedicosQuery, useGetLastUpdateQuery, useGetIconesQuery, useGetCategoriasGroupedQuery } from '../store/slices/apiSlice' 
 import MapLegend from '../components/MapLegend'
 import 'leaflet/dist/leaflet.css'
 import { trackBusca, trackVisualizacaoUnidade, trackCliqueMapaUnidade, trackContatoUnidade, trackRedeSocialUnidade, trackFiltroMapa } from '../utils/analytics'
@@ -248,6 +249,9 @@ const CORUMBA_CONFIG = {
   ],
 }
 
+// Imagem padrão a ser usada quando a unidade não possuir imagem própria
+const DEFAULT_UNIDADE_IMAGE = '/uploads/Logo-Prefeitura-Padr--o-1767631304429-148006191.png' 
+
 // Função auxiliar para obter ícone da rede social
 const getRedeSocialIcon = (nomeRede) => {
   switch (nomeRede) {
@@ -283,7 +287,9 @@ export default function MapPage() {
   const [searchValue, setSearchValue] = useState(null)
   const [searchText, setSearchText] = useState('') // Busca unificada por texto
   const [selectedIconUrl, setSelectedIconUrl] = useState(null) // Filtro por ícone da legenda
-  const [selectedOfertaId, setSelectedOfertaId] = useState(null) // Filtro por oferta de ensino
+  // Filtros de categoria
+  const [selectedCategoriaNome, setSelectedCategoriaNome] = useState(null)
+  const [selectedSubcategoriaId, setSelectedSubcategoriaId] = useState(null)
 
   // Detectar mobile
   useEffect(() => {
@@ -321,9 +327,9 @@ export default function MapPage() {
     refetchOnMountOrArgChange: 300, // Refetch ícones após 5 minutos
     refetchOnFocus: false, // Não refetch ao voltar para a aba
   })
-  const { data: ofertasData } = useGetOfertasEnsinoQuery({ ativo: 'true' }, {
-    refetchOnMountOrArgChange: 300, // Refetch ofertas após 5 minutos
-    refetchOnFocus: false, // Não refetch ao voltar para a aba
+  const { data: categoriasGroupedData } = useGetCategoriasGroupedQuery(undefined, {
+    refetchOnMountOrArgChange: 300, // Refetch categorias após 5 minutos
+    refetchOnFocus: false,
   })
 
   // Extrair dados antes dos early returns
@@ -331,6 +337,7 @@ export default function MapPage() {
   const medicos = medicosData?.data || []
   const ofertas = ofertasData?.data || []
   const lastUpdate = lastUpdateData?.data?.lastUpdate || null
+  const categoriasGrouped = categoriasGroupedData?.data || []
   
   // Extrair bairros únicos das unidades (não precisa query separada)
   const bairros = useMemo(() => {
@@ -386,10 +393,15 @@ export default function MapPage() {
       filtered = filtered.filter(unidade => normalizePath(unidade.icone_url) === selNorm)
     }
 
-    // Aplicar filtro por oferta de ensino (se selecionado)
-    if (selectedOfertaId) {
+    // Aplicar filtro por categoria (subcategoria tem prioridade)
+    if (selectedSubcategoriaId) {
+      const subId = Number(selectedSubcategoriaId)
       filtered = filtered.filter(unidade =>
-        unidade.ofertas_ensino?.some(oferta => oferta.id === selectedOfertaId)
+        unidade.categorias?.some(cat => cat.id === subId)
+      )
+    } else if (selectedCategoriaNome) {
+      filtered = filtered.filter(unidade =>
+        unidade.categorias?.some(cat => cat.nome === selectedCategoriaNome)
       )
     }
 
@@ -430,7 +442,7 @@ export default function MapPage() {
       }
       return true
     })
-  }, [unidades, searchType, searchValue, searchText, selectedIconUrl, selectedOfertaId])
+  }, [unidades, searchType, searchValue, searchText, selectedIconUrl, selectedCategoriaNome, selectedSubcategoriaId])
 
   // Calcular estatísticas de busca por texto
   const searchStats = useMemo(() => {
@@ -462,6 +474,8 @@ export default function MapPage() {
     setSearchValue(null)
     setSearchText('')
     setSelectedOfertaId(null)
+    setSelectedCategoriaNome(null)
+    setSelectedSubcategoriaId(null)
   }
 
   if (isLoading) {
@@ -588,28 +602,15 @@ export default function MapPage() {
                   </Button>
                 </div>
 
-                {/* Imagem da Unidade */}
-                {selectedUnidade.imagem_url ? (
-                  <div style={{
-                    width: '100%',
-                    height: '200px',
-                    backgroundImage: `url(${apiBaseUrl}${encodeURI(selectedUnidade.imagem_url)})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    backgroundColor: '#f0f0f0', // Fallback color
-                  }} />
-                ) : (
-                  <div style={{
-                    width: '100%',
-                    height: '200px',
-                    backgroundColor: '#f0f0f0',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}>
-                    <EnvironmentOutlined style={{ fontSize: '48px', color: '#d9d9d9' }} />
-                  </div>
-                )}
+                {/* Imagem da Unidade (usa imagem padrão quando não houver imagem própria) */}
+                <div style={{
+                  width: '100%',
+                  height: '200px',
+                  backgroundImage: `url(${apiBaseUrl}${encodeURI(selectedUnidade.imagem_url || DEFAULT_UNIDADE_IMAGE)})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  backgroundColor: '#f0f0f0', // Fallback color
+                }} />
 
                 {/* Conteúdo */}
                 <div style={{ padding: '24px' }}>
@@ -660,28 +661,6 @@ export default function MapPage() {
                     }}>
                       <ClockCircleOutlined style={{ marginRight: '8px', marginTop: '4px', fontSize: '16px' }} />
                       <span style={{ flex: 1, whiteSpace: 'pre-line' }}>{selectedUnidade.horario_funcionamento}</span>
-                    </div>
-                  )}
-
-                  {/* Ofertas de Ensino */}
-                  {selectedUnidade.ofertas_ensino && selectedUnidade.ofertas_ensino.length > 0 && (
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      marginBottom: '16px',
-                      color: '#666',
-                    }}>
-                      <BookOutlined style={{ marginRight: '8px', marginTop: '4px', fontSize: '16px', color: '#52c41a' }} />
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: '12px', color: '#999', marginBottom: '6px' }}>Ofertas de Ensino</div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                          {selectedUnidade.ofertas_ensino.map((oferta) => (
-                            <Tag key={oferta.id} color="green" style={{ margin: 0 }}>
-                              {oferta.nome}
-                            </Tag>
-                          ))}
-                        </div>
-                      </div>
                     </div>
                   )}
 
@@ -997,7 +976,7 @@ export default function MapPage() {
 
                       {/* Campo de busca unificada por texto */}
                       <Input
-                        placeholder="Digite para buscar unidade, bairro ou especialidade..."
+                        placeholder="Digite para buscar ponto turístico, bairro ou categoria (ex.: museu, praça, restaurante)"
                         prefix={<SearchOutlined style={{ color: '#999' }} />}
                         suffix={
                           searchText ? (
@@ -1016,9 +995,11 @@ export default function MapPage() {
                           const newValue = e.target.value
                           setSearchText(newValue)
                           // Limpar filtros de select quando começar a digitar
-                          if (newValue && (searchType || searchValue)) {
+                          if (newValue && (searchType || searchValue || selectedCategoriaNome || selectedSubcategoriaId)) {
                             setSearchType(null)
                             setSearchValue(null)
+                            setSelectedCategoriaNome(null)
+                            setSelectedSubcategoriaId(null)
                           }
                         }}
                         onPressEnter={(e) => {
@@ -1051,109 +1032,104 @@ export default function MapPage() {
                         allowClear={false}
                       />
 
-                      {/* Filtro por Oferta de Ensino */}
+                      {/* Filtro por Categoria */}
+                      
                       <Select
-                        placeholder="Filtrar por oferta de ensino"
-                        value={selectedOfertaId}
+                        placeholder="Filtrar por categoria"
+                        value={selectedCategoriaNome}
                         onChange={(value) => {
-                          setSelectedOfertaId(value)
-                          // Rastrear filtro por oferta
+                          // Aplicar filtro automático: limpar outros filtros e aplicar categoria
+                          setSelectedCategoriaNome(value)
+                          setSelectedSubcategoriaId(null)
+                          setSearchText('')
+                          setSearchType(null)
+                          setSearchValue(null)
+                          setSelectedOfertaId(null)
+                          setSelectedIconUrl(null)
+
+                          // Rastrear filtro por categoria principal
                           if (value) {
-                            const oferta = ofertas.find(o => o.id === value)
                             trackFiltroMapa({
-                              tipo: 'oferta_ensino',
-                              valor: oferta?.nome,
+                              tipo: 'categoria',
+                              valor: value,
                             })
                           }
                         }}
+
                         allowClear
-                        onClear={() => setSelectedOfertaId(null)}
+                        onClear={() => { setSelectedCategoriaNome(null); setSelectedSubcategoriaId(null); }}
                         size="large"
                         style={{
                           width: '100%',
-                          marginBottom: '16px',
+                          marginBottom: '12px',
                           borderRadius: '8px',
                         }}
-                        suffixIcon={<BookOutlined />}
+                        suffixIcon={<TagOutlined />}
                       >
-                        {ofertas.map((oferta) => (
-                          <Select.Option key={oferta.id} value={oferta.id}>
-                            {oferta.nome}
+                        {categoriasGrouped.map((c) => (
+                          <Select.Option key={c.nome} value={c.nome}>
+                            {c.nome}
                           </Select.Option>
                         ))}
                       </Select>
 
-                      {/* Divider com "OU" */}
+                      {/* Se selecionou categoria principal, abrir seleção de subcategorias */}
+                      {selectedCategoriaNome && (
+                        (() => {
+                          const group = categoriasGrouped.find(g => g.nome === selectedCategoriaNome) || { subcategorias: [] }
+                          return (
+                            <Select
+                              placeholder="Selecione uma subcategoria"
+                              value={selectedSubcategoriaId}
+                              onChange={(value) => {
+                                // Aplicar filtro automático: limpar outros filtros e aplicar subcategoria
+                                setSearchText('')
+                                setSearchType(null)
+                                setSearchValue(null)
+                                setSelectedOfertaId(null)
+                                setSelectedIconUrl(null)
+
+                                setSelectedSubcategoriaId(value)
+                                const sub = group.subcategorias.find(s => s.id === value)
+                                trackFiltroMapa({ tipo: 'subcategoria', valor: sub ? `${selectedCategoriaNome} — ${sub.nome}` : selectedCategoriaNome })
+                              }}
+                              allowClear
+                              size="large"
+                              style={{ width: '100%', marginBottom: '16px', borderRadius: '8px' }}
+                              showSearch
+                              filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}
+                            >
+                              {group.subcategorias.map(sub => (
+                                <Select.Option key={sub.id} value={sub.id}>{sub.nome}</Select.Option>
+                              ))}
+                            </Select>
+                          )
+                        })()
+                      )}
+
+                      {/* Select direto para Buscar por Ponto Turístico */}
                       {!searchText && (
                         <>
-                          <Divider style={{ margin: '16px 0', fontSize: '12px', color: '#999' }}>
-                            OU
-                          </Divider>
-
                           <Select
-                            placeholder="Selecione o tipo de busca"
+                            placeholder="Buscar por ponto turístico"
                             className="custom-select"
                             style={{
                               width: '100%',
                               marginBottom: '12px',
                             }}
-                            value={searchType}
+                            value={searchValue}
                             onChange={(value) => {
-                              setSearchType(value)
-                              setSearchValue(null)
-                            }}
-                            allowClear
-                            onClear={handleResetSearch}
-                            size="large"
-                          >
-                            <Select.Option value="bairro">Buscar por Bairro</Select.Option>
-                            <Select.Option value="unidade">Buscar por Unidade</Select.Option>
-                          </Select>
-                        </>
-                      )}
+                              // Aplicar seleção de unidade diretamente
+                              setSearchType('unidade')
+                              setSearchValue(value)
 
-                      {!searchText && searchType === 'bairro' && (
-                        <Select
-                          placeholder="Selecione um bairro"
-                          className="custom-select"
-                          style={{ width: '100%' }}
-                          value={searchValue}
-                          onChange={(value) => {
-                            setSearchValue(value)
-                            if (value) {
-                              // Rastrear busca por bairro
-                              const resultados = unidades.filter(u => u.bairro === value).length
-                              trackBusca({
-                                tipo: 'bairro',
-                                termo: value,
-                                resultados: resultados,
-                              })
-                            }
-                          }}
-                          showSearch
-                          allowClear
-                          size="large"
-                          filterOption={(input, option) =>
-                            option.children.toLowerCase().includes(input.toLowerCase())
-                          }
-                        >
-                          {bairros.map((bairro) => (
-                            <Select.Option key={bairro} value={bairro}>
-                              {bairro}
-                            </Select.Option>
-                          ))}
-                        </Select>
-                      )}
+                              // Limpar outros filtros
+                              setSearchText('')
+                              setSelectedCategoriaNome(null)
+                              setSelectedSubcategoriaId(null)
+                              setSelectedOfertaId(null)
+                              setSelectedIconUrl(null)
 
-                      {!searchText && searchType === 'unidade' && (
-                        <Select
-                          placeholder="Selecione uma unidade"
-                          className="custom-select"
-                          style={{ width: '100%' }}
-                          value={searchValue}
-                          onChange={(value) => {
-                            setSearchValue(value)
-                            if (value) {
                               // Rastrear busca por unidade
                               const unidade = unidades.find(u => u.id === value)
                               if (unidade) {
@@ -1163,25 +1139,27 @@ export default function MapPage() {
                                   resultados: 1,
                                 })
                               }
+                            }}
+                            allowClear
+                            onClear={handleResetSearch}
+                            showSearch
+                            size="large"
+                            filterOption={(input, option) =>
+                              option.children.toLowerCase().includes(input.toLowerCase())
                             }
-                          }}
-                          showSearch
-                          allowClear
-                          size="large"
-                          filterOption={(input, option) =>
-                            option.children.toLowerCase().includes(input.toLowerCase())
-                          }
-                        >
-                          {unidades.map((unidade) => (
-                            <Select.Option key={unidade.id} value={unidade.id}>
-                              {unidade.nome}
-                            </Select.Option>
-                          ))}
-                        </Select>
-                      )}
+                          >
+                            {unidades.map((unidade) => (
+                              <Select.Option key={unidade.id} value={unidade.id}>
+                                {unidade.nome}
+                              </Select.Option>
+                            ))}
+                          </Select>
+                        </>
+                      )} 
+
                     </div>
 
-                    {(searchText || searchValue || selectedIconUrl || selectedOfertaId) && (
+                    {(searchText || searchValue || selectedIconUrl) && (
                       <div style={{
                         marginTop: '16px',
                         padding: '12px',
@@ -1266,11 +1244,14 @@ export default function MapPage() {
                           </div>
                         )}
 
-                        {selectedOfertaId && !searchText && (
+                        {selectedCategoriaNome && !searchText && (
                           <div style={{ fontSize: '13px', color: '#333', marginTop: '8px' }}>
-                            Filtrando por oferta de ensino: <Tag color="green" style={{ margin: '0 0 0 4px' }}>
-                              {ofertas.find(o => o.id === selectedOfertaId)?.nome}
-                            </Tag>
+                            Filtrando por categoria: <Tag color="gold" style={{ marginLeft: '8px' }}>{selectedCategoriaNome}</Tag>
+                            {selectedSubcategoriaId && (
+                              <Tag color="orange" style={{ marginLeft: '8px' }}>
+                                {categoriasGrouped.find(c => c.nome === selectedCategoriaNome)?.subcategorias.find(s => s.id === selectedSubcategoriaId)?.nome}
+                              </Tag>
+                            )}
                           </div>
                         )}
 
