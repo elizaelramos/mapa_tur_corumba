@@ -10,6 +10,7 @@ const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
 const stagingRoutes = require('./routes/staging.routes');
 const unidadeRoutes = require('./routes/unidade.routes');
+const categoriaRoutes = require('./routes/categoria.routes');
 const medicoRoutes = require('./routes/medico.routes');
 // const especialidadeRoutes = require('./routes/especialidade.routes'); // DESATIVADO - modelo removido
 const bairroRoutes = require('./routes/bairro.routes');
@@ -121,6 +122,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/staging', stagingRoutes);
 app.use('/api/unidades', publicLimiter, unidadeRoutes); // Rate limit público para mapa
+app.use('/api/categorias', publicLimiter, categoriaRoutes); // Rate limit público para filtros
 app.use('/api/medicos', publicLimiter, medicoRoutes); // Rate limit público para mapa
 // app.use('/api/especialidades', publicLimiter, especialidadeRoutes); // DESATIVADO - modelo removido
 app.use('/api/bairros', bairroRoutes);

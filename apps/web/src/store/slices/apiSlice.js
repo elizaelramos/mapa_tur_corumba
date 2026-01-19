@@ -30,7 +30,7 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 export const apiSlice = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Unidades', 'Medicos', 'Especialidades', 'Staging', 'Users', 'Audit', 'ETL', 'Mapeamentos', 'Bairros', 'OfertasEnsino', 'Icones'],
+  tagTypes: ['Unidades', 'Categorias', 'Medicos', 'Especialidades', 'Staging', 'Users', 'Audit', 'ETL', 'Mapeamentos', 'Bairros', 'OfertasEnsino', 'Icones'],
   keepUnusedDataFor: 300, // Cache por 5 minutos (300 segundos)
   endpoints: (builder) => ({
     // Auth
@@ -154,6 +154,56 @@ export const apiSlice = createApi({
         method: 'DELETE',
       }),
       invalidatesTags: ['OfertasEnsino'],
+    }),
+
+    // Categorias Turísticas
+    getCategorias: builder.query({
+      query: (params) => ({
+        url: '/categorias',
+        params,
+      }),
+      providesTags: ['Categorias'],
+    }),
+
+    getCategoriasGrouped: builder.query({
+      query: () => '/categorias/grouped/list',
+      providesTags: ['Categorias'],
+    }),
+
+    getCategoriaById: builder.query({
+      query: (id) => `/categorias/${id}`,
+      providesTags: ['Categorias'],
+    }),
+
+    createCategoria: builder.mutation({
+      query: (data) => ({
+        url: '/categorias',
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['Categorias', 'Unidades'],
+    }),
+
+    updateCategoria: builder.mutation({
+      query: ({ id, ...data }) => ({
+        url: `/categorias/${id}`,
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: ['Categorias', 'Unidades'],
+    }),
+
+    deleteCategoria: builder.mutation({
+      query: (id) => ({
+        url: `/categorias/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Categorias', 'Unidades'],
+    }),
+
+    getCategoriasStats: builder.query({
+      query: () => '/categorias/stats/usage',
+      providesTags: ['Categorias'],
     }),
 
     getLastUpdate: builder.query({
@@ -464,6 +514,13 @@ export const {
   useCreateOfertaEnsinoMutation,
   useUpdateOfertaEnsinoMutation,
   useDeleteOfertaEnsinoMutation,
+  useGetCategoriasQuery,
+  useGetCategoriasGroupedQuery,
+  useGetCategoriaByIdQuery,
+  useCreateCategoriaMutation,
+  useUpdateCategoriaMutation,
+  useDeleteCategoriaMutation,
+  useGetCategoriasStatsQuery,
   useCreateUnidadeMutation,
   useUpdateUnidadeMutation,
   useDeleteUnidadeMutation,
