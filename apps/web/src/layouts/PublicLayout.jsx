@@ -81,7 +81,7 @@ export default function PublicLayout() {
           textAlign: 'center',
           margin: isMobile ? '0 8px' : '0'
         }}>
-          MAPA TURISMO — GUIA DE TURISMO DE CORUMBÁ
+          MAPA TURISMO
         </span>
         <img 
           src="/uploads/arte__horizontal_monocromatica.png" 
