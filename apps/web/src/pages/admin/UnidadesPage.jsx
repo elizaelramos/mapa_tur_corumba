@@ -1,21 +1,20 @@
 import { useState, useEffect } from 'react'
 import {
   Table, Button, Space, Tag, Modal, Form, Input, InputNumber, Switch, Select,
-  message, Popconfirm, Typography, Divider, Card, List, Alert, Upload
+  message, Popconfirm, Typography, Divider, Card, List, Alert, Upload, DatePicker
 } from 'antd'
 import {
   EnvironmentOutlined, PlusOutlined, EditOutlined, DeleteOutlined,
-  MedicineBoxOutlined, UserOutlined, CloseOutlined, WhatsAppOutlined, PhoneOutlined,
-  FacebookOutlined, InstagramOutlined, GlobalOutlined, LinkOutlined, DownOutlined, UpOutlined,
-  UploadOutlined, PictureOutlined, MailOutlined, BookOutlined,
+  ShopOutlined, CloseOutlined, WhatsAppOutlined, PhoneOutlined,
+  FacebookOutlined, InstagramOutlined, GlobalOutlined, LinkOutlined,
+  UploadOutlined, PictureOutlined, MailOutlined, TagsOutlined,
+  IdcardOutlined, CalendarOutlined
 } from '@ant-design/icons'
 import {
   useGetUnidadesQuery,
-  useGetMedicosQuery,
   useCreateUnidadeMutation,
   useUpdateUnidadeMutation,
   useDeleteUnidadeMutation,
-  useGetUnidadeMedicosQuery,
   useGetUnidadeRedesSociaisQuery,
   useCreateUnidadeRedeSocialMutation,
   useUpdateUnidadeRedeSocialMutation,
@@ -24,12 +23,31 @@ import {
   useDeleteUnidadeImagemMutation,
   useGetBairrosQuery,
   useGetIconesQuery,
-  useGetOfertasEnsinoQuery,
+  useGetCategoriasQuery,
 } from '../../store/slices/apiSlice'
 import LocationPicker from '../../components/LocationPicker'
+import dayjs from 'dayjs'
 
 const { Title, Text } = Typography
 const { TextArea } = Input
+
+// Lista de setores turísticos
+const SETORES_OPTIONS = [
+  'AGÊNCIA DE VIAGENS',
+  'HOTEL',
+  'POUSADA',
+  'RESTAURANTE',
+  'LANCHONETE',
+  'BAR',
+  'PONTO TURÍSTICO',
+  'MUSEU',
+  'GALERIA',
+  'COMÉRCIO',
+  'ARTESANATO',
+  'TRANSPORTE TURÍSTICO',
+  'GUIA DE TURISMO',
+  'OUTRO',
+]
 
 // Lista de redes sociais disponíveis
 const REDES_SOCIAIS_OPTIONS = [
@@ -54,11 +72,9 @@ export default function UnidadesPage() {
   const [page, setPage] = useState(1)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingUnidade, setEditingUnidade] = useState(null)
-  const [selectedMedicos, setSelectedMedicos] = useState([])
-  const [selectedOfertas, setSelectedOfertas] = useState([])
+  const [selectedCategorias, setSelectedCategorias] = useState([])
   const [redesSociais, setRedesSociais] = useState([])
   const [novaRedeSocial, setNovaRedeSocial] = useState({ nome_rede: '', url_perfil: '' })
-  const [isMedicosListExpanded, setIsMedicosListExpanded] = useState(false)
   const [imageUrl, setImageUrl] = useState(null)
   const [uploading, setUploading] = useState(false)
   const [selectedIcon, setSelectedIcon] = useState(null)
@@ -66,19 +82,13 @@ export default function UnidadesPage() {
 
   // API hooks
   const { data, isLoading } = useGetUnidadesQuery({ page, limit: 20 })
-  const { data: medicosData } = useGetMedicosQuery({ ativo: 'true', limit: 10000 })
   const { data: bairrosData } = useGetBairrosQuery({ ativo: true })
   const { data: iconesData } = useGetIconesQuery({ ativo: 'true' })
-  const { data: ofertasData } = useGetOfertasEnsinoQuery({ ativo: 'true' })
+  const { data: categoriasData } = useGetCategoriasQuery({ ativo: 'true' })
   const [createUnidade, { isLoading: creating }] = useCreateUnidadeMutation()
   const [updateUnidade, { isLoading: updating }] = useUpdateUnidadeMutation()
   const [deleteUnidade] = useDeleteUnidadeMutation()
   const [uploadUnidadeImagem] = useUploadUnidadeImagemMutation()
-
-  // Fetch unit medicos when editing
-  const { data: unidadeMedicosData } = useGetUnidadeMedicosQuery(editingUnidade?.id, {
-    skip: !editingUnidade
-  })
 
   // Fetch unit redes sociais when editing
   const { data: unidadeRedesSociaisData } = useGetUnidadeRedesSociaisQuery(editingUnidade?.id, {
@@ -89,9 +99,8 @@ export default function UnidadesPage() {
   const [updateRedeSocial, { isLoading: updatingRede }] = useUpdateUnidadeRedeSocialMutation()
   const [deleteRedeSocial] = useDeleteUnidadeRedeSocialMutation()
 
-  const medicos = medicosData?.data || []
   const bairros = bairrosData?.data?.map(b => b.nome).sort() || []
-  const ofertas = ofertasData?.data || []
+  const categorias = categoriasData?.data || []
 
   // Handle upload de imagem
   const handleUploadImagem = async (file) => {
@@ -114,10 +123,8 @@ export default function UnidadesPage() {
   // Handle create new unit
   const handleCreate = () => {
     setEditingUnidade(null)
-    setSelectedMedicos([])
-    setSelectedOfertas([])
+    setSelectedCategorias([])
     setRedesSociais([])
-    setIsMedicosListExpanded(false)
     setImageUrl(null)
     setSelectedIcon(null)
     form.resetFields()
@@ -128,23 +135,26 @@ export default function UnidadesPage() {
   // Handle edit unit
   const handleEdit = async (unidade) => {
     setEditingUnidade(unidade)
-    setIsMedicosListExpanded(false)
 
     // Set image and icon if available
     setImageUrl(unidade.imagem_url || null)
     setSelectedIcon(unidade.icone_url || null)
 
-    // Set ofertas de ensino if available
-    if (unidade.ofertas_ensino && Array.isArray(unidade.ofertas_ensino)) {
-      const ofertaIds = unidade.ofertas_ensino.map(o => o.id)
-      setSelectedOfertas(ofertaIds)
+    // Set categorias if available
+    if (unidade.categorias && Array.isArray(unidade.categorias)) {
+      const categoriaIds = unidade.categorias.map(c => c.id)
+      setSelectedCategorias(categoriaIds)
     } else {
-      setSelectedOfertas([])
+      setSelectedCategorias([])
     }
 
     // Set basic form fields
     form.setFieldsValue({
       nome: unidade.nome,
+      nome_fantasia: unidade.nome_fantasia,
+      razao_social: unidade.razao_social,
+      cnpj: unidade.cnpj,
+      setor: unidade.setor,
       endereco: unidade.endereco,
       bairro: unidade.bairro,
       latitude: parseFloat(unidade.latitude),
@@ -152,36 +162,31 @@ export default function UnidadesPage() {
       telefone: unidade.telefone,
       whatsapp: unidade.whatsapp,
       email: unidade.email,
-      diretor_responsavel: unidade.diretor_responsavel,
       horario_funcionamento: unidade.horario_funcionamento,
-      laboratorio_informatica: unidade.laboratorio_informatica || false,
+      descricao_servicos: unidade.descricao_servicos,
+      data_cadastro: unidade.data_cadastro ? dayjs(unidade.data_cadastro) : null,
+      data_vencimento: unidade.data_vencimento ? dayjs(unidade.data_vencimento) : null,
       ativo: unidade.ativo,
-      ofertas_ensino: unidade.ofertas_ensino?.map(o => o.id) || [],
+      categorias: unidade.categorias?.map(c => c.id) || [],
     })
 
     setIsModalOpen(true)
   }
 
-  // Update selected medicos and redes sociais when unit data arrives
+  // Update redes sociais when unit data arrives
   useEffect(() => {
-    if (editingUnidade && unidadeMedicosData?.data) {
-      const medicoIds = unidadeMedicosData.data.map(m => m.id)
-      setSelectedMedicos(medicoIds)
-      form.setFieldsValue({ medicos: medicoIds })
-    }
-
     if (editingUnidade && unidadeRedesSociaisData?.data) {
       setRedesSociais(unidadeRedesSociaisData.data)
     }
-  }, [editingUnidade, unidadeMedicosData, unidadeRedesSociaisData, form])
+  }, [editingUnidade, unidadeRedesSociaisData])
 
   // Handle delete unit
   const handleDelete = async (id) => {
     try {
       await deleteUnidade(id).unwrap()
-      message.success('Escola excluída com sucesso!')
+      message.success('Unidade turística excluída com sucesso!')
     } catch (error) {
-      message.error('Erro ao excluir escola: ' + (error.data?.error || error.message))
+      message.error('Erro ao excluir unidade: ' + (error.data?.error || error.message))
     }
   }
 
@@ -190,6 +195,10 @@ export default function UnidadesPage() {
     try {
       const payload = {
         nome: values.nome,
+        nome_fantasia: values.nome_fantasia || null,
+        razao_social: values.razao_social || null,
+        cnpj: values.cnpj || null,
+        setor: values.setor || null,
         endereco: values.endereco || null,
         bairro: values.bairro || null,
         latitude: values.latitude,
@@ -197,12 +206,12 @@ export default function UnidadesPage() {
         telefone: values.telefone || null,
         whatsapp: values.whatsapp || null,
         email: values.email || null,
-        diretor_responsavel: values.diretor_responsavel || null,
         horario_funcionamento: values.horario_funcionamento || null,
-        laboratorio_informatica: values.laboratorio_informatica || false,
+        descricao_servicos: values.descricao_servicos || null,
+        data_cadastro: values.data_cadastro ? values.data_cadastro.toISOString() : null,
+        data_vencimento: values.data_vencimento ? values.data_vencimento.toISOString() : null,
         ativo: values.ativo ?? true,
-        professores: selectedMedicos,
-        ofertas_ensino: selectedOfertas,
+        categorias: selectedCategorias,
         imagem_url: imageUrl || null,
         icone_url: selectedIcon || null,
       }
@@ -215,7 +224,6 @@ export default function UnidadesPage() {
         unidadeId = editingUnidade.id
 
         // Gerenciar redes sociais para unidade existente
-        // Comparar com redes sociais existentes e fazer create/delete conforme necessário
         const redesSociaisExistentes = unidadeRedesSociaisData?.data || []
 
         // Deletar redes sociais que foram removidas
@@ -228,7 +236,6 @@ export default function UnidadesPage() {
 
         // Criar novas redes sociais
         for (const rede of redesSociais) {
-          // Se o id for um timestamp (gerado localmente), é uma nova rede social
           if (!redesSociaisExistentes.some(r => r.id === rede.id)) {
             await createRedeSocial({
               id: unidadeId,
@@ -238,11 +245,10 @@ export default function UnidadesPage() {
           }
         }
 
-        message.success('Escola atualizada com sucesso!')
+        message.success('Unidade turística atualizada com sucesso!')
       } else {
-        // Create new unit - generate id_origem
-        const id_origem = `manual_${Date.now()}_${Math.floor(Math.random() * 1000000)}`
-        const novaUnidade = await createUnidade({ ...payload, id_origem }).unwrap()
+        // Create new unit
+        const novaUnidade = await createUnidade(payload).unwrap()
         unidadeId = novaUnidade.data.id
 
         // Salvar redes sociais para nova unidade
@@ -254,19 +260,18 @@ export default function UnidadesPage() {
           }).unwrap()
         }
 
-        message.success('Escola criada com sucesso!')
+        message.success('Unidade turística criada com sucesso!')
       }
 
       setIsModalOpen(false)
       form.resetFields()
       setEditingUnidade(null)
-      setSelectedMedicos([])
+      setSelectedCategorias([])
       setRedesSociais([])
-      setIsMedicosListExpanded(false)
       setImageUrl(null)
       setSelectedIcon(null)
     } catch (error) {
-      message.error('Erro ao salvar escola: ' + (error.data?.error || error.message))
+      message.error('Erro ao salvar unidade turística: ' + (error.data?.error || error.message))
     }
   }
 
@@ -275,30 +280,11 @@ export default function UnidadesPage() {
     setIsModalOpen(false)
     form.resetFields()
     setEditingUnidade(null)
-    setSelectedMedicos([])
+    setSelectedCategorias([])
     setRedesSociais([])
-    setIsMedicosListExpanded(false)
     setImageUrl(null)
     setSelectedIcon(null)
     setNovaRedeSocial({ nome_rede: '', url_perfil: '' })
-  }
-
-  // Handle adding medico to team
-  const handleAddMedico = (medicoId) => {
-    if (!selectedMedicos.includes(medicoId)) {
-      const newSelected = [...selectedMedicos, medicoId]
-      setSelectedMedicos(newSelected)
-      form.setFieldsValue({ medicos: newSelected })
-      message.success('Professor adicionado à equipe!')
-    }
-  }
-
-  // Handle removing medico from team
-  const handleRemoveMedico = (medicoId) => {
-    const newSelected = selectedMedicos.filter(id => id !== medicoId)
-    setSelectedMedicos(newSelected)
-    form.setFieldsValue({ medicos: newSelected })
-    message.info('Professor removido da lista. Clique em "Atualizar" para salvar as alterações.')
   }
 
   // Handle adding rede social
@@ -309,7 +295,7 @@ export default function UnidadesPage() {
     }
 
     if (redesSociais.length >= 3) {
-      message.error('Limite máximo de 3 redes sociais por escola')
+      message.error('Limite máximo de 3 redes sociais por unidade')
       return
     }
 
@@ -326,7 +312,6 @@ export default function UnidadesPage() {
   const handleUpdateRedeSocial = async (redeId, values) => {
     try {
       if (!editingUnidade) {
-        // Para nova unidade, atualizar localmente
         setRedesSociais(redesSociais.map(rede =>
           rede.id === redeId ? { ...rede, ...values } : rede
         ))
@@ -334,7 +319,6 @@ export default function UnidadesPage() {
         return
       }
 
-      // Para unidade existente, atualizar na API
       await updateRedeSocial({
         id: editingUnidade.id,
         redeId,
@@ -352,13 +336,11 @@ export default function UnidadesPage() {
   const handleRemoveRedeSocial = async (redeId) => {
     try {
       if (!editingUnidade) {
-        // Para nova unidade, remover localmente
         setRedesSociais(redesSociais.filter(rede => rede.id !== redeId))
         message.success('Rede social removida')
         return
       }
 
-      // Para unidade existente, remover da API
       await deleteRedeSocial({
         id: editingUnidade.id,
         redeId,
@@ -370,38 +352,10 @@ export default function UnidadesPage() {
     }
   }
 
-  // Get selected medicos with full data
-  const getSelectedMedicosData = () => {
-    return selectedMedicos
-      .map(id => medicos.find(m => m.id === id))
-      .filter(Boolean)
-  }
-
-  // Get available medicos (not yet selected)
-  const getAvailableMedicos = () => {
-    return medicos.filter(m => !selectedMedicos.includes(m.id))
-  }
-
   // Get icon for social network
   const getRedeSocialIcon = (nomeRede) => {
     const rede = REDES_SOCIAIS_OPTIONS.find(r => r.value === nomeRede)
     return rede ? rede.icon : <LinkOutlined />
-  }
-
-  // Calculate especialidades offered based on selected medicos
-  const getEspecialidadesOferecidas = () => {
-    const selectedMedicosData = getSelectedMedicosData()
-    const especialidadesSet = new Set()
-
-    selectedMedicosData.forEach(medico => {
-      if (medico.especialidades && medico.especialidades.length > 0) {
-        medico.especialidades.forEach(esp => {
-          especialidadesSet.add(JSON.stringify({ id: esp.id, nome: esp.nome }))
-        })
-      }
-    })
-
-    return Array.from(especialidadesSet).map(esp => JSON.parse(esp))
   }
 
   // Table columns
@@ -414,8 +368,20 @@ export default function UnidadesPage() {
       width: 250,
       render: (text) => <Text strong>{text}</Text>
     },
-    { title: 'Endereço', dataIndex: 'endereco', key: 'endereco', width: 250 },
-    { title: 'Bairro', dataIndex: 'bairro', key: 'bairro', width: 150 },
+    {
+      title: 'Setor',
+      dataIndex: 'setor',
+      key: 'setor',
+      width: 150,
+      render: (text) => text || '-'
+    },
+    {
+      title: 'Bairro',
+      dataIndex: 'bairro',
+      key: 'bairro',
+      width: 150,
+      render: (text) => text || '-'
+    },
     {
       title: 'Status',
       dataIndex: 'ativo',
@@ -456,8 +422,8 @@ export default function UnidadesPage() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <Title level={2} style={{ margin: 0 }}>
-          <EnvironmentOutlined style={{ marginRight: '12px' }} />
-          Escolas
+          <ShopOutlined style={{ marginRight: '12px' }} />
+          Unidades Turísticas
         </Title>
         <Button
           type="primary"
@@ -465,7 +431,7 @@ export default function UnidadesPage() {
           onClick={handleCreate}
           size="large"
         >
-          Nova Escola
+          Nova Unidade
         </Button>
       </div>
 
@@ -485,7 +451,7 @@ export default function UnidadesPage() {
 
       {/* Create/Edit Modal */}
       <Modal
-        title={editingUnidade ? 'Editar Escola' : 'Nova Escola'}
+        title={editingUnidade ? 'Editar Unidade Turística' : 'Nova Unidade Turística'}
         open={isModalOpen}
         onCancel={handleCancel}
         footer={null}
@@ -503,11 +469,33 @@ export default function UnidadesPage() {
           </Divider>
 
           <Form.Item
-            label="Nome da Escola"
+            label="Nome"
             name="nome"
-            rules={[{ required: true, message: 'Por favor, insira o nome da escola' }]}
+            rules={[{ required: true, message: 'Por favor, insira o nome da unidade' }]}
           >
-            <Input placeholder="Digite o nome da escola" />
+            <Input placeholder="Nome para exibição no mapa" />
+          </Form.Item>
+
+          <Form.Item label="Nome Fantasia" name="nome_fantasia">
+            <Input placeholder="Nome comercial" />
+          </Form.Item>
+
+          <Form.Item label="Razão Social" name="razao_social">
+            <Input placeholder="Nome empresarial" />
+          </Form.Item>
+
+          <Form.Item label="CNPJ" name="cnpj">
+            <Input placeholder="00.000.000/0000-00" />
+          </Form.Item>
+
+          <Form.Item label="Setor" name="setor">
+            <Select placeholder="Selecione o setor" allowClear showSearch>
+              {SETORES_OPTIONS.map((setor) => (
+                <Select.Option key={setor} value={setor}>
+                  {setor}
+                </Select.Option>
+              ))}
+            </Select>
           </Form.Item>
 
           <Form.Item label="Endereço" name="endereco">
@@ -539,36 +527,46 @@ export default function UnidadesPage() {
             <Switch checkedChildren="Ativo" unCheckedChildren="Inativo" />
           </Form.Item>
 
-          <Form.Item
-            label="Laboratório de Informática"
-            name="laboratorio_informatica"
-            valuePropName="checked"
-          >
-            <Switch checkedChildren="Sim" unCheckedChildren="Não" />
-          </Form.Item>
+          <Divider orientation="left">
+            <Text strong><TagsOutlined /> Categorização</Text>
+          </Divider>
 
           <Form.Item
-            label="Ofertas de Ensino"
-            name="ofertas_ensino"
-            tooltip="Selecione uma ou mais ofertas de ensino disponíveis nesta escola"
+            label="Categorias"
+            name="categorias"
+            tooltip="Selecione uma ou mais categorias turísticas"
           >
             <Select
               mode="multiple"
-              placeholder="Selecione as ofertas de ensino"
-              value={selectedOfertas}
-              onChange={setSelectedOfertas}
+              placeholder="Selecione as categorias"
+              value={selectedCategorias}
+              onChange={setSelectedCategorias}
               showSearch
-              filterOption={(input, option) =>
-                option.children.toLowerCase().includes(input.toLowerCase())
-              }
+              filterOption={(input, option) => {
+                const categoria = categorias.find(c => c.id === option.value)
+                if (!categoria) return false
+                const searchText = `${categoria.nome} ${categoria.subcategoria || ''}`.toLowerCase()
+                return searchText.includes(input.toLowerCase())
+              }}
             >
-              {ofertas.map((oferta) => (
-                <Select.Option key={oferta.id} value={oferta.id}>
-                  {oferta.nome}
+              {categorias.map((cat) => (
+                <Select.Option key={cat.id} value={cat.id}>
+                  {cat.nome}{cat.subcategoria ? ` → ${cat.subcategoria}` : ''}
                 </Select.Option>
               ))}
             </Select>
           </Form.Item>
+
+          <Form.Item label="Serviços Oferecidos" name="descricao_servicos">
+            <TextArea
+              rows={4}
+              placeholder="Descreva os serviços oferecidos pela unidade turística"
+            />
+          </Form.Item>
+
+          <Divider orientation="left">
+            <Text strong><EnvironmentOutlined /> Localização</Text>
+          </Divider>
 
           {/* Hidden fields for latitude/longitude */}
           <Form.Item name="latitude" hidden rules={[{ required: true, message: 'Selecione a localização no mapa' }]}>
@@ -589,6 +587,10 @@ export default function UnidadesPage() {
               })
             }}
           />
+
+          <Divider orientation="left">
+            <Text strong><PhoneOutlined /> Contato</Text>
+          </Divider>
 
           <Form.Item label="Telefone" name="telefone">
             <Input placeholder="(67) 3234-5678" />
@@ -611,7 +613,7 @@ export default function UnidadesPage() {
                   }
                 }}
               >
-                Abrir
+                Testar
               </Button>
             </Space.Compact>
           </Form.Item>
@@ -619,20 +621,28 @@ export default function UnidadesPage() {
           <Form.Item label="Email" name="email">
             <Input
               prefix={<MailOutlined />}
-              placeholder="escola@corumba.ms.gov.br"
+              placeholder="contato@empresa.com.br"
               type="email"
             />
           </Form.Item>
 
-          <Form.Item label="Diretor(a) Responsável" name="diretor_responsavel">
-            <Input placeholder="Nome do(a) diretor(a) responsável" />
-          </Form.Item>
-
           <Form.Item label="Horário de Funcionamento" name="horario_funcionamento">
             <TextArea
-              rows={2}
-              placeholder="Ex: Segunda a Sexta: 7h às 17h"
+              rows={3}
+              placeholder="Ex: Segunda a Sexta: 8h às 18h&#10;Sábado: 8h às 12h"
             />
+          </Form.Item>
+
+          <Divider orientation="left">
+            <Text strong><CalendarOutlined /> Cadastro</Text>
+          </Divider>
+
+          <Form.Item label="Data de Cadastro" name="data_cadastro">
+            <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
+          </Form.Item>
+
+          <Form.Item label="Data de Vencimento" name="data_vencimento">
+            <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
           </Form.Item>
 
           <Divider orientation="left">
@@ -640,291 +650,173 @@ export default function UnidadesPage() {
           </Divider>
 
           {/* Upload de Imagem */}
-          <Form.Item label="Imagem da Escola">
+          <Form.Item label="Imagem da Unidade">
             <Space direction="vertical" style={{ width: '100%' }}>
               {imageUrl && (
                 <div style={{ marginBottom: 12 }}>
                   <img
                     src={imageUrl}
                     alt="Pré-visualização"
-                    style={{
-                      width: '100%',
-                      maxHeight: '200px',
-                      objectFit: 'cover',
-                      borderRadius: '8px'
-                    }}
+                    style={{ maxWidth: '100%', maxHeight: 200, objectFit: 'contain' }}
                   />
-                  <Button
-                    type="link"
-                    danger
-                    size="small"
-                    onClick={() => setImageUrl(null)}
-                  >
-                    Remover imagem
-                  </Button>
                 </div>
               )}
               <Upload
                 beforeUpload={handleUploadImagem}
-                maxCount={1}
-                accept="image/*"
                 showUploadList={false}
+                accept="image/*"
               >
                 <Button icon={<UploadOutlined />} loading={uploading}>
-                  {uploading ? 'Enviando...' : imageUrl ? 'Trocar Imagem' : 'Fazer Upload da Imagem'}
+                  {imageUrl ? 'Alterar Imagem' : 'Enviar Imagem'}
                 </Button>
               </Upload>
-              <div style={{ fontSize: '12px', color: '#999' }}>
-                Formatos aceitos: JPG, PNG (máx. 5MB)
-              </div>
+              {imageUrl && (
+                <Button
+                  danger
+                  size="small"
+                  onClick={() => {
+                    setImageUrl(null)
+                    message.info('Imagem removida')
+                  }}
+                >
+                  Remover Imagem
+                </Button>
+              )}
             </Space>
           </Form.Item>
 
           {/* Seleção de Ícone */}
-          <Form.Item label="Ícone do Marcador no Mapa">
-            <Space direction="vertical" style={{ width: '100%' }}>
-              <div style={{ fontSize: '12px', color: '#666', marginBottom: 8 }}>
-                Escolha um dos ícones disponíveis:
-              </div>
-              <Space size="large" wrap>
-                {(iconesData?.data || []).map((icon) => (
-                  <div
-                    key={icon.url}
-                    onClick={() => setSelectedIcon(icon.url)}
-                    style={{
-                      border: selectedIcon === icon.url ? '3px solid #1890ff' : '2px solid #d9d9d9',
-                      borderRadius: '8px',
-                      padding: '8px',
-                      cursor: 'pointer',
-                      transition: 'all 0.3s',
-                      backgroundColor: selectedIcon === icon.url ? '#e6f7ff' : 'white',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: '100px',
-                      height: '100px',
-                      gap: '8px',
-                    }}
-                  >
-                    <img
-                      src={getFullImageUrl(icon.url)}
-                      alt={icon.nome}
-                      style={{ maxWidth: '50px', maxHeight: '50px', objectFit: 'contain' }}
-                    />
-                    <span style={{ fontSize: '11px', color: '#666', textAlign: 'center', fontWeight: selectedIcon === icon.url ? 'bold' : 'normal' }}>
-                      {icon.nome}
-                    </span>
-                  </div>
-                ))}
-              </Space>
-              {selectedIcon && (
-                <div style={{ marginTop: 8 }}>
-                  <strong>Ícone selecionado:</strong>{' '}
-                  <span style={{ fontSize: '12px', color: '#666' }}>{selectedIcon}</span>
-                </div>
-              )}
-              <div style={{ fontSize: '12px', color: '#1890ff', marginTop: 8 }}>
-                💡 Para adicionar novos ícones, acesse o menu <a href="/admin/icones" target="_blank" style={{ fontWeight: 'bold' }}>Ícones</a>
-              </div>
-            </Space>
-          </Form.Item>
-
-          <Divider orientation="left">
-            <Text strong><UserOutlined /> Equipe de Professores</Text>
-          </Divider>
-
-          <Form.Item label="Adicionar Professor" style={{ marginBottom: 12 }}>
-            <Select
-              placeholder="Buscar e selecionar professor..."
-              style={{ width: '100%' }}
-              showSearch
-              value={null}
-              onChange={handleAddMedico}
-              filterOption={(input, option) =>
-                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-              }
-              options={getAvailableMedicos().map(medico => ({
-                label: `${medico.nome}`,
-                value: medico.id,
-              }))}
-            />
-          </Form.Item>
-
-          {/* Hidden field to store selected medicos */}
-          <Form.Item name="medicos" hidden>
-            <Input />
-          </Form.Item>
-
-          {/* Selected Doctors List */}
-          {getSelectedMedicosData().length > 0 && (
-            <>
-              <Alert
-                message="Atenção"
-                description="Após adicionar ou remover professores, clique no botão 'Atualizar' ou 'Criar' no final da página para salvar as alterações."
-                type="info"
-                showIcon
-                closable
-                style={{ marginBottom: 12 }}
-              />
-              <Card
-                size="small"
-                title={
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Text strong>Professores Selecionados ({getSelectedMedicosData().length})</Text>
-                    <Button
-                      type="text"
-                      size="small"
-                      icon={isMedicosListExpanded ? <UpOutlined /> : <DownOutlined />}
-                      onClick={() => setIsMedicosListExpanded(!isMedicosListExpanded)}
-                    >
-                      {isMedicosListExpanded ? 'Recolher' : 'Expandir'}
-                    </Button>
-                  </div>
-                }
-                style={{ marginBottom: 16 }}
-              >
-                {isMedicosListExpanded && (
-                  <List
-                    dataSource={getSelectedMedicosData()}
-                    renderItem={(medico) => (
-                      <List.Item
-                        key={medico.id}
-                        actions={[
-                          <Button
-                            key="remove"
-                            type="text"
-                            danger
-                            size="small"
-                            icon={<CloseOutlined />}
-                            onClick={() => handleRemoveMedico(medico.id)}
-                          >
-                            Remover
-                          </Button>
-                        ]}
-                      >
-                        <List.Item.Meta
-                          title={<Text strong>{medico.nome}</Text>}
-                        />
-                      </List.Item>
-                    )}
+          <Form.Item label="Ícone no Mapa">
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {iconesData?.data?.map((icone) => (
+                <div
+                  key={icone.id}
+                  onClick={() => setSelectedIcon(icone.url)}
+                  style={{
+                    width: 60,
+                    height: 60,
+                    border: selectedIcon === icone.url ? '3px solid #1890ff' : '1px solid #d9d9d9',
+                    borderRadius: 4,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    backgroundColor: selectedIcon === icone.url ? '#e6f7ff' : 'white',
+                  }}
+                >
+                  <img
+                    src={icone.url}
+                    alt={icone.nome}
+                    style={{ maxWidth: '90%', maxHeight: '90%' }}
                   />
-                )}
-              </Card>
-            </>
-          )}
+                </div>
+              ))}
+            </div>
+            {selectedIcon && (
+              <Button
+                danger
+                size="small"
+                style={{ marginTop: 8 }}
+                onClick={() => setSelectedIcon(null)}
+              >
+                Remover Ícone
+              </Button>
+            )}
+          </Form.Item>
 
           <Divider orientation="left">
             <Text strong><GlobalOutlined /> Redes Sociais</Text>
           </Divider>
 
-          {/* Redes Sociais Section */}
-          <div style={{ marginBottom: 24 }}>
-            <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
-              Adicione até 3 redes sociais para esta escola (opcional)
-            </Text>
-
-            {/* Lista de Redes Sociais */}
-            {redesSociais.length > 0 && (
-              <div style={{ marginBottom: 16 }}>
-                <List
-                  size="small"
-                  dataSource={redesSociais}
-                  renderItem={(rede) => (
-                    <List.Item
-                      actions={[
-                        <Button
-                          key="edit"
-                          type="link"
-                          size="small"
-                          onClick={() => {
-                            message.info('Funcionalidade de edição será implementada em breve')
-                          }}
-                        >
-                          Editar
-                        </Button>,
-                        <Button
-                          key="remove"
-                          type="text"
-                          danger
-                          size="small"
-                          icon={<CloseOutlined />}
-                          onClick={() => handleRemoveRedeSocial(rede.id)}
-                        >
+          {/* Lista de Redes Sociais */}
+          {redesSociais.length > 0 && (
+            <Card size="small" style={{ marginBottom: 16 }}>
+              <List
+                size="small"
+                dataSource={redesSociais}
+                renderItem={(rede) => (
+                  <List.Item
+                    actions={[
+                      <Button
+                        type="link"
+                        size="small"
+                        onClick={() => window.open(rede.url_perfil, '_blank')}
+                      >
+                        Abrir
+                      </Button>,
+                      <Popconfirm
+                        title="Remover rede social?"
+                        onConfirm={() => handleRemoveRedeSocial(rede.id)}
+                        okText="Sim"
+                        cancelText="Não"
+                      >
+                        <Button type="link" danger size="small">
                           Remover
                         </Button>
-                      ]}
-                    >
-                      <List.Item.Meta
-                        avatar={getRedeSocialIcon(rede.nome_rede)}
-                        title={<Text strong>{rede.nome_rede}</Text>}
-                        description={
-                          <a
-                            href={rede.url_perfil}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{ color: '#1890ff' }}
-                          >
-                            {rede.url_perfil}
-                          </a>
-                        }
-                      />
-                    </List.Item>
-                  )}
-                />
-              </div>
-            )}
-
-            {/* Form para adicionar nova rede social */}
-            {redesSociais.length < 3 && (
-              <Card size="small" style={{ backgroundColor: '#fafafa' }}>
-                <Space style={{ width: '100%' }}>
-                  <Select
-                    placeholder="Rede social"
-                    style={{ width: 140 }}
-                    value={novaRedeSocial.nome_rede}
-                    onChange={(value) => setNovaRedeSocial({ ...novaRedeSocial, nome_rede: value })}
-                    options={REDES_SOCIAIS_OPTIONS.filter(rede =>
-                      !redesSociais.some(r => r.nome_rede === rede.value)
-                    )}
-                  />
-                  <Input
-                    placeholder="https://..."
-                    style={{ width: 200 }}
-                    value={novaRedeSocial.url_perfil}
-                    onChange={(e) => setNovaRedeSocial({ ...novaRedeSocial, url_perfil: e.target.value })}
-                    onPressEnter={handleAddRedeSocial}
-                  />
-                  <Button type="primary" onClick={handleAddRedeSocial}>
-                    Adicionar
-                  </Button>
-                </Space>
-              </Card>
-            )}
-
-            {redesSociais.length >= 3 && (
-              <Alert
-                message="Limite atingido"
-                description="Você pode adicionar no máximo 3 redes sociais por escola."
-                type="info"
-                showIcon
-                style={{ marginTop: 8 }}
+                      </Popconfirm>,
+                    ]}
+                  >
+                    <List.Item.Meta
+                      avatar={getRedeSocialIcon(rede.nome_rede)}
+                      title={rede.nome_rede}
+                      description={rede.url_perfil}
+                    />
+                  </List.Item>
+                )}
               />
-            )}
-          </div>
+            </Card>
+          )}
+
+          {redesSociais.length < 3 && (
+            <Card size="small" title="Adicionar Rede Social">
+              <Space direction="vertical" style={{ width: '100%' }}>
+                <Select
+                  placeholder="Selecione a rede social"
+                  value={novaRedeSocial.nome_rede}
+                  onChange={(value) => setNovaRedeSocial({ ...novaRedeSocial, nome_rede: value })}
+                  style={{ width: '100%' }}
+                >
+                  {REDES_SOCIAIS_OPTIONS.map((option) => (
+                    <Select.Option key={option.value} value={option.value}>
+                      {option.icon} {option.label}
+                    </Select.Option>
+                  ))}
+                </Select>
+                <Input
+                  placeholder="URL do perfil (ex: https://instagram.com/usuario)"
+                  value={novaRedeSocial.url_perfil}
+                  onChange={(e) => setNovaRedeSocial({ ...novaRedeSocial, url_perfil: e.target.value })}
+                />
+                <Button
+                  type="dashed"
+                  icon={<PlusOutlined />}
+                  onClick={handleAddRedeSocial}
+                  block
+                >
+                  Adicionar Rede Social
+                </Button>
+              </Space>
+            </Card>
+          )}
+
+          {redesSociais.length >= 3 && (
+            <Alert
+              message="Limite de redes sociais atingido"
+              description="Cada unidade pode ter no máximo 3 redes sociais cadastradas."
+              type="info"
+              showIcon
+            />
+          )}
+
+          <Divider />
 
           <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
             <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
               <Button onClick={handleCancel}>
                 Cancelar
               </Button>
-              <Button
-                type="primary"
-                htmlType="submit"
-                loading={creating || updating}
-                icon={editingUnidade ? <EditOutlined /> : <PlusOutlined />}
-              >
-                {editingUnidade ? 'Atualizar' : 'Criar'}
+              <Button type="primary" htmlType="submit" loading={creating || updating}>
+                {editingUnidade ? 'Atualizar' : 'Criar'} Unidade Turística
               </Button>
             </Space>
           </Form.Item>
