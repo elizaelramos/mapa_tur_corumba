@@ -33,16 +33,44 @@ export default function PublicLayout() {
         lineHeight: isMobile ? '56px' : '64px',
       }}>
         <a href="https://corumba.ms.gov.br/" aria-label="Ir para Prefeitura de Corumbá" title="Ir para Prefeitura de Corumbá" style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-          <img 
-            src="/uploads/logo__horizontal_monocromatica.png" 
-            alt="Logo Prefeitura" 
-            style={{ 
+          <img
+            src="/uploads/logo__horizontal_monocromatica.png"
+            alt="Logo Prefeitura"
+            style={{
               display: 'block',
               alignSelf: 'center',
               height: isMobile ? '28px' : '40px',
               maxWidth: isMobile ? '80px' : 'none',
               objectFit: 'contain'
-            }} 
+            }}
+          />
+        </a>
+        <a
+          href="https://wa.me/556732312886"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Guia Interativo Digital - WhatsApp"
+          title="Guia Interativo Digital - WhatsApp"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            height: '100%',
+            marginLeft: isMobile ? '8px' : '16px',
+            transition: 'transform 0.2s ease'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        >
+          <img
+            src="/img_guia_interativo_tur.png"
+            alt="Guia Interativo Digital"
+            style={{
+              display: 'block',
+              alignSelf: 'center',
+              height: isMobile ? '32px' : '48px',
+              objectFit: 'contain',
+              cursor: 'pointer'
+            }}
           />
         </a>
         <span style={{
