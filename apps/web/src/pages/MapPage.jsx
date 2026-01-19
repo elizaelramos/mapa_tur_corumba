@@ -484,7 +484,7 @@ export default function MapPage() {
           message="Erro ao Carregar Dados das Unidades"
           description={
             <>
-              <p>Não foi possível buscar os dados das unidades de saúde. Verifique se o servidor da API (backend) está rodando corretamente na porta 8008.</p>
+              <p>Não foi possível buscar os dados das unidades. Verifique se o servidor da API (backend) está rodando corretamente na porta 8010.</p>
               <strong>Detalhes do erro:</strong>
               <pre style={{
                 marginTop: '10px',

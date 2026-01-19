@@ -50,10 +50,8 @@ export default function AdminLayout() {
     { key: '/admin/dashboard', icon: <DashboardOutlined />, label: 'Painel' },
     { key: '/admin/unidades', icon: <EnvironmentOutlined />, label: 'Unidades Turísticas' },
     { key: '/admin/categorias', icon: <TagsOutlined />, label: 'Categorias' },
-    { key: '/admin/medicos', icon: <TeamOutlined />, label: 'Professores' },
     { key: '/admin/icones', icon: <PictureOutlined />, label: 'Ícones' },
     { key: '/admin/bairros', icon: <EnvironmentOutlined />, label: 'Bairros' },
-    { key: '/admin/ofertas-ensino', icon: <BookOutlined />, label: 'Ofertas de Ensino' },
     ...(isSuperadmin ? [
       { key: '/admin/users', icon: <UserOutlined />, label: 'Usuários' },
       { key: '/admin/audit', icon: <AuditOutlined />, label: 'Auditoria' },

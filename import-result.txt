@@ -1,0 +1,151 @@
+======================================
+IMPORTAÇÃO DE UNIDADES TURÍSTICAS
+======================================
+
+📄 Lendo planilha Excel...
+✓ Planilha lida com sucesso
+  Aba: Agência
+  Total de registros: 117
+
+📂 Processando categorias...
+  ✓ Categoria: Onde Passear → Circuitos Culturais
+  ✓ Categoria: Onde Passear → Afroturismo
+  ✓ Categoria: Organize sua Viagem → Agencias e Operadoras
+  ✓ Categoria: Onde Passear → Ecoturismo e Aventura: 
+
+✓ Categorias processadas: 4
+
+🏢 Importando unidades turísticas...
+
+  ✓ [1/117] Aguapé Ecoturismo Pantaneiro
+  ✓ [2/117] Belo Oyá Pantanal
+  ✓ [3/117] Brigi Travel Tours Agência de Viagens
+  ✓ [4/117] Lord e Yatch
+  ✓ [5/117] CORACAO DE PESCADOR 
+  ✓ [6/117] Igaratá I, Igaratá II e Barão do Lago
+  ✓ [7/117] NÃO ESTÁ NA LISTA DO WORD
+  ⚠ Bairro "Porto Geral" não encontrado para Peralta Cruise 
+  ✓ [8/117] Peralta Cruise 
+  ⚠ Bairro "Porto Morrinho" não encontrado para HPO TURISMO LTDA
+  ✓ [9/117] HPO TURISMO LTDA
+  ✓ [10/117] undefined
+  ✓ [11/117] undefined
+  ✓ [12/117] undefined
+  ⚠ Bairro "Guató" não encontrado para undefined
+  ✓ [13/117] undefined
+
+======================================
+RESUMO DA IMPORTAÇÃO
+======================================
+Total de registros na planilha: 117
+✓ Importadas com sucesso: 13 (11.1%)
+✗ Erros: 104 (88.9%)
+
+--- Detalhes dos erros ---
+1. Empresa de Transportes Campos: Coordenadas ausentes ou inválidas
+2. Icterus Ecoturismo: Coordenadas ausentes ou inválidas
+3. Sem nome: Coordenadas ausentes ou inválidas
+4. Sem nome: Coordenadas ausentes ou inválidas
+5. Sem nome: Coordenadas ausentes ou inválidas
+6. Sem nome: Coordenadas ausentes ou inválidas
+7. Sem nome: Coordenadas ausentes ou inválidas
+8. Sem nome: Coordenadas ausentes ou inválidas
+9. Sem nome: Coordenadas ausentes ou inválidas
+10. Sem nome: Coordenadas ausentes ou inválidas
+11. Sem nome: Coordenadas ausentes ou inválidas
+12. Sem nome: Coordenadas ausentes ou inválidas
+13. Sem nome: Coordenadas ausentes ou inválidas
+14. Sem nome: Coordenadas ausentes ou inválidas
+15. Sem nome: Coordenadas ausentes ou inválidas
+16. Sem nome: Coordenadas ausentes ou inválidas
+17. Sem nome: Coordenadas ausentes ou inválidas
+18. Sem nome: Coordenadas ausentes ou inválidas
+19. Sem nome: Coordenadas ausentes ou inválidas
+20. Sem nome: Coordenadas ausentes ou inválidas
+21. Sem nome: Coordenadas ausentes ou inválidas
+22. Sem nome: Coordenadas ausentes ou inválidas
+23. Sem nome: Coordenadas ausentes ou inválidas
+24. Sem nome: Coordenadas ausentes ou inválidas
+25. Sem nome: Coordenadas ausentes ou inválidas
+26. Sem nome: Coordenadas ausentes ou inválidas
+27. Sem nome: Coordenadas ausentes ou inválidas
+28. Sem nome: Coordenadas ausentes ou inválidas
+29. Sem nome: Coordenadas ausentes ou inválidas
+30. Sem nome: Coordenadas ausentes ou inválidas
+31. Sem nome: Coordenadas ausentes ou inválidas
+32. Sem nome: Coordenadas ausentes ou inválidas
+33. Sem nome: Coordenadas ausentes ou inválidas
+34. Sem nome: Coordenadas ausentes ou inválidas
+35. Sem nome: Coordenadas ausentes ou inválidas
+36. Sem nome: Coordenadas ausentes ou inválidas
+37. Sem nome: Coordenadas ausentes ou inválidas
+38. Sem nome: Coordenadas ausentes ou inválidas
+39. Sem nome: Coordenadas ausentes ou inválidas
+40. Sem nome: Coordenadas ausentes ou inválidas
+41. Sem nome: Coordenadas ausentes ou inválidas
+42. Sem nome: Coordenadas ausentes ou inválidas
+43. Sem nome: Coordenadas ausentes ou inválidas
+44. Sem nome: Coordenadas ausentes ou inválidas
+45. Sem nome: Coordenadas ausentes ou inválidas
+46. Sem nome: Coordenadas ausentes ou inválidas
+47. Sem nome: Coordenadas ausentes ou inválidas
+48. Sem nome: Coordenadas ausentes ou inválidas
+49. Sem nome: Coordenadas ausentes ou inválidas
+50. Sem nome: Coordenadas ausentes ou inválidas
+51. Sem nome: Coordenadas ausentes ou inválidas
+52. Sem nome: Coordenadas ausentes ou inválidas
+53. Sem nome: Coordenadas ausentes ou inválidas
+54. Sem nome: Coordenadas ausentes ou inválidas
+55. Sem nome: Coordenadas ausentes ou inválidas
+56. Sem nome: Coordenadas ausentes ou inválidas
+57. Sem nome: Coordenadas ausentes ou inválidas
+58. Sem nome: Coordenadas ausentes ou inválidas
+59. Sem nome: Coordenadas ausentes ou inválidas
+60. Sem nome: Coordenadas ausentes ou inválidas
+61. Sem nome: Coordenadas ausentes ou inválidas
+62. Sem nome: Coordenadas ausentes ou inválidas
+63. Sem nome: Coordenadas ausentes ou inválidas
+64. Sem nome: Coordenadas ausentes ou inválidas
+65. Sem nome: Coordenadas ausentes ou inválidas
+66. Sem nome: Coordenadas ausentes ou inválidas
+67. Sem nome: Coordenadas ausentes ou inválidas
+68. Sem nome: Coordenadas ausentes ou inválidas
+69. Sem nome: Coordenadas ausentes ou inválidas
+70. Sem nome: Coordenadas ausentes ou inválidas
+71. Sem nome: Coordenadas ausentes ou inválidas
+72. Sem nome: Coordenadas ausentes ou inválidas
+73. Sem nome: Coordenadas ausentes ou inválidas
+74. Sem nome: Coordenadas ausentes ou inválidas
+75. Sem nome: Coordenadas ausentes ou inválidas
+76. Sem nome: Coordenadas ausentes ou inválidas
+77. Sem nome: Coordenadas ausentes ou inválidas
+78. Sem nome: Coordenadas ausentes ou inválidas
+79. Sem nome: Coordenadas ausentes ou inválidas
+80. Sem nome: Coordenadas ausentes ou inválidas
+81. Sem nome: Coordenadas ausentes ou inválidas
+82. Sem nome: Coordenadas ausentes ou inválidas
+83. Sem nome: Coordenadas ausentes ou inválidas
+84. Sem nome: Coordenadas ausentes ou inválidas
+85. Sem nome: Coordenadas ausentes ou inválidas
+86. Sem nome: Coordenadas ausentes ou inválidas
+87. Sem nome: Coordenadas ausentes ou inválidas
+88. Sem nome: Coordenadas ausentes ou inválidas
+89. Sem nome: Coordenadas ausentes ou inválidas
+90. Sem nome: Coordenadas ausentes ou inválidas
+91. Sem nome: Coordenadas ausentes ou inválidas
+92. Sem nome: Coordenadas ausentes ou inválidas
+93. Sem nome: Coordenadas ausentes ou inválidas
+94. Sem nome: Coordenadas ausentes ou inválidas
+95. Sem nome: Coordenadas ausentes ou inválidas
+96. Sem nome: Coordenadas ausentes ou inválidas
+97. Sem nome: Coordenadas ausentes ou inválidas
+98. Sem nome: Coordenadas ausentes ou inválidas
+99. Sem nome: Coordenadas ausentes ou inválidas
+100. Sem nome: Coordenadas ausentes ou inválidas
+101. Sem nome: Coordenadas ausentes ou inválidas
+102. Sem nome: Coordenadas ausentes ou inválidas
+103. Sem nome: Coordenadas ausentes ou inválidas
+104. Sem nome: Coordenadas ausentes ou inválidas
+
+✅ Importação concluída!
+

@@ -7,12 +7,12 @@ const { asyncHandler } = require('../middleware/error.middleware');
 const router = express.Router();
 
 // ============================================================================
-// ESCOLA ROUTES
+// UNIDADE TURÍSTICA ROUTES
 // ============================================================================
 
 /**
  * GET /api/unidades
- * Lista todas as escolas (público)
+ * Lista todas as unidades turísticas (público)
  */
 router.get('/', asyncHandler(async (req, res) => {
   const { ativo = 'true', page = 1, limit = 100 } = req.query;
@@ -24,42 +24,36 @@ router.get('/', asyncHandler(async (req, res) => {
 
   const skip = (parseInt(page) - 1) * parseInt(limit);
 
-  const [escolas, total] = await Promise.all([
-    prisma.pROD_Escola.findMany({
+  const [unidades, total] = await Promise.all([
+    prisma.pROD_UnidadeTuristica.findMany({
       where,
       skip,
       take: parseInt(limit),
       include: {
         redes_sociais: true,
         bairro: true,
-        professores: {
+        categorias: {
           include: {
-            professor: true,
-          },
-        },
-        ofertas_ensino: {
-          include: {
-            oferta_ensino: true,
+            categoria: true,
           },
         },
       },
       orderBy: { nome: 'asc' },
     }),
-    prisma.pROD_Escola.count({ where }),
+    prisma.pROD_UnidadeTuristica.count({ where }),
   ]);
 
-  // Transformar dados para incluir redes sociais, bairro, professores e ofertas
-  const escolasFormatted = escolas.map(e => ({
-    ...e,
-    bairro: e.bairro?.nome || null,
-    redes_sociais: e.redes_sociais,
-    professores: e.professores?.map(p => p.professor) || [],
-    ofertas_ensino: e.ofertas_ensino?.map(o => o.oferta_ensino) || [],
+  // Transformar dados para incluir redes sociais, bairro e categorias
+  const unidadesFormatted = unidades.map(u => ({
+    ...u,
+    bairro: u.bairro?.nome || null,
+    redes_sociais: u.redes_sociais,
+    categorias: u.categorias?.map(c => c.categoria) || [],
   }));
 
   res.json({
     success: true,
-    data: escolasFormatted,
+    data: unidadesFormatted,
     pagination: {
       page: parseInt(page),
       limit: parseInt(limit),
@@ -71,337 +65,300 @@ router.get('/', asyncHandler(async (req, res) => {
 
 /**
  * GET /api/unidades/:id
- * Busca escola por ID
+ * Busca unidade turística por ID
  */
 router.get('/:id', asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const escola = await prisma.pROD_Escola.findUnique({
+  const unidade = await prisma.pROD_UnidadeTuristica.findUnique({
     where: { id: parseInt(id) },
     include: {
       redes_sociais: true,
       bairro: true,
-      professores: {
+      categorias: {
         include: {
-          professor: true,
-        },
-      },
-      ofertas_ensino: {
-        include: {
-          oferta_ensino: true,
+          categoria: true,
         },
       },
     },
   });
 
-  if (!escola) {
+  if (!unidade) {
     return res.status(404).json({
       success: false,
-      error: 'Escola not found',
+      error: 'Unidade turística não encontrada',
     });
   }
 
   res.json({
     success: true,
     data: {
-      ...escola,
-      bairro: escola.bairro?.nome || null,
-      redes_sociais: escola.redes_sociais,
-      professores: escola.professores?.map(p => p.professor) || [],
-      ofertas_ensino: escola.ofertas_ensino?.map(o => o.oferta_ensino) || [],
+      ...unidade,
+      bairro: unidade.bairro?.nome || null,
+      redes_sociais: unidade.redes_sociais,
+      categorias: unidade.categorias?.map(c => c.categoria) || [],
     },
   });
 }));
 
 /**
  * POST /api/unidades
- * Cria nova escola (requer autenticação)
+ * Cria nova unidade turística (requer autenticação)
  */
 router.post('/', authenticate, requireAdmin, asyncHandler(async (req, res) => {
-  const { nome, endereco, bairro, latitude, longitude, telefone, whatsapp, email, diretor_responsavel, horario_funcionamento, laboratorio_informatica, professores = [], ofertas_ensino = [] } = req.body;
+  const {
+    nome,
+    nome_fantasia,
+    razao_social,
+    cnpj,
+    setor,
+    endereco,
+    bairro,
+    latitude,
+    longitude,
+    telefone,
+    whatsapp,
+    email,
+    horario_funcionamento,
+    descricao_servicos,
+    imagem_url,
+    icone_url,
+    data_cadastro,
+    data_vencimento,
+    categorias = []
+  } = req.body;
 
   if (!nome || latitude === undefined || longitude === undefined) {
     return res.status(400).json({
       success: false,
-      error: 'Nome, latitude and longitude are required',
+      error: 'Nome, latitude e longitude são obrigatórios',
     });
   }
 
   // Buscar ID do bairro pelo nome, se fornecido
-  let id_bairro = null;
+  let bairroConnect = undefined;
   if (bairro) {
     const bairroRecord = await prisma.pROD_Bairro.findUnique({
       where: { nome: bairro },
     });
     if (bairroRecord) {
-      id_bairro = bairroRecord.id;
+      bairroConnect = { connect: { id: bairroRecord.id } };
     }
   }
 
-  // Criar escola
-  const escola = await prisma.pROD_Escola.create({
+  // Criar unidade turística
+  const unidade = await prisma.pROD_UnidadeTuristica.create({
     data: {
       nome,
+      nome_fantasia,
+      razao_social,
+      cnpj,
+      setor,
       endereco,
-      id_bairro,
+      bairro: bairroConnect,
       latitude,
       longitude,
       telefone,
       whatsapp,
       email,
-      diretor_responsavel,
       horario_funcionamento,
-      laboratorio_informatica: laboratorio_informatica || false,
+      descricao_servicos,
+      imagem_url,
+      icone_url,
+      data_cadastro: data_cadastro ? new Date(data_cadastro) : null,
+      data_vencimento: data_vencimento ? new Date(data_vencimento) : null,
     },
   });
 
-  // Adicionar professores se fornecidos
-  if (professores.length > 0) {
-    await prisma.junction_Escola_Professor.createMany({
-      data: professores.map(professor_id => ({
-        id_escola: escola.id,
-        id_professor: professor_id,
+  // Adicionar categorias se fornecidas
+  if (categorias.length > 0) {
+    await prisma.junction_UnidadeTuristica_Categoria.createMany({
+      data: categorias.map(categoria_id => ({
+        id_unidade: unidade.id,
+        id_categoria: categoria_id,
       })),
     });
   }
 
-  // Adicionar ofertas de ensino se fornecidas
-  if (ofertas_ensino.length > 0) {
-    await prisma.junction_Escola_OfertaEnsino.createMany({
-      data: ofertas_ensino.map(oferta_id => ({
-        id_escola: escola.id,
-        id_oferta_ensino: oferta_id,
-      })),
-    });
-  }
+  auditLog('CREATE', 'PROD_UnidadeTuristica', unidade.id, req.user.id, req.user.role);
 
-  auditLog('CREATE', 'PROD_Escola', escola.id, req.user.id, req.user.role);
-
-  logger.info('Escola created', {
+  logger.info('Unidade turística criada', {
     user_id: req.user.id,
-    escola_id: escola.id,
-    nome: escola.nome,
+    unidade_id: unidade.id,
+    nome: unidade.nome,
   });
 
   res.status(201).json({
     success: true,
-    data: escola,
+    data: unidade,
   });
 }));
 
 /**
  * PUT /api/unidades/:id
- * Atualiza escola (requer autenticação)
+ * Atualiza unidade turística (requer autenticação)
  */
 router.put('/:id', authenticate, requireAdmin, asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { nome, endereco, bairro, latitude, longitude, telefone, whatsapp, email, diretor_responsavel, horario_funcionamento, laboratorio_informatica, ativo, imagem_url, icone_url, professores, ofertas_ensino } = req.body;
+  const {
+    nome,
+    nome_fantasia,
+    razao_social,
+    cnpj,
+    setor,
+    endereco,
+    bairro,
+    latitude,
+    longitude,
+    telefone,
+    whatsapp,
+    email,
+    horario_funcionamento,
+    descricao_servicos,
+    ativo,
+    imagem_url,
+    icone_url,
+    data_cadastro,
+    data_vencimento,
+    categorias
+  } = req.body;
+
+  // Verificar se unidade existe
+  const existingUnidade = await prisma.pROD_UnidadeTuristica.findUnique({
+    where: { id: parseInt(id) },
+  });
+
+  if (!existingUnidade) {
+    return res.status(404).json({
+      success: false,
+      error: 'Unidade turística não encontrada',
+    });
+  }
 
   // Buscar ID do bairro pelo nome, se fornecido
-  let id_bairro = undefined;
+  let bairroConnect = undefined;
   if (bairro !== undefined) {
-    if (bairro === null || bairro === '') {
-      id_bairro = null;
+    if (bairro === null) {
+      bairroConnect = { disconnect: true };
     } else {
       const bairroRecord = await prisma.pROD_Bairro.findUnique({
         where: { nome: bairro },
       });
       if (bairroRecord) {
-        id_bairro = bairroRecord.id;
-      } else {
-        id_bairro = null;
+        bairroConnect = { connect: { id: bairroRecord.id } };
       }
     }
   }
 
+  // Preparar dados para atualização
   const updateData = {};
-  if (nome) updateData.nome = nome;
+  if (nome !== undefined) updateData.nome = nome;
+  if (nome_fantasia !== undefined) updateData.nome_fantasia = nome_fantasia;
+  if (razao_social !== undefined) updateData.razao_social = razao_social;
+  if (cnpj !== undefined) updateData.cnpj = cnpj;
+  if (setor !== undefined) updateData.setor = setor;
   if (endereco !== undefined) updateData.endereco = endereco;
-  if (id_bairro !== undefined) updateData.id_bairro = id_bairro;
+  if (bairroConnect !== undefined) updateData.bairro = bairroConnect;
   if (latitude !== undefined) updateData.latitude = latitude;
   if (longitude !== undefined) updateData.longitude = longitude;
   if (telefone !== undefined) updateData.telefone = telefone;
   if (whatsapp !== undefined) updateData.whatsapp = whatsapp;
   if (email !== undefined) updateData.email = email;
-  if (diretor_responsavel !== undefined) updateData.diretor_responsavel = diretor_responsavel;
   if (horario_funcionamento !== undefined) updateData.horario_funcionamento = horario_funcionamento;
-  if (typeof laboratorio_informatica === 'boolean') updateData.laboratorio_informatica = laboratorio_informatica;
-  if (typeof ativo === 'boolean') updateData.ativo = ativo;
+  if (descricao_servicos !== undefined) updateData.descricao_servicos = descricao_servicos;
+  if (ativo !== undefined) updateData.ativo = ativo;
   if (imagem_url !== undefined) updateData.imagem_url = imagem_url;
   if (icone_url !== undefined) updateData.icone_url = icone_url;
+  if (data_cadastro !== undefined) updateData.data_cadastro = data_cadastro ? new Date(data_cadastro) : null;
+  if (data_vencimento !== undefined) updateData.data_vencimento = data_vencimento ? new Date(data_vencimento) : null;
 
-  const escola = await prisma.pROD_Escola.update({
+  // Atualizar unidade
+  const unidade = await prisma.pROD_UnidadeTuristica.update({
     where: { id: parseInt(id) },
     data: updateData,
   });
 
-  // Atualizar professores se fornecidos
-  if (professores !== undefined) {
-    // Remover professores antigos
-    await prisma.junction_Escola_Professor.deleteMany({
-      where: { id_escola: parseInt(id) },
+  // Atualizar categorias se fornecidas
+  if (categorias !== undefined) {
+    // Remover categorias antigas
+    await prisma.junction_UnidadeTuristica_Categoria.deleteMany({
+      where: { id_unidade: parseInt(id) },
     });
 
-    // Adicionar novos professores
-    if (professores.length > 0) {
-      await prisma.junction_Escola_Professor.createMany({
-        data: professores.map(professor_id => ({
-          id_escola: parseInt(id),
-          id_professor: professor_id,
+    // Adicionar novas categorias
+    if (categorias.length > 0) {
+      await prisma.junction_UnidadeTuristica_Categoria.createMany({
+        data: categorias.map(categoria_id => ({
+          id_unidade: parseInt(id),
+          id_categoria: categoria_id,
         })),
       });
     }
   }
 
-  // Atualizar ofertas de ensino se fornecidas
-  if (ofertas_ensino !== undefined) {
-    // Remover ofertas antigas
-    await prisma.junction_Escola_OfertaEnsino.deleteMany({
-      where: { id_escola: parseInt(id) },
-    });
+  auditLog('UPDATE', 'PROD_UnidadeTuristica', unidade.id, req.user.id, req.user.role, { updateData });
 
-    // Adicionar novas ofertas
-    if (ofertas_ensino.length > 0) {
-      await prisma.junction_Escola_OfertaEnsino.createMany({
-        data: ofertas_ensino.map(oferta_id => ({
-          id_escola: parseInt(id),
-          id_oferta_ensino: oferta_id,
-        })),
-      });
-    }
-  }
-
-  auditLog('UPDATE', 'PROD_Escola', parseInt(id), req.user.id, req.user.role, {
-    updated_fields: Object.keys(updateData),
-  });
-
-  logger.info('Escola updated', {
+  logger.info('Unidade turística atualizada', {
     user_id: req.user.id,
-    escola_id: parseInt(id),
-    updated_fields: Object.keys(updateData),
+    unidade_id: unidade.id,
+    nome: unidade.nome,
   });
 
   res.json({
     success: true,
-    data: escola,
+    data: unidade,
   });
 }));
 
 /**
- * GET /api/unidades/bairros/list
- * Lista todos os bairros cadastrados (público)
+ * DELETE /api/unidades/:id
+ * Deleta unidade turística (requer autenticação)
  */
-router.get('/bairros/list', asyncHandler(async (req, res) => {
-  const bairros = await prisma.pROD_Bairro.findMany({
-    where: { ativo: true },
-    select: { nome: true },
-    orderBy: { nome: 'asc' },
-  });
-
-  // Retornar apenas os nomes
-  const bairrosNomes = bairros.map(b => b.nome);
-
-  res.json({
-    success: true,
-    data: bairrosNomes,
-  });
-}));
-
-/**
- * GET /api/unidades/stats/last-update
- * Retorna a data da última atualização das escolas (público)
- */
-router.get('/stats/last-update', asyncHandler(async (req, res) => {
-  // Buscar o último registro de UPDATE na tabela PROD_Escola
-  const lastUpdate = await prisma.aUDIT_LOG.findFirst({
-    where: {
-      tabela: 'PROD_Escola',
-      operacao: 'UPDATE',
-    },
-    orderBy: {
-      timestamp: 'desc',
-    },
-    select: {
-      timestamp: true,
-    },
-  });
-
-  res.json({
-    success: true,
-    data: {
-      lastUpdate: lastUpdate?.timestamp || null,
-    },
-  });
-}));
-
-/**
- * GET /api/unidades/:id/professores
- * Busca professores que lecionam em uma escola (baseado na relação direta escola-professor)
- */
-router.get('/:id/professores', asyncHandler(async (req, res) => {
+router.delete('/:id', authenticate, requireAdmin, asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  // Buscar professores que lecionam nesta escola através da junction table
-  const junctionRecords = await prisma.junction_Escola_Professor.findMany({
-    where: { id_escola: parseInt(id) },
-    include: {
-      professor: true,
-    },
+  const unidade = await prisma.pROD_UnidadeTuristica.findUnique({
+    where: { id: parseInt(id) },
   });
 
-  // Filtrar apenas professores ativos e formatar dados
-  const professoresAtivos = junctionRecords
-    .map(j => j.professor)
-    .filter(p => p.ativo);
+  if (!unidade) {
+    return res.status(404).json({
+      success: false,
+      error: 'Unidade turística não encontrada',
+    });
+  }
 
-  // Ordenar por nome
-  professoresAtivos.sort((a, b) => a.nome.localeCompare(b.nome));
+  await prisma.pROD_UnidadeTuristica.delete({
+    where: { id: parseInt(id) },
+  });
+
+  auditLog('DELETE', 'PROD_UnidadeTuristica', parseInt(id), req.user.id, req.user.role);
+
+  logger.info('Unidade turística deletada', {
+    user_id: req.user.id,
+    unidade_id: parseInt(id),
+    nome: unidade.nome,
+  });
 
   res.json({
     success: true,
-    data: professoresAtivos,
+    message: 'Unidade turística deletada com sucesso',
   });
 }));
 
-/**
- * GET /api/unidades/:id/medicos
- * Alias para /professores (mantido para compatibilidade)
- */
-router.get('/:id/medicos', asyncHandler(async (req, res) => {
-  const { id } = req.params;
-
-  // Buscar professores que lecionam nesta escola através da junction table
-  const junctionRecords = await prisma.junction_Escola_Professor.findMany({
-    where: { id_escola: parseInt(id) },
-    include: {
-      professor: true,
-    },
-  });
-
-  // Filtrar apenas professores ativos e formatar dados
-  const professoresAtivos = junctionRecords
-    .map(j => j.professor)
-    .filter(p => p.ativo);
-
-  // Ordenar por nome
-  professoresAtivos.sort((a, b) => a.nome.localeCompare(b.nome));
-
-  res.json({
-    success: true,
-    data: professoresAtivos,
-  });
-}));
+// ============================================================================
+// REDES SOCIAIS
+// ============================================================================
 
 /**
  * GET /api/unidades/:id/redes-sociais
- * Busca redes sociais de uma escola
+ * Lista redes sociais de uma unidade turística
  */
 router.get('/:id/redes-sociais', asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const redesSociais = await prisma.pROD_Escola_RedeSocial.findMany({
-    where: { id_escola: parseInt(id) },
-    orderBy: { created_at: 'asc' },
+  const redesSociais = await prisma.pROD_UnidadeTuristica_RedeSocial.findMany({
+    where: { id_unidade: parseInt(id) },
   });
 
   res.json({
@@ -412,7 +369,7 @@ router.get('/:id/redes-sociais', asyncHandler(async (req, res) => {
 
 /**
  * POST /api/unidades/:id/redes-sociais
- * Adiciona rede social a uma escola (requer autenticação)
+ * Adiciona rede social a uma unidade turística
  */
 router.post('/:id/redes-sociais', authenticate, requireAdmin, asyncHandler(async (req, res) => {
   const { id } = req.params;
@@ -421,64 +378,61 @@ router.post('/:id/redes-sociais', authenticate, requireAdmin, asyncHandler(async
   if (!nome_rede || !url_perfil) {
     return res.status(400).json({
       success: false,
-      error: 'nome_rede and url_perfil are required',
+      error: 'nome_rede e url_perfil são obrigatórios',
     });
   }
 
-  // Verificar se a escola existe
-  const escola = await prisma.pROD_Escola.findUnique({
+  // Verificar se unidade existe
+  const unidade = await prisma.pROD_UnidadeTuristica.findUnique({
     where: { id: parseInt(id) },
   });
 
-  if (!escola) {
+  if (!unidade) {
     return res.status(404).json({
       success: false,
-      error: 'Escola not found',
+      error: 'Unidade turística não encontrada',
     });
   }
 
-  // Verificar se já não existe uma rede social com o mesmo nome para esta escola
-  const existingRede = await prisma.pROD_Escola_RedeSocial.findFirst({
+  // Verificar limite de 3 redes sociais
+  const count = await prisma.pROD_UnidadeTuristica_RedeSocial.count({
+    where: { id_unidade: parseInt(id) },
+  });
+
+  if (count >= 3) {
+    return res.status(400).json({
+      success: false,
+      error: 'Limite máximo de 3 redes sociais atingido',
+    });
+  }
+
+  // Verificar se rede social já existe para esta unidade
+  const existing = await prisma.pROD_UnidadeTuristica_RedeSocial.findFirst({
     where: {
-      id_escola: parseInt(id),
-      nome_rede: nome_rede,
+      id_unidade: parseInt(id),
+      nome_rede,
     },
   });
 
-  if (existingRede) {
+  if (existing) {
     return res.status(400).json({
       success: false,
-      error: 'Esta rede social já está cadastrada para esta escola',
+      error: 'Rede social já cadastrada para esta unidade',
     });
   }
 
-  // Verificar limite de 3 redes sociais por escola
-  const totalRedes = await prisma.pROD_Escola_RedeSocial.count({
-    where: { id_escola: parseInt(id) },
-  });
-
-  if (totalRedes >= 3) {
-    return res.status(400).json({
-      success: false,
-      error: 'Limite máximo de 3 redes sociais por escola atingido',
-    });
-  }
-
-  const redeSocial = await prisma.pROD_Escola_RedeSocial.create({
+  const redeSocial = await prisma.pROD_UnidadeTuristica_RedeSocial.create({
     data: {
-      id_escola: parseInt(id),
+      id_unidade: parseInt(id),
       nome_rede,
       url_perfil,
     },
   });
 
-  auditLog('INSERT', 'PROD_Escola_RedeSocial', redeSocial.id, req.user.id, req.user.role);
-
-  logger.info('Rede social added to escola', {
+  logger.info('Rede social adicionada', {
     user_id: req.user.id,
-    escola_id: parseInt(id),
+    unidade_id: parseInt(id),
     rede_social_id: redeSocial.id,
-    nome_rede: nome_rede,
   });
 
   res.status(201).json({
@@ -489,112 +443,118 @@ router.post('/:id/redes-sociais', authenticate, requireAdmin, asyncHandler(async
 
 /**
  * PUT /api/unidades/:id/redes-sociais/:redeId
- * Atualiza rede social de uma escola (requer autenticação)
+ * Atualiza rede social de uma unidade turística
  */
 router.put('/:id/redes-sociais/:redeId', authenticate, requireAdmin, asyncHandler(async (req, res) => {
   const { id, redeId } = req.params;
   const { nome_rede, url_perfil } = req.body;
 
-  if (!nome_rede || !url_perfil) {
-    return res.status(400).json({
-      success: false,
-      error: 'nome_rede and url_perfil are required',
-    });
-  }
-
-  // Verificar se a rede social existe e pertence à escola
-  const redeSocial = await prisma.pROD_Escola_RedeSocial.findFirst({
+  const redeSocial = await prisma.pROD_UnidadeTuristica_RedeSocial.findFirst({
     where: {
       id: parseInt(redeId),
-      id_escola: parseInt(id),
+      id_unidade: parseInt(id),
     },
   });
 
   if (!redeSocial) {
     return res.status(404).json({
       success: false,
-      error: 'Rede social not found for this escola',
+      error: 'Rede social não encontrada',
     });
   }
 
-  // Verificar se já não existe outra rede social com o mesmo nome para esta escola (exceto a atual)
-  if (nome_rede !== redeSocial.nome_rede) {
-    const existingRede = await prisma.pROD_Escola_RedeSocial.findFirst({
-      where: {
-        id_escola: parseInt(id),
-        nome_rede: nome_rede,
-        id: { not: parseInt(redeId) },
-      },
-    });
-
-    if (existingRede) {
-      return res.status(400).json({
-        success: false,
-        error: 'Esta rede social já está cadastrada para esta escola',
-      });
-    }
-  }
-
-  const updatedRede = await prisma.pROD_Escola_RedeSocial.update({
+  const updated = await prisma.pROD_UnidadeTuristica_RedeSocial.update({
     where: { id: parseInt(redeId) },
     data: {
-      nome_rede,
-      url_perfil,
+      ...(nome_rede && { nome_rede }),
+      ...(url_perfil && { url_perfil }),
     },
   });
 
-  auditLog('UPDATE', 'PROD_Escola_RedeSocial', parseInt(redeId), req.user.id, req.user.role);
-
-  logger.info('Rede social updated for escola', {
+  logger.info('Rede social atualizada', {
     user_id: req.user.id,
-    escola_id: parseInt(id),
+    unidade_id: parseInt(id),
     rede_social_id: parseInt(redeId),
-    nome_rede: nome_rede,
   });
 
   res.json({
     success: true,
-    data: updatedRede,
+    data: updated,
   });
 }));
 
 /**
  * DELETE /api/unidades/:id/redes-sociais/:redeId
- * Remove rede social de uma escola (requer autenticação)
+ * Remove rede social de uma unidade turística
  */
 router.delete('/:id/redes-sociais/:redeId', authenticate, requireAdmin, asyncHandler(async (req, res) => {
   const { id, redeId } = req.params;
 
-  // Verificar se a rede social existe e pertence à escola
-  const redeSocial = await prisma.pROD_Escola_RedeSocial.findFirst({
+  const redeSocial = await prisma.pROD_UnidadeTuristica_RedeSocial.findFirst({
     where: {
       id: parseInt(redeId),
-      id_escola: parseInt(id),
+      id_unidade: parseInt(id),
     },
   });
 
   if (!redeSocial) {
     return res.status(404).json({
       success: false,
-      error: 'Rede social not found for this escola',
+      error: 'Rede social não encontrada',
     });
   }
 
-  await prisma.pROD_Escola_RedeSocial.delete({
+  await prisma.pROD_UnidadeTuristica_RedeSocial.delete({
     where: { id: parseInt(redeId) },
   });
 
-  auditLog('DELETE', 'PROD_Escola_RedeSocial', parseInt(redeId), req.user.id, req.user.role);
-
-  logger.info('Rede social deleted from escola', {
+  logger.info('Rede social removida', {
     user_id: req.user.id,
-    escola_id: parseInt(id),
+    unidade_id: parseInt(id),
     rede_social_id: parseInt(redeId),
   });
 
   res.json({
     success: true,
-    message: 'Rede social deleted successfully',
+    message: 'Rede social removida com sucesso',
+  });
+}));
+
+// ============================================================================
+// UTILITIES
+// ============================================================================
+
+/**
+ * GET /api/unidades/bairros/list
+ * Lista todos os bairros disponíveis
+ */
+router.get('/bairros/list', asyncHandler(async (req, res) => {
+  const bairros = await prisma.pROD_Bairro.findMany({
+    where: { ativo: true },
+    orderBy: { nome: 'asc' },
+  });
+
+  res.json({
+    success: true,
+    data: bairros,
+  });
+}));
+
+/**
+ * GET /api/unidades/stats/last-update
+ * Retorna timestamp da última atualização
+ */
+router.get('/stats/last-update', asyncHandler(async (req, res) => {
+  const lastUnidade = await prisma.pROD_UnidadeTuristica.findFirst({
+    orderBy: { updated_at: 'desc' },
+    select: { updated_at: true },
+  });
+
+  res.json({
+    success: true,
+    data: {
+      last_update: lastUnidade?.updated_at || null,
+    },
   });
 }));
 

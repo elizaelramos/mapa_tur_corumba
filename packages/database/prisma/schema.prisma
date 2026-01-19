@@ -11,105 +11,101 @@ datasource db {
 }
 
 // ============================================================================
-// PRODUCTION TABLES - Dados limpos e validados
+// PRODUCTION TABLES - Unidades Turísticas
 // ============================================================================
 
-model PROD_Escola {
-  id                     Int                           @id @default(autoincrement())
-  nome                   String                        @db.VarChar(255)
-  endereco               String?                       @db.VarChar(500)
-  id_bairro              Int?                          // Referência ao bairro
-  latitude               Decimal                       @db.Decimal(10, 8) // NOT NULL - obrigatório para mapa
-  longitude              Decimal                       @db.Decimal(11, 8) // NOT NULL - obrigatório para mapa
-  telefone               String?                       @db.VarChar(100)
-  whatsapp               String?                       @db.VarChar(100)
-  email                  String?                       @db.VarChar(255)
-  diretor_responsavel    String?                       @db.VarChar(255)
-  horario_funcionamento  String?                       @db.Text
-  imagem_url             String?                       @db.VarChar(500)
-  icone_url              String?                       @db.VarChar(500)
-  laboratorio_informatica Boolean                      @default(false)
-  laboratorio_info       String?                       @db.Text
-  ativo                  Boolean                       @default(true)
-  created_at             DateTime                      @default(now())
-  updated_at             DateTime                      @updatedAt
+model PROD_UnidadeTuristica {
+  id                     Int                                  @id @default(autoincrement())
+
+  // Campos básicos (mantidos)
+  nome                   String                               @db.VarChar(255)
+  endereco               String?                              @db.VarChar(500)
+  id_bairro              Int?
+  latitude               Decimal                              @db.Decimal(10, 8) // NOT NULL - obrigatório para mapa
+  longitude              Decimal                              @db.Decimal(11, 8) // NOT NULL - obrigatório para mapa
+  telefone               String?                              @db.VarChar(100)
+  whatsapp               String?                              @db.VarChar(100)
+  email                  String?                              @db.VarChar(255)
+  horario_funcionamento  String?                              @db.Text
+  imagem_url             String?                              @db.VarChar(500)
+  icone_url              String?                              @db.VarChar(500)
+  ativo                  Boolean                              @default(true)
+  created_at             DateTime                             @default(now())
+  updated_at             DateTime                             @updatedAt
+
+  // NOVOS CAMPOS TURÍSTICOS
+  nome_fantasia          String?                              @db.VarChar(255)  // Nome comercial
+  razao_social           String?                              @db.VarChar(255)  // Nome empresarial
+  cnpj                   String?                              @db.VarChar(20)   // Cadastro
+  setor                  String?                              @db.VarChar(100)  // Ex: "AGÊNCIA VIAGENS"
+  descricao_servicos     String?                              @db.Text          // Campo "Serviço" da planilha
+  data_cadastro          DateTime?                                              // INICIO VIG
+  data_vencimento        DateTime?                                              // VENCIMENTO
 
   // Relações
-  bairro                 PROD_Bairro?                  @relation(fields: [id_bairro], references: [id], onDelete: SetNull)
-  professores            Junction_Escola_Professor[]
-  redes_sociais          PROD_Escola_RedeSocial[]
-  ofertas_ensino         Junction_Escola_OfertaEnsino[]
+  bairro                 PROD_Bairro?                         @relation(fields: [id_bairro], references: [id], onDelete: SetNull)
+  redes_sociais          PROD_UnidadeTuristica_RedeSocial[]
+  categorias             Junction_UnidadeTuristica_Categoria[]
 
   @@index([ativo])
   @@index([latitude, longitude])
-  @@index([laboratorio_informatica])
   @@index([id_bairro])
-  @@map("prod_escola")
+  @@index([setor])
+  @@map("prod_unidade_turistica")
 }
 
-model PROD_Professor {
-  id                Int                              @id @default(autoincrement())
-  nome              String                           @db.VarChar(255)
-  cpf               String?                          @db.VarChar(14)
-  matricula         String?                          @db.VarChar(20)
-  cargo             String?                          @db.VarChar(100) // Diretor, Coordenador Pedagógico, Diretor de Ensino, etc.
-  ativo             Boolean                          @default(true)
-  created_at        DateTime                         @default(now())
-  updated_at        DateTime                         @updatedAt
+model PROD_UnidadeTuristica_RedeSocial {
+  id          Int                      @id @default(autoincrement())
+  id_unidade  Int
+  nome_rede   String                   @db.VarChar(50)
+  url_perfil  String                   @db.VarChar(500)
+  created_at  DateTime                 @default(now())
+  updated_at  DateTime                 @updatedAt
+
+  unidade     PROD_UnidadeTuristica    @relation(fields: [id_unidade], references: [id], onDelete: Cascade)
+
+  @@index([id_unidade])
+  @@map("prod_unidade_turistica_redesocial")
+}
+
+// ============================================================================
+// CATEGORIAS TURÍSTICAS
+// ============================================================================
+
+model PROD_Categoria {
+  id            Int                                    @id @default(autoincrement())
+  nome          String                                 @db.VarChar(100)         // "Onde Passear", "Organize sua Viagem"
+  subcategoria  String?                                @db.VarChar(100)         // "Circuitos Culturais", "Afroturismo", etc.
+  ativo         Boolean                                @default(true)
+  ordem         Int                                    @default(0)
+  created_at    DateTime                               @default(now())
+  updated_at    DateTime                               @updatedAt
 
   // Relações
-  escolas           Junction_Escola_Professor[]
+  unidades      Junction_UnidadeTuristica_Categoria[]
 
+  @@unique([nome, subcategoria])  // Cada combinação categoria+subcategoria é única
+  @@index([nome])
   @@index([ativo])
-  @@index([cpf])
-  @@index([cargo])
-  @@map("prod_professor")
-}
-
-model PROD_Escola_RedeSocial {
-  id          Int                 @id @default(autoincrement())
-  id_escola   Int
-  nome_rede   String              @db.VarChar(50)
-  url_perfil  String              @db.VarChar(500)
-  created_at  DateTime            @default(now())
-  updated_at  DateTime            @updatedAt
-
-  escola      PROD_Escola         @relation(fields: [id_escola], references: [id], onDelete: Cascade)
-
-  @@index([id_escola])
-  @@map("prod_escola_redesocial")
+  @@map("prod_categoria")
 }
 
 // ============================================================================
 // JUNCTION TABLES - Relações N:N
 // ============================================================================
 
-model Junction_Escola_Professor {
-  id_escola         Int
-  id_professor      Int
-  created_at        DateTime                         @default(now())
+model Junction_UnidadeTuristica_Categoria {
+  id_unidade     Int
+  id_categoria   Int
+  created_at     DateTime               @default(now())
 
-  escola            PROD_Escola                      @relation(fields: [id_escola], references: [id], onDelete: Cascade)
-  professor         PROD_Professor                   @relation(fields: [id_professor], references: [id], onDelete: Cascade)
+  unidade        PROD_UnidadeTuristica  @relation(fields: [id_unidade], references: [id], onDelete: Cascade)
+  categoria      PROD_Categoria         @relation(fields: [id_categoria], references: [id], onDelete: Cascade)
 
-  @@id([id_escola, id_professor])
-  @@index([id_escola])
-  @@index([id_professor])
-  @@map("junction_escola_professor")
-}
-
-model Junction_Escola_OfertaEnsino {
-  id_escola         Int
-  id_oferta_ensino  Int
-  created_at        DateTime                         @default(now())
-
-  escola            PROD_Escola                      @relation(fields: [id_escola], references: [id], onDelete: Cascade)
-  oferta_ensino     PROD_OfertaEnsino                @relation(fields: [id_oferta_ensino], references: [id], onDelete: Cascade)
-
-  @@id([id_escola, id_oferta_ensino])
-  @@index([id_escola])
-  @@index([id_oferta_ensino])
-  @@map("junction_escola_oferta_ensino")
+  @@id([id_unidade, id_categoria])
+  @@index([id_unidade])
+  @@index([id_categoria])
+  @@map("junction_unidade_categoria")
 }
 
 // ============================================================================
@@ -178,14 +174,14 @@ enum OperacaoAudit {
 // ============================================================================
 
 model PROD_Bairro {
-  id         Int           @id @default(autoincrement())
-  nome       String        @unique @db.VarChar(100)
-  ativo      Boolean       @default(true)
-  created_at DateTime      @default(now())
-  updated_at DateTime      @updatedAt
+  id         Int                      @id @default(autoincrement())
+  nome       String                   @unique @db.VarChar(100)
+  ativo      Boolean                  @default(true)
+  created_at DateTime                 @default(now())
+  updated_at DateTime                 @updatedAt
 
   // Relações
-  escolas    PROD_Escola[]
+  unidades   PROD_UnidadeTuristica[]
 
   @@index([nome])
   @@index([ativo])
@@ -193,12 +189,12 @@ model PROD_Bairro {
 }
 
 // ============================================================================
-// ÍCONES - Gerenciamento de ícones para tipos de escolas
+// ÍCONES - Gerenciamento de ícones para tipos de unidades turísticas
 // ============================================================================
 
 model PROD_Icone {
   id         Int      @id @default(autoincrement())
-  nome       String   @unique @db.VarChar(100) // Ex: Integral, Fundamental, Creche
+  nome       String   @unique @db.VarChar(100) // Ex: Hotel, Restaurante, Agência
   url        String   @db.VarChar(500)
   ativo      Boolean  @default(true)
   ordem      Int      @default(0)
@@ -208,23 +204,4 @@ model PROD_Icone {
   @@index([ativo])
   @@index([ordem])
   @@map("prod_icone")
-}
-
-// ============================================================================
-// OFERTAS DE ENSINO - Tipos de ensino oferecidos pelas escolas
-// ============================================================================
-
-model PROD_OfertaEnsino {
-  id         Int                                @id @default(autoincrement())
-  nome       String                             @unique @db.VarChar(100) // Ex: Infantil, Fundamental I, Fundamental II, Médio, EJA
-  ativo      Boolean                            @default(true)
-  created_at DateTime                           @default(now())
-  updated_at DateTime                           @updatedAt
-
-  // Relações
-  escolas    Junction_Escola_OfertaEnsino[]
-
-  @@index([nome])
-  @@index([ativo])
-  @@map("prod_oferta_ensino")
 }
