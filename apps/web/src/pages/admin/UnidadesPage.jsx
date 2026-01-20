@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
   Table, Button, Space, Tag, Modal, Form, Input, InputNumber, Switch, Select,
-  message, Popconfirm, Typography, Divider, Card, List, Alert, Upload, DatePicker
+  message, Popconfirm, Typography, Divider, Card, List, Alert, Upload, DatePicker, Tabs
 } from 'antd'
 import {
   EnvironmentOutlined, PlusOutlined, EditOutlined, DeleteOutlined,
@@ -78,10 +78,14 @@ export default function UnidadesPage() {
   const [imageUrl, setImageUrl] = useState(null)
   const [uploading, setUploading] = useState(false)
   const [selectedIcon, setSelectedIcon] = useState(null)
+  const [activeTab, setActiveTab] = useState('1')
+  const [currentNome, setCurrentNome] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [searchInput, setSearchInput] = useState('')
   const [form] = Form.useForm()
 
   // API hooks
-  const { data, isLoading } = useGetUnidadesQuery({ page, limit: 20 })
+  const { data, isLoading } = useGetUnidadesQuery({ page, limit: 20, search: searchTerm })
   const { data: bairrosData } = useGetBairrosQuery({ ativo: true })
   const { data: iconesData } = useGetIconesQuery({ ativo: 'true' })
   const { data: categoriasData } = useGetCategoriasQuery({ ativo: 'true' })
@@ -127,6 +131,7 @@ export default function UnidadesPage() {
     setRedesSociais([])
     setImageUrl(null)
     setSelectedIcon(null)
+    setCurrentNome('')
     form.resetFields()
     form.setFieldsValue({ ativo: true })
     setIsModalOpen(true)
@@ -135,6 +140,7 @@ export default function UnidadesPage() {
   // Handle edit unit
   const handleEdit = async (unidade) => {
     setEditingUnidade(unidade)
+    setCurrentNome(unidade.nome || '')
 
     // Set image and icon if available
     setImageUrl(unidade.imagem_url || null)
@@ -179,6 +185,16 @@ export default function UnidadesPage() {
       setRedesSociais(unidadeRedesSociaisData.data)
     }
   }, [editingUnidade, unidadeRedesSociaisData])
+
+  // Debounce search - aguarda 500ms após o usuário parar de digitar
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchTerm(searchInput)
+      setPage(1) // Reset to first page when searching
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [searchInput])
 
   // Handle delete unit
   const handleDelete = async (id) => {
@@ -285,6 +301,8 @@ export default function UnidadesPage() {
     setImageUrl(null)
     setSelectedIcon(null)
     setNovaRedeSocial({ nome_rede: '', url_perfil: '' })
+    setActiveTab('1')
+    setCurrentNome('')
   }
 
   // Handle adding rede social
@@ -435,6 +453,18 @@ export default function UnidadesPage() {
         </Button>
       </div>
 
+      <div style={{ marginBottom: 16 }}>
+        <Input.Search
+          placeholder="Buscar por nome, razão social, endereço ou setor..."
+          allowClear
+          size="large"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          style={{ maxWidth: 600 }}
+          loading={searchInput !== searchTerm && searchInput !== ''}
+        />
+      </div>
+
       <Table
         columns={columns}
         dataSource={data?.data || []}
@@ -464,353 +494,423 @@ export default function UnidadesPage() {
           onFinish={handleSubmit}
           initialValues={{ ativo: true }}
         >
-          <Divider orientation="left">
-            <Text strong><EnvironmentOutlined /> Informações Básicas</Text>
-          </Divider>
-
-          <Form.Item
-            label="Nome"
-            name="nome"
-            rules={[{ required: true, message: 'Por favor, insira o nome da unidade' }]}
-          >
-            <Input placeholder="Nome para exibição no mapa" />
-          </Form.Item>
-
-          <Form.Item label="Nome Fantasia" name="nome_fantasia">
-            <Input placeholder="Nome comercial" />
-          </Form.Item>
-
-          <Form.Item label="Razão Social" name="razao_social">
-            <Input placeholder="Nome empresarial" />
-          </Form.Item>
-
-          <Form.Item label="CNPJ" name="cnpj">
-            <Input placeholder="00.000.000/0000-00" />
-          </Form.Item>
-
-          <Form.Item label="Setor" name="setor">
-            <Select placeholder="Selecione o setor" allowClear showSearch>
-              {SETORES_OPTIONS.map((setor) => (
-                <Select.Option key={setor} value={setor}>
-                  {setor}
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <Form.Item label="Endereço" name="endereco">
-            <Input placeholder="Digite o endereço completo" />
-          </Form.Item>
-
-          <Form.Item label="Bairro" name="bairro">
-            <Select
-              placeholder="Selecione o bairro"
-              showSearch
-              allowClear
-              filterOption={(input, option) =>
-                option.children.toLowerCase().includes(input.toLowerCase())
+          {/* Exibir nome da unidade sendo editada/criada */}
+          {currentNome && (
+            <Alert
+              message={
+                <Space>
+                  <ShopOutlined />
+                  <Text strong>{editingUnidade ? 'Editando:' : 'Criando:'} {currentNome}</Text>
+                </Space>
               }
-            >
-              {bairros.map((bairro) => (
-                <Select.Option key={bairro} value={bairro}>
-                  {bairro}
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            label="Status"
-            name="ativo"
-            valuePropName="checked"
-          >
-            <Switch checkedChildren="Ativo" unCheckedChildren="Inativo" />
-          </Form.Item>
-
-          <Divider orientation="left">
-            <Text strong><TagsOutlined /> Categorização</Text>
-          </Divider>
-
-          <Form.Item
-            label="Categorias"
-            name="categorias"
-            tooltip="Selecione uma ou mais categorias turísticas"
-          >
-            <Select
-              mode="multiple"
-              placeholder="Selecione as categorias"
-              value={selectedCategorias}
-              onChange={setSelectedCategorias}
-              showSearch
-              filterOption={(input, option) => {
-                const categoria = categorias.find(c => c.id === option.value)
-                if (!categoria) return false
-                const searchText = `${categoria.nome} ${categoria.subcategoria || ''}`.toLowerCase()
-                return searchText.includes(input.toLowerCase())
-              }}
-            >
-              {categorias.map((cat) => (
-                <Select.Option key={cat.id} value={cat.id}>
-                  {cat.nome}{cat.subcategoria ? ` → ${cat.subcategoria}` : ''}
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <Form.Item label="Serviços Oferecidos" name="descricao_servicos">
-            <TextArea
-              rows={4}
-              placeholder="Descreva os serviços oferecidos pela unidade turística"
+              type="info"
+              showIcon={false}
+              style={{ marginBottom: 16 }}
             />
-          </Form.Item>
-
-          <Divider orientation="left">
-            <Text strong><EnvironmentOutlined /> Localização</Text>
-          </Divider>
-
-          {/* Hidden fields for latitude/longitude */}
-          <Form.Item name="latitude" hidden rules={[{ required: true, message: 'Selecione a localização no mapa' }]}>
-            <InputNumber />
-          </Form.Item>
-          <Form.Item name="longitude" hidden rules={[{ required: true, message: 'Selecione a localização no mapa' }]}>
-            <InputNumber />
-          </Form.Item>
-
-          {/* Map Location Picker */}
-          <LocationPicker
-            latitude={form.getFieldValue('latitude')}
-            longitude={form.getFieldValue('longitude')}
-            onChange={(coords) => {
-              form.setFieldsValue({
-                latitude: coords.latitude,
-                longitude: coords.longitude,
-              })
-            }}
-          />
-
-          <Divider orientation="left">
-            <Text strong><PhoneOutlined /> Contato</Text>
-          </Divider>
-
-          <Form.Item label="Telefone" name="telefone">
-            <Input placeholder="(67) 3234-5678" />
-          </Form.Item>
-
-          <Form.Item label="WhatsApp">
-            <Space.Compact style={{ width: '100%' }}>
-              <Form.Item name="whatsapp" noStyle>
-                <Input placeholder="(67) 99999-9999" />
-              </Form.Item>
-              <Button
-                icon={<WhatsAppOutlined />}
-                onClick={() => {
-                  const whatsapp = form.getFieldValue('whatsapp');
-                  if (whatsapp) {
-                    const cleanNumber = whatsapp.replace(/\D/g, '');
-                    window.open(`https://wa.me/55${cleanNumber}`, '_blank');
-                  } else {
-                    message.warning('Por favor, insira um número de WhatsApp primeiro');
-                  }
-                }}
-              >
-                Testar
-              </Button>
-            </Space.Compact>
-          </Form.Item>
-
-          <Form.Item label="Email" name="email">
-            <Input
-              prefix={<MailOutlined />}
-              placeholder="contato@empresa.com.br"
-              type="email"
-            />
-          </Form.Item>
-
-          <Form.Item label="Horário de Funcionamento" name="horario_funcionamento">
-            <TextArea
-              rows={3}
-              placeholder="Ex: Segunda a Sexta: 8h às 18h&#10;Sábado: 8h às 12h"
-            />
-          </Form.Item>
-
-          <Divider orientation="left">
-            <Text strong><CalendarOutlined /> Cadastro</Text>
-          </Divider>
-
-          <Form.Item label="Data de Cadastro" name="data_cadastro">
-            <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
-          </Form.Item>
-
-          <Form.Item label="Data de Vencimento" name="data_vencimento">
-            <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
-          </Form.Item>
-
-          <Divider orientation="left">
-            <Text strong><PictureOutlined /> Mídia</Text>
-          </Divider>
-
-          {/* Upload de Imagem */}
-          <Form.Item label="Imagem da Unidade">
-            <Space direction="vertical" style={{ width: '100%' }}>
-              {imageUrl && (
-                <div style={{ marginBottom: 12 }}>
-                  <img
-                    src={imageUrl}
-                    alt="Pré-visualização"
-                    style={{ maxWidth: '100%', maxHeight: 200, objectFit: 'contain' }}
-                  />
-                </div>
-              )}
-              <Upload
-                beforeUpload={handleUploadImagem}
-                showUploadList={false}
-                accept="image/*"
-              >
-                <Button icon={<UploadOutlined />} loading={uploading}>
-                  {imageUrl ? 'Alterar Imagem' : 'Enviar Imagem'}
-                </Button>
-              </Upload>
-              {imageUrl && (
-                <Button
-                  danger
-                  size="small"
-                  onClick={() => {
-                    setImageUrl(null)
-                    message.info('Imagem removida')
-                  }}
-                >
-                  Remover Imagem
-                </Button>
-              )}
-            </Space>
-          </Form.Item>
-
-          {/* Seleção de Ícone */}
-          <Form.Item label="Ícone no Mapa">
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {iconesData?.data?.map((icone) => (
-                <div
-                  key={icone.id}
-                  onClick={() => setSelectedIcon(icone.url)}
-                  style={{
-                    width: 60,
-                    height: 60,
-                    border: selectedIcon === icone.url ? '3px solid #1890ff' : '1px solid #d9d9d9',
-                    borderRadius: 4,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    backgroundColor: selectedIcon === icone.url ? '#e6f7ff' : 'white',
-                  }}
-                >
-                  <img
-                    src={icone.url}
-                    alt={icone.nome}
-                    style={{ maxWidth: '90%', maxHeight: '90%' }}
-                  />
-                </div>
-              ))}
-            </div>
-            {selectedIcon && (
-              <Button
-                danger
-                size="small"
-                style={{ marginTop: 8 }}
-                onClick={() => setSelectedIcon(null)}
-              >
-                Remover Ícone
-              </Button>
-            )}
-          </Form.Item>
-
-          <Divider orientation="left">
-            <Text strong><GlobalOutlined /> Redes Sociais</Text>
-          </Divider>
-
-          {/* Lista de Redes Sociais */}
-          {redesSociais.length > 0 && (
-            <Card size="small" style={{ marginBottom: 16 }}>
-              <List
-                size="small"
-                dataSource={redesSociais}
-                renderItem={(rede) => (
-                  <List.Item
-                    actions={[
-                      <Button
-                        type="link"
-                        size="small"
-                        onClick={() => window.open(rede.url_perfil, '_blank')}
-                      >
-                        Abrir
-                      </Button>,
-                      <Popconfirm
-                        title="Remover rede social?"
-                        onConfirm={() => handleRemoveRedeSocial(rede.id)}
-                        okText="Sim"
-                        cancelText="Não"
-                      >
-                        <Button type="link" danger size="small">
-                          Remover
-                        </Button>
-                      </Popconfirm>,
-                    ]}
-                  >
-                    <List.Item.Meta
-                      avatar={getRedeSocialIcon(rede.nome_rede)}
-                      title={rede.nome_rede}
-                      description={rede.url_perfil}
-                    />
-                  </List.Item>
-                )}
-              />
-            </Card>
           )}
 
-          {redesSociais.length < 3 && (
-            <Card size="small" title="Adicionar Rede Social">
-              <Space direction="vertical" style={{ width: '100%' }}>
-                <Select
-                  placeholder="Selecione a rede social"
-                  value={novaRedeSocial.nome_rede}
-                  onChange={(value) => setNovaRedeSocial({ ...novaRedeSocial, nome_rede: value })}
-                  style={{ width: '100%' }}
-                >
-                  {REDES_SOCIAIS_OPTIONS.map((option) => (
-                    <Select.Option key={option.value} value={option.value}>
-                      {option.icon} {option.label}
+          <Tabs activeKey={activeTab} onChange={setActiveTab}>
+            {/* Aba 1: Informações Básicas */}
+            <Tabs.TabPane
+              tab={
+                <span>
+                  <IdcardOutlined />
+                  Informações Básicas
+                </span>
+              }
+              key="1"
+            >
+              <Form.Item
+                label="Nome"
+                name="nome"
+                rules={[{ required: true, message: 'Por favor, insira o nome da unidade' }]}
+              >
+                <Input
+                  placeholder="Nome para exibição no mapa"
+                  onChange={(e) => setCurrentNome(e.target.value)}
+                />
+              </Form.Item>
+
+              <Form.Item label="Nome Fantasia" name="nome_fantasia">
+                <Input placeholder="Nome comercial" />
+              </Form.Item>
+
+              <Form.Item label="Razão Social" name="razao_social">
+                <Input placeholder="Nome empresarial" />
+              </Form.Item>
+
+              <Form.Item label="CNPJ" name="cnpj">
+                <Input placeholder="00.000.000/0000-00" />
+              </Form.Item>
+
+              <Form.Item label="Setor" name="setor">
+                <Select placeholder="Selecione o setor" allowClear showSearch>
+                  {SETORES_OPTIONS.map((setor) => (
+                    <Select.Option key={setor} value={setor}>
+                      {setor}
                     </Select.Option>
                   ))}
                 </Select>
-                <Input
-                  placeholder="URL do perfil (ex: https://instagram.com/usuario)"
-                  value={novaRedeSocial.url_perfil}
-                  onChange={(e) => setNovaRedeSocial({ ...novaRedeSocial, url_perfil: e.target.value })}
-                />
-                <Button
-                  type="dashed"
-                  icon={<PlusOutlined />}
-                  onClick={handleAddRedeSocial}
-                  block
-                >
-                  Adicionar Rede Social
-                </Button>
-              </Space>
-            </Card>
-          )}
+              </Form.Item>
 
-          {redesSociais.length >= 3 && (
-            <Alert
-              message="Limite de redes sociais atingido"
-              description="Cada unidade pode ter no máximo 3 redes sociais cadastradas."
-              type="info"
-              showIcon
-            />
-          )}
+              <Form.Item label="Endereço" name="endereco">
+                <Input placeholder="Digite o endereço completo" />
+              </Form.Item>
+
+              <Form.Item label="Bairro" name="bairro">
+                <Select
+                  placeholder="Selecione o bairro"
+                  showSearch
+                  allowClear
+                  filterOption={(input, option) =>
+                    option.children.toLowerCase().includes(input.toLowerCase())
+                  }
+                >
+                  {bairros.map((bairro) => (
+                    <Select.Option key={bairro} value={bairro}>
+                      {bairro}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+
+              <Form.Item
+                label="Status"
+                name="ativo"
+                valuePropName="checked"
+              >
+                <Switch checkedChildren="Ativo" unCheckedChildren="Inativo" />
+              </Form.Item>
+
+              <Form.Item label="Data de Cadastro" name="data_cadastro">
+                <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
+              </Form.Item>
+
+              <Form.Item label="Data de Vencimento" name="data_vencimento">
+                <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
+              </Form.Item>
+            </Tabs.TabPane>
+
+            {/* Aba 2: Categorização */}
+            <Tabs.TabPane
+              tab={
+                <span>
+                  <TagsOutlined />
+                  Categorização
+                </span>
+              }
+              key="2"
+            >
+              <Form.Item
+                label="Categorias"
+                name="categorias"
+                tooltip="Selecione uma ou mais categorias turísticas"
+              >
+                <Select
+                  mode="multiple"
+                  placeholder="Selecione as categorias"
+                  value={selectedCategorias}
+                  onChange={setSelectedCategorias}
+                  showSearch
+                  filterOption={(input, option) => {
+                    const categoria = categorias.find(c => c.id === option.value)
+                    if (!categoria) return false
+                    const searchText = `${categoria.nome} ${categoria.subcategoria || ''}`.toLowerCase()
+                    return searchText.includes(input.toLowerCase())
+                  }}
+                >
+                  {categorias.map((cat) => (
+                    <Select.Option key={cat.id} value={cat.id}>
+                      {cat.nome}{cat.subcategoria ? ` → ${cat.subcategoria}` : ''}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+
+              <Form.Item label="Serviços Oferecidos" name="descricao_servicos">
+                <TextArea
+                  rows={4}
+                  placeholder="Descreva os serviços oferecidos pela unidade turística"
+                />
+              </Form.Item>
+            </Tabs.TabPane>
+
+            {/* Aba 3: Localização */}
+            <Tabs.TabPane
+              tab={
+                <span>
+                  <EnvironmentOutlined />
+                  Localização
+                </span>
+              }
+              key="3"
+            >
+              {/* Hidden fields for latitude/longitude */}
+              <Form.Item name="latitude" hidden rules={[{ required: true, message: 'Selecione a localização no mapa' }]}>
+                <InputNumber />
+              </Form.Item>
+              <Form.Item name="longitude" hidden rules={[{ required: true, message: 'Selecione a localização no mapa' }]}>
+                <InputNumber />
+              </Form.Item>
+
+              {/* Map Location Picker */}
+              <LocationPicker
+                latitude={form.getFieldValue('latitude')}
+                longitude={form.getFieldValue('longitude')}
+                onChange={(coords) => {
+                  form.setFieldsValue({
+                    latitude: coords.latitude,
+                    longitude: coords.longitude,
+                  })
+                }}
+              />
+            </Tabs.TabPane>
+
+            {/* Aba 4: Contato */}
+            <Tabs.TabPane
+              tab={
+                <span>
+                  <PhoneOutlined />
+                  Contato
+                </span>
+              }
+              key="4"
+            >
+              <Form.Item label="Telefone" name="telefone">
+                <Input placeholder="(67) 3234-5678" />
+              </Form.Item>
+
+              <Form.Item label="WhatsApp">
+                <Space.Compact style={{ width: '100%' }}>
+                  <Form.Item name="whatsapp" noStyle>
+                    <Input placeholder="(67) 99999-9999" />
+                  </Form.Item>
+                  <Button
+                    icon={<WhatsAppOutlined />}
+                    onClick={() => {
+                      const whatsapp = form.getFieldValue('whatsapp');
+                      if (whatsapp) {
+                        const cleanNumber = whatsapp.replace(/\D/g, '');
+                        window.open(`https://wa.me/55${cleanNumber}`, '_blank');
+                      } else {
+                        message.warning('Por favor, insira um número de WhatsApp primeiro');
+                      }
+                    }}
+                  >
+                    Testar
+                  </Button>
+                </Space.Compact>
+              </Form.Item>
+
+              <Form.Item label="Email" name="email">
+                <Input
+                  prefix={<MailOutlined />}
+                  placeholder="contato@empresa.com.br"
+                  type="email"
+                />
+              </Form.Item>
+
+              <Form.Item label="Horário de Funcionamento" name="horario_funcionamento">
+                <TextArea
+                  rows={3}
+                  placeholder="Ex: Segunda a Sexta: 8h às 18h&#10;Sábado: 8h às 12h"
+                />
+              </Form.Item>
+            </Tabs.TabPane>
+
+            {/* Aba 5: Mídia */}
+            <Tabs.TabPane
+              tab={
+                <span>
+                  <PictureOutlined />
+                  Mídia
+                </span>
+              }
+              key="5"
+            >
+              {/* Upload de Imagem */}
+              <Form.Item label="Imagem da Unidade">
+                <Space direction="vertical" style={{ width: '100%' }}>
+                  {imageUrl && (
+                    <div style={{ marginBottom: 12 }}>
+                      <img
+                        src={imageUrl}
+                        alt="Pré-visualização"
+                        style={{ maxWidth: '100%', maxHeight: 200, objectFit: 'contain' }}
+                      />
+                    </div>
+                  )}
+                  <Upload
+                    beforeUpload={handleUploadImagem}
+                    showUploadList={false}
+                    accept="image/*"
+                  >
+                    <Button icon={<UploadOutlined />} loading={uploading}>
+                      {imageUrl ? 'Alterar Imagem' : 'Enviar Imagem'}
+                    </Button>
+                  </Upload>
+                  {imageUrl && (
+                    <Button
+                      danger
+                      size="small"
+                      onClick={() => {
+                        setImageUrl(null)
+                        message.info('Imagem removida')
+                      }}
+                    >
+                      Remover Imagem
+                    </Button>
+                  )}
+                </Space>
+              </Form.Item>
+
+              {/* Seleção de Ícone */}
+              <Form.Item label="Ícone no Mapa">
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                  {iconesData?.data?.map((icone) => (
+                    <div
+                      key={icone.id}
+                      onClick={() => setSelectedIcon(icone.url)}
+                      style={{
+                        width: 80,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 60,
+                          height: 60,
+                          border: selectedIcon === icone.url ? '3px solid #1890ff' : '1px solid #d9d9d9',
+                          borderRadius: 4,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: selectedIcon === icone.url ? '#e6f7ff' : 'white',
+                          marginBottom: 4,
+                        }}
+                      >
+                        <img
+                          src={icone.url}
+                          alt={icone.nome}
+                          style={{ maxWidth: '90%', maxHeight: '90%' }}
+                        />
+                      </div>
+                      <Text
+                        style={{
+                          fontSize: 11,
+                          textAlign: 'center',
+                          color: selectedIcon === icone.url ? '#1890ff' : '#666',
+                          fontWeight: selectedIcon === icone.url ? 'bold' : 'normal',
+                          wordBreak: 'break-word',
+                        }}
+                      >
+                        {icone.nome}
+                      </Text>
+                    </div>
+                  ))}
+                </div>
+                {selectedIcon && (
+                  <Button
+                    danger
+                    size="small"
+                    style={{ marginTop: 8 }}
+                    onClick={() => setSelectedIcon(null)}
+                  >
+                    Remover Ícone
+                  </Button>
+                )}
+              </Form.Item>
+
+              <Divider>Redes Sociais</Divider>
+
+              {/* Lista de Redes Sociais */}
+              {redesSociais.length > 0 && (
+                <Card size="small" style={{ marginBottom: 16 }}>
+                  <List
+                    size="small"
+                    dataSource={redesSociais}
+                    renderItem={(rede) => (
+                      <List.Item
+                        actions={[
+                          <Button
+                            type="link"
+                            size="small"
+                            onClick={() => window.open(rede.url_perfil, '_blank')}
+                          >
+                            Abrir
+                          </Button>,
+                          <Popconfirm
+                            title="Remover rede social?"
+                            onConfirm={() => handleRemoveRedeSocial(rede.id)}
+                            okText="Sim"
+                            cancelText="Não"
+                          >
+                            <Button type="link" danger size="small">
+                              Remover
+                            </Button>
+                          </Popconfirm>,
+                        ]}
+                      >
+                        <List.Item.Meta
+                          avatar={getRedeSocialIcon(rede.nome_rede)}
+                          title={rede.nome_rede}
+                          description={rede.url_perfil}
+                        />
+                      </List.Item>
+                    )}
+                  />
+                </Card>
+              )}
+
+              {redesSociais.length < 3 && (
+                <Card size="small" title="Adicionar Rede Social">
+                  <Space direction="vertical" style={{ width: '100%' }}>
+                    <Select
+                      placeholder="Selecione a rede social"
+                      value={novaRedeSocial.nome_rede}
+                      onChange={(value) => setNovaRedeSocial({ ...novaRedeSocial, nome_rede: value })}
+                      style={{ width: '100%' }}
+                    >
+                      {REDES_SOCIAIS_OPTIONS.map((option) => (
+                        <Select.Option key={option.value} value={option.value}>
+                          {option.icon} {option.label}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                    <Input
+                      placeholder="URL do perfil (ex: https://instagram.com/usuario)"
+                      value={novaRedeSocial.url_perfil}
+                      onChange={(e) => setNovaRedeSocial({ ...novaRedeSocial, url_perfil: e.target.value })}
+                    />
+                    <Button
+                      type="dashed"
+                      icon={<PlusOutlined />}
+                      onClick={handleAddRedeSocial}
+                      block
+                    >
+                      Adicionar Rede Social
+                    </Button>
+                  </Space>
+                </Card>
+              )}
+
+              {redesSociais.length >= 3 && (
+                <Alert
+                  message="Limite de redes sociais atingido"
+                  description="Cada unidade pode ter no máximo 3 redes sociais cadastradas."
+                  type="info"
+                  showIcon
+                />
+              )}
+            </Tabs.TabPane>
+          </Tabs>
 
           <Divider />
 
-          <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
+          <Form.Item style={{ marginBottom: 0 }}>
             <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
               <Button onClick={handleCancel}>
                 Cancelar

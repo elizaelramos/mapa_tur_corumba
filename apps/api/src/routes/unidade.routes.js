@@ -15,11 +15,22 @@ const router = express.Router();
  * Lista todas as unidades turísticas (público)
  */
 router.get('/', asyncHandler(async (req, res) => {
-  const { ativo = 'true', page = 1, limit = 100 } = req.query;
+  const { ativo = 'true', page = 1, limit = 100, search } = req.query;
 
   const where = {};
   if (ativo === 'true') {
     where.ativo = true;
+  }
+
+  // Adicionar busca por texto
+  if (search && search.trim()) {
+    where.OR = [
+      { nome: { contains: search.trim() } },
+      { nome_fantasia: { contains: search.trim() } },
+      { razao_social: { contains: search.trim() } },
+      { endereco: { contains: search.trim() } },
+      { setor: { contains: search.trim() } },
+    ];
   }
 
   const skip = (parseInt(page) - 1) * parseInt(limit);
