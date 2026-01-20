@@ -1,40 +1,40 @@
 import { Card, Row, Col, Statistic } from 'antd'
-import { EnvironmentOutlined, MedicineBoxOutlined, TeamOutlined, DatabaseOutlined } from '@ant-design/icons'
-import { useGetUnidadesQuery, useGetEspecialidadesQuery, useGetStagingQuery } from '../../store/slices/apiSlice'
+import { EnvironmentOutlined, ShopOutlined, TagsOutlined, PictureOutlined } from '@ant-design/icons'
+import { useGetUnidadesQuery, useGetCategoriasQuery, useGetIconesQuery } from '../../store/slices/apiSlice'
 
 export default function DashboardPage() {
   const { data: unidadesData } = useGetUnidadesQuery({})
-  const { data: especialidadesData } = useGetEspecialidadesQuery()
-  const { data: stagingData } = useGetStagingQuery({ status: 'pendente' })
-  
+  const { data: categoriasData } = useGetCategoriasQuery()
+  const { data: iconesData } = useGetIconesQuery({ ativo: true })
+
   return (
     <div>
-      <h1>Painel</h1>
+      <h1>Painel de Turismo</h1>
       <Row gutter={16}>
-        <Col span={6}>
+        <Col xs={24} sm={12} md={8}>
           <Card>
             <Statistic
-              title="Unidades de Saúde"
+              title="Locais Turísticos"
               value={unidadesData?.pagination?.total || 0}
               prefix={<EnvironmentOutlined />}
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={24} sm={12} md={8}>
           <Card>
             <Statistic
-              title="Especialidades"
-              value={especialidadesData?.data?.length || 0}
-              prefix={<TeamOutlined />}
+              title="Categorias"
+              value={categoriasData?.data?.length || 0}
+              prefix={<TagsOutlined />}
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={24} sm={12} md={8}>
           <Card>
             <Statistic
-              title="Staging Pendente"
-              value={stagingData?.pagination?.total || 0}
-              prefix={<DatabaseOutlined />}
+              title="Ícones Ativos"
+              value={iconesData?.data?.length || 0}
+              prefix={<PictureOutlined />}
             />
           </Card>
         </Col>

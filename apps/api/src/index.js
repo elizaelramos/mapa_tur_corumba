@@ -8,12 +8,13 @@ const { requestLogger, errorLogger, logger } = require('@mapatur/logger');
 
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
-const stagingRoutes = require('./routes/staging.routes');
+// const stagingRoutes = require('./routes/staging.routes'); // DESATIVADO - modelo removido (migração para turismo)
 const unidadeRoutes = require('./routes/unidade.routes');
-const medicoRoutes = require('./routes/medico.routes');
+const categoriaRoutes = require('./routes/categoria.routes');
+// const medicoRoutes = require('./routes/medico.routes'); // DESATIVADO - modelo removido (migração para turismo)
 // const especialidadeRoutes = require('./routes/especialidade.routes'); // DESATIVADO - modelo removido
 const bairroRoutes = require('./routes/bairro.routes');
-const ofertaEnsinoRoutes = require('./routes/oferta-ensino.routes');
+// const ofertaEnsinoRoutes = require('./routes/oferta-ensino.routes'); // DESATIVADO - modelo removido (migração para turismo)
 const iconeRoutes = require('./routes/icone.routes');
 const auditRoutes = require('./routes/audit.routes');
 const etlRoutes = require('./routes/etl.routes');
@@ -61,7 +62,7 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-      "img-src": ["'self'", "data:", "http://localhost:8008", "http://localhost:3002", "http://localhost:8007", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176", "http://172.16.1.109:8008"],
+      "img-src": ["'self'", "data:", "http://localhost:8010", "http://localhost:3002", "http://localhost:8009", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176", "http://172.16.1.109:8010"],
     },
   },
   crossOriginResourcePolicy: { policy: "cross-origin" },
@@ -69,7 +70,7 @@ app.use(helmet({
 
 // CORS - aceitar múltiplas origens
 const allowedOrigins = [
-  'http://localhost:8007',
+  'http://localhost:8009',
   'http://localhost:5174',
   'http://localhost:5175',
   'http://localhost:5176',
@@ -119,12 +120,13 @@ app.get('/health', (req, res) => {
 app.use('/api/auth/login', loginLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/staging', stagingRoutes);
+// app.use('/api/staging', stagingRoutes); // DESATIVADO - modelo removido (migração para turismo)
 app.use('/api/unidades', publicLimiter, unidadeRoutes); // Rate limit público para mapa
-app.use('/api/medicos', publicLimiter, medicoRoutes); // Rate limit público para mapa
+app.use('/api/categorias', publicLimiter, categoriaRoutes); // Rate limit público para filtros
+// app.use('/api/medicos', publicLimiter, medicoRoutes); // DESATIVADO - modelo removido (migração para turismo)
 // app.use('/api/especialidades', publicLimiter, especialidadeRoutes); // DESATIVADO - modelo removido
 app.use('/api/bairros', bairroRoutes);
-app.use('/api/ofertas-ensino', ofertaEnsinoRoutes);
+// app.use('/api/ofertas-ensino', ofertaEnsinoRoutes); // DESATIVADO - modelo removido (migração para turismo)
 app.use('/api/icones', iconeRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/etl', etlRoutes);

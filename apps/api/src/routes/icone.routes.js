@@ -179,33 +179,45 @@ router.put('/:id', authenticate, requireAdmin, asyncHandler(async (req, res) => 
 
 /**
  * DELETE /api/icones/:id
- * Deletar ícone (Admin) - soft delete
+ * Deletar ícone (Admin)
  */
 router.delete('/:id', authenticate, requireAdmin, asyncHandler(async (req, res) => {
   const { id } = req.params;
-  
-  // Verificar se há escolas usando este ícone
-  const escolasUsando = await prisma.pROD_Escola.count({
-    where: { icone_url: { contains: req.params.id } },
+
+  // Buscar o ícone para obter sua URL
+  const icone = await prisma.pROD_Icone.findUnique({
+    where: { id: parseInt(id) },
   });
 
-  if (escolasUsando > 0) {
-    return res.status(400).json({
+  if (!icone) {
+    return res.status(404).json({
       success: false,
-      error: `Não é possível excluir. ${escolasUsando} escola(s) está(ão) usando este ícone.`,
+      error: 'Ícone não encontrado',
     });
   }
-  
-  await prisma.pROD_Icone.update({
-    where: { id: parseInt(id) },
-    data: { ativo: false },
+
+  // Verificar se há unidades turísticas usando este ícone
+  const unidadesUsando = await prisma.pROD_UnidadeTuristica.count({
+    where: { icone_url: icone.url },
   });
-  
-  logger.info(`Ícone desativado: ID ${id}`);
-  
+
+  if (unidadesUsando > 0) {
+    return res.status(400).json({
+      success: false,
+      error: `Não é possível excluir. ${unidadesUsando} unidade(s) turística(s) está(ão) usando este ícone.`,
+    });
+  }
+
+  // Deletar o ícone permanentemente
+  await prisma.pROD_Icone.delete({
+    where: { id: parseInt(id) },
+  });
+
+  logger.info(`Ícone excluído: ${icone.nome} (ID ${id})`);
+
   res.json({
     success: true,
-    message: 'Ícone desativado com sucesso',
+    message: 'Ícone excluído com sucesso',
   });
 }));
 

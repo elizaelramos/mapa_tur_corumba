@@ -13,6 +13,7 @@ import EspecialidadesNormalizacaoPage from './pages/admin/EspecialidadesNormaliz
 import IconesPage from './pages/admin/IconesPage'
 import BairrosPage from './pages/admin/BairrosPage'
 import OfertasEnsinoPage from './pages/admin/OfertasEnsinoPage'
+import CategoriasPage from './pages/admin/CategoriasPage'
 import UsersPage from './pages/admin/UsersPage'
 import AuditPage from './pages/admin/AuditPage'
 import ETLPage from './pages/admin/ETLPage'
@@ -46,6 +47,7 @@ function App() {
           <Route path="icones" element={<IconesPage />} />
           <Route path="bairros" element={<BairrosPage />} />
           <Route path="ofertas-ensino" element={<OfertasEnsinoPage />} />
+          <Route path="categorias" element={<CategoriasPage />} />
           <Route path="users" element={<SuperadminRoute><UsersPage /></SuperadminRoute>} />
           <Route path="audit" element={<SuperadminRoute><AuditPage /></SuperadminRoute>} />
           <Route path="etl" element={<SuperadminRoute><ETLPage /></SuperadminRoute>} />

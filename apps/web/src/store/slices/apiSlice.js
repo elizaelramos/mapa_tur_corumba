@@ -30,7 +30,7 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 export const apiSlice = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Unidades', 'Medicos', 'Especialidades', 'Staging', 'Users', 'Audit', 'ETL', 'Mapeamentos', 'Bairros', 'OfertasEnsino', 'Icones'],
+  tagTypes: ['Unidades', 'Categorias', 'Medicos', 'Especialidades', 'Staging', 'Users', 'Audit', 'ETL', 'Mapeamentos', 'Bairros', 'OfertasEnsino', 'Icones'],
   keepUnusedDataFor: 300, // Cache por 5 minutos (300 segundos)
   endpoints: (builder) => ({
     // Auth
@@ -51,10 +51,11 @@ export const apiSlice = createApi({
       providesTags: ['Unidades'],
     }),
 
-    getUnidadeMedicos: builder.query({
-      query: (id) => `/unidades/${id}/medicos`,
-      keepUnusedDataFor: 300, // Cache por 5 minutos
-    }),
+    // DESATIVADO - modelo removido (migração para turismo)
+    // getUnidadeMedicos: builder.query({
+    //   query: (id) => `/unidades/${id}/medicos`,
+    //   keepUnusedDataFor: 300, // Cache por 5 minutos
+    // }),
 
     getUnidadeRedesSociais: builder.query({
       query: (id) => `/unidades/${id}/redes-sociais`,
@@ -121,39 +122,89 @@ export const apiSlice = createApi({
       invalidatesTags: ['Bairros'],
     }),
 
-    // Ofertas de Ensino
-    getOfertasEnsino: builder.query({
+    // DESATIVADO - Ofertas de Ensino (migração para turismo)
+    // getOfertasEnsino: builder.query({
+    //   query: (params) => ({
+    //     url: '/ofertas-ensino',
+    //     params,
+    //   }),
+    //   providesTags: ['OfertasEnsino'],
+    // }),
+
+    // createOfertaEnsino: builder.mutation({
+    //   query: (data) => ({
+    //     url: '/ofertas-ensino',
+    //     method: 'POST',
+    //     body: data,
+    //   }),
+    //   invalidatesTags: ['OfertasEnsino'],
+    // }),
+
+    // updateOfertaEnsino: builder.mutation({
+    //   query: ({ id, ...data }) => ({
+    //     url: `/ofertas-ensino/${id}`,
+    //     method: 'PUT',
+    //     body: data,
+    //   }),
+    //   invalidatesTags: ['OfertasEnsino'],
+    // }),
+
+    // deleteOfertaEnsino: builder.mutation({
+    //   query: (id) => ({
+    //     url: `/ofertas-ensino/${id}`,
+    //     method: 'DELETE',
+    //   }),
+    //   invalidatesTags: ['OfertasEnsino'],
+    // }),
+
+    // Categorias Turísticas
+    getCategorias: builder.query({
       query: (params) => ({
-        url: '/ofertas-ensino',
+        url: '/categorias',
         params,
       }),
-      providesTags: ['OfertasEnsino'],
+      providesTags: ['Categorias'],
     }),
 
-    createOfertaEnsino: builder.mutation({
+    getCategoriasGrouped: builder.query({
+      query: () => '/categorias/grouped/list',
+      providesTags: ['Categorias'],
+    }),
+
+    getCategoriaById: builder.query({
+      query: (id) => `/categorias/${id}`,
+      providesTags: ['Categorias'],
+    }),
+
+    createCategoria: builder.mutation({
       query: (data) => ({
-        url: '/ofertas-ensino',
+        url: '/categorias',
         method: 'POST',
         body: data,
       }),
-      invalidatesTags: ['OfertasEnsino'],
+      invalidatesTags: ['Categorias', 'Unidades'],
     }),
 
-    updateOfertaEnsino: builder.mutation({
+    updateCategoria: builder.mutation({
       query: ({ id, ...data }) => ({
-        url: `/ofertas-ensino/${id}`,
+        url: `/categorias/${id}`,
         method: 'PUT',
         body: data,
       }),
-      invalidatesTags: ['OfertasEnsino'],
+      invalidatesTags: ['Categorias', 'Unidades'],
     }),
 
-    deleteOfertaEnsino: builder.mutation({
+    deleteCategoria: builder.mutation({
       query: (id) => ({
-        url: `/ofertas-ensino/${id}`,
+        url: `/categorias/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: ['OfertasEnsino'],
+      invalidatesTags: ['Categorias', 'Unidades'],
+    }),
+
+    getCategoriasStats: builder.query({
+      query: () => '/categorias/stats/usage',
+      providesTags: ['Categorias'],
     }),
 
     getLastUpdate: builder.query({
@@ -186,77 +237,77 @@ export const apiSlice = createApi({
       invalidatesTags: ['Unidades'],
     }),
 
-    // Médicos
-    getMedicos: builder.query({
-      query: (params) => ({
-        url: '/medicos',
-        params,
-      }),
-      providesTags: ['Medicos'],
-    }),
+    // DESATIVADO - Médicos (migração para turismo)
+    // getMedicos: builder.query({
+    //   query: (params) => ({
+    //     url: '/medicos',
+    //     params,
+    //   }),
+    //   providesTags: ['Medicos'],
+    // }),
 
-    createMedico: builder.mutation({
-      query: (data) => ({
-        url: '/medicos',
-        method: 'POST',
-        body: data,
-      }),
-      invalidatesTags: ['Medicos'],
-    }),
+    // createMedico: builder.mutation({
+    //   query: (data) => ({
+    //     url: '/medicos',
+    //     method: 'POST',
+    //     body: data,
+    //   }),
+    //   invalidatesTags: ['Medicos'],
+    // }),
 
-    updateMedico: builder.mutation({
-      query: ({ id, ...data }) => ({
-        url: `/medicos/${id}`,
-        method: 'PUT',
-        body: data,
-      }),
-      invalidatesTags: ['Medicos'],
-    }),
+    // updateMedico: builder.mutation({
+    //   query: ({ id, ...data }) => ({
+    //     url: `/medicos/${id}`,
+    //     method: 'PUT',
+    //     body: data,
+    //   }),
+    //   invalidatesTags: ['Medicos'],
+    // }),
 
-    deleteMedico: builder.mutation({
-      query: (id) => ({
-        url: `/medicos/${id}`,
-        method: 'DELETE',
-      }),
-      invalidatesTags: ['Medicos'],
-    }),
+    // deleteMedico: builder.mutation({
+    //   query: (id) => ({
+    //     url: `/medicos/${id}`,
+    //     method: 'DELETE',
+    //   }),
+    //   invalidatesTags: ['Medicos'],
+    // }),
 
-    // Especialidades
-    getEspecialidades: builder.query({
-      query: () => '/especialidades',
-      providesTags: ['Especialidades'],
-    }),
+    // DESATIVADO - Especialidades (migração para turismo)
+    // getEspecialidades: builder.query({
+    //   query: () => '/especialidades',
+    //   providesTags: ['Especialidades'],
+    // }),
 
-    // Staging
-    getStaging: builder.query({
-      query: (params) => ({
-        url: '/staging',
-        params,
-      }),
-      providesTags: ['Staging'],
-    }),
+    // DESATIVADO - Staging (migração para turismo)
+    // getStaging: builder.query({
+    //   query: (params) => ({
+    //     url: '/staging',
+    //     params,
+    //   }),
+    //   providesTags: ['Staging'],
+    // }),
 
-    getStagingById: builder.query({
-      query: (id) => `/staging/${id}`,
-      providesTags: ['Staging'],
-    }),
+    // getStagingById: builder.query({
+    //   query: (id) => `/staging/${id}`,
+    //   providesTags: ['Staging'],
+    // }),
 
-    enrichStaging: builder.mutation({
-      query: ({ id, ...data }) => ({
-        url: `/staging/${id}/enrich`,
-        method: 'PUT',
-        body: data,
-      }),
-      invalidatesTags: ['Staging'],
-    }),
+    // enrichStaging: builder.mutation({
+    //   query: ({ id, ...data }) => ({
+    //     url: `/staging/${id}/enrich`,
+    //     method: 'PUT',
+    //     body: data,
+    //   }),
+    //   invalidatesTags: ['Staging'],
+    // }),
 
-    validateStaging: builder.mutation({
-      query: (id) => ({
-        url: `/staging/${id}/validate`,
-        method: 'POST',
-      }),
-      invalidatesTags: ['Staging', 'Unidades'],
-    }),
+    // validateStaging: builder.mutation({
+    //   query: (id) => ({
+    //     url: `/staging/${id}/validate`,
+    //     method: 'POST',
+    //   }),
+    //   invalidatesTags: ['Staging', 'Unidades'],
+    // }),
 
     // Users (Superadmin only)
     getUsers: builder.query({
@@ -321,47 +372,47 @@ export const apiSlice = createApi({
       providesTags: ['ETL'],
     }),
 
-    // Normalização de Especialidades
-    getEspecialidadesBrutas: builder.query({
-      query: () => '/especialidades/brutas/list',
-      providesTags: ['Especialidades'],
-    }),
+    // DESATIVADO - Normalização de Especialidades (migração para turismo)
+    // getEspecialidadesBrutas: builder.query({
+    //   query: () => '/especialidades/brutas/list',
+    //   providesTags: ['Especialidades'],
+    // }),
 
-    getMapeamentos: builder.query({
-      query: () => '/especialidades/mapeamentos/list',
-      providesTags: ['Mapeamentos'],
-    }),
+    // getMapeamentos: builder.query({
+    //   query: () => '/especialidades/mapeamentos/list',
+    //   providesTags: ['Mapeamentos'],
+    // }),
 
-    getEstatisticasNormalizacao: builder.query({
-      query: () => '/especialidades/estatisticas/normalizacao',
-      providesTags: ['Mapeamentos'],
-    }),
+    // getEstatisticasNormalizacao: builder.query({
+    //   query: () => '/especialidades/estatisticas/normalizacao',
+    //   providesTags: ['Mapeamentos'],
+    // }),
 
-    createMapeamento: builder.mutation({
-      query: (data) => ({
-        url: '/especialidades/mapear',
-        method: 'POST',
-        body: data,
-      }),
-      invalidatesTags: ['Mapeamentos', 'Especialidades'],
-    }),
+    // createMapeamento: builder.mutation({
+    //   query: (data) => ({
+    //     url: '/especialidades/mapear',
+    //     method: 'POST',
+    //     body: data,
+    //   }),
+    //   invalidatesTags: ['Mapeamentos', 'Especialidades'],
+    // }),
 
-    updateMapeamento: builder.mutation({
-      query: ({ id, body }) => ({
-        url: `/especialidades/mapear/${id}`,
-        method: 'PUT',
-        body,
-      }),
-      invalidatesTags: ['Mapeamentos'],
-    }),
+    // updateMapeamento: builder.mutation({
+    //   query: ({ id, body }) => ({
+    //     url: `/especialidades/mapear/${id}`,
+    //     method: 'PUT',
+    //     body,
+    //   }),
+    //   invalidatesTags: ['Mapeamentos'],
+    // }),
 
-    deleteMapeamento: builder.mutation({
-      query: (id) => ({
-        url: `/especialidades/mapear/${id}`,
-        method: 'DELETE',
-      }),
-      invalidatesTags: ['Mapeamentos', 'Especialidades'],
-    }),
+    // deleteMapeamento: builder.mutation({
+    //   query: (id) => ({
+    //     url: `/especialidades/mapear/${id}`,
+    //     method: 'DELETE',
+    //   }),
+    //   invalidatesTags: ['Mapeamentos', 'Especialidades'],
+    // }),
 
     // Upload de imagem
     uploadUnidadeImagem: builder.mutation({
@@ -451,7 +502,7 @@ export const apiSlice = createApi({
 export const {
   useLoginMutation,
   useGetUnidadesQuery,
-  useGetUnidadeMedicosQuery,
+  // useGetUnidadeMedicosQuery, // DESATIVADO - migração para turismo
   useGetUnidadeRedesSociaisQuery,
   useCreateUnidadeRedeSocialMutation,
   useUpdateUnidadeRedeSocialMutation,
@@ -460,22 +511,29 @@ export const {
   useCreateBairroMutation,
   useUpdateBairroMutation,
   useDeleteBairroMutation,
-  useGetOfertasEnsinoQuery,
-  useCreateOfertaEnsinoMutation,
-  useUpdateOfertaEnsinoMutation,
-  useDeleteOfertaEnsinoMutation,
+  // useGetOfertasEnsinoQuery, // DESATIVADO - migração para turismo
+  // useCreateOfertaEnsinoMutation, // DESATIVADO - migração para turismo
+  // useUpdateOfertaEnsinoMutation, // DESATIVADO - migração para turismo
+  // useDeleteOfertaEnsinoMutation, // DESATIVADO - migração para turismo
+  useGetCategoriasQuery,
+  useGetCategoriasGroupedQuery,
+  useGetCategoriaByIdQuery,
+  useCreateCategoriaMutation,
+  useUpdateCategoriaMutation,
+  useDeleteCategoriaMutation,
+  useGetCategoriasStatsQuery,
   useCreateUnidadeMutation,
   useUpdateUnidadeMutation,
   useDeleteUnidadeMutation,
-  useGetMedicosQuery,
-  useCreateMedicoMutation,
-  useUpdateMedicoMutation,
-  useDeleteMedicoMutation,
-  useGetEspecialidadesQuery,
-  useGetStagingQuery,
-  useGetStagingByIdQuery,
-  useEnrichStagingMutation,
-  useValidateStagingMutation,
+  // useGetMedicosQuery, // DESATIVADO - migração para turismo
+  // useCreateMedicoMutation, // DESATIVADO - migração para turismo
+  // useUpdateMedicoMutation, // DESATIVADO - migração para turismo
+  // useDeleteMedicoMutation, // DESATIVADO - migração para turismo
+  // useGetEspecialidadesQuery, // DESATIVADO - migração para turismo
+  // useGetStagingQuery, // DESATIVADO - migração para turismo
+  // useGetStagingByIdQuery, // DESATIVADO - migração para turismo
+  // useEnrichStagingMutation, // DESATIVADO - migração para turismo
+  // useValidateStagingMutation, // DESATIVADO - migração para turismo
   useGetUsersQuery,
   useCreateUserMutation,
   useUpdateUserMutation,
@@ -485,12 +543,12 @@ export const {
   useGetETLExecutionsQuery,
   useGetETLStatsQuery,
   useGetLastUpdateQuery,
-  useGetEspecialidadesBrutasQuery,
-  useGetMapeamentosQuery,
-  useGetEstatisticasNormalizacaoQuery,
-  useCreateMapeamentoMutation,
-  useUpdateMapeamentoMutation,
-  useDeleteMapeamentoMutation,
+  // useGetEspecialidadesBrutasQuery, // DESATIVADO - migração para turismo
+  // useGetMapeamentosQuery, // DESATIVADO - migração para turismo
+  // useGetEstatisticasNormalizacaoQuery, // DESATIVADO - migração para turismo
+  // useCreateMapeamentoMutation, // DESATIVADO - migração para turismo
+  // useUpdateMapeamentoMutation, // DESATIVADO - migração para turismo
+  // useDeleteMapeamentoMutation, // DESATIVADO - migração para turismo
   useUploadUnidadeImagemMutation,
   useDeleteUnidadeImagemMutation,
   useUploadIconeMutation,
