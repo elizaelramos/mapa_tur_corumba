@@ -171,6 +171,11 @@ export const apiSlice = createApi({
       providesTags: ['Categorias'],
     }),
 
+    getCategoriasHierarchy: builder.query({
+      query: () => '/categorias/hierarchy/admin',
+      providesTags: ['Categorias'],
+    }),
+
     getCategoriaById: builder.query({
       query: (id) => `/categorias/${id}`,
       providesTags: ['Categorias'],
@@ -179,6 +184,24 @@ export const apiSlice = createApi({
     createCategoria: builder.mutation({
       query: (data) => ({
         url: '/categorias',
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['Categorias', 'Unidades'],
+    }),
+
+    createSubcategoria: builder.mutation({
+      query: (data) => ({
+        url: '/categorias/subcategoria',
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['Categorias', 'Unidades'],
+    }),
+
+    createSegmento: builder.mutation({
+      query: (data) => ({
+        url: '/categorias/segmento',
         method: 'POST',
         body: data,
       }),
@@ -205,6 +228,12 @@ export const apiSlice = createApi({
     getCategoriasStats: builder.query({
       query: () => '/categorias/stats/usage',
       providesTags: ['Categorias'],
+    }),
+
+    // Unidades por Categoria
+    getUnidadesByCategoria: builder.query({
+      query: (categoriaId) => `/categorias/${categoriaId}/unidades`,
+      providesTags: ['Unidades'],
     }),
 
     getLastUpdate: builder.query({
@@ -517,11 +546,15 @@ export const {
   // useDeleteOfertaEnsinoMutation, // DESATIVADO - migração para turismo
   useGetCategoriasQuery,
   useGetCategoriasGroupedQuery,
+  useGetCategoriasHierarchyQuery,
   useGetCategoriaByIdQuery,
   useCreateCategoriaMutation,
+  useCreateSubcategoriaMutation,
+  useCreateSegmentoMutation,
   useUpdateCategoriaMutation,
   useDeleteCategoriaMutation,
   useGetCategoriasStatsQuery,
+  useGetUnidadesByCategoriaQuery,
   useCreateUnidadeMutation,
   useUpdateUnidadeMutation,
   useDeleteUnidadeMutation,

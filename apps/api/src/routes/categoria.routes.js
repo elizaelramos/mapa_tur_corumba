@@ -47,6 +47,39 @@ router.get('/', asyncHandler(async (req, res) => {
 }));
 
 /**
+ * GET /api/categorias/:id/unidades
+ * Lista unidades que utilizam a categoria (público)
+ */
+router.get('/:id/unidades', asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const categoriaId = parseInt(id);
+
+  const unidades = await prisma.pROD_UnidadeTuristica.findMany({
+    where: {
+      categorias: { some: { id_categoria: categoriaId } }
+    },
+    include: {
+      bairro: true,
+      categorias: {
+        include: { categoria: true }
+      },
+    },
+    orderBy: { nome: 'asc' }
+  });
+
+  const unidadesFormatted = unidades.map(u => ({
+    ...u,
+    bairro: u.bairro?.nome || null,
+    categorias: u.categorias?.map(c => c.categoria) || [],
+  }));
+
+  res.json({
+    success: true,
+    data: unidadesFormatted,
+  });
+}));
+
+/**
  * GET /api/categorias/:id
  * Busca categoria por ID
  */
@@ -138,6 +171,94 @@ router.get('/grouped/list', asyncHandler(async (req, res) => {
 }));
 
 /**
+ * GET /api/categorias/hierarchy/admin
+ * Retorna hierarquia completa para interface administrativa (Miller Columns)
+ * Inclui contagem de unidades e status ativo/inativo
+ */
+router.get('/hierarchy/admin', asyncHandler(async (req, res) => {
+  const categorias = await prisma.pROD_Categoria.findMany({
+    orderBy: [
+      { ordem: 'asc' },
+      { nome: 'asc' },
+      { subcategoria: 'asc' },
+      { segmento: 'asc' }
+    ],
+    include: {
+      _count: {
+        select: { unidades: true }
+      }
+    }
+  });
+
+  // Estrutura hierárquica para Miller Columns
+  const hierarchy = {
+    categorias: {}, // Nível 1: Categorias principais
+    subcategorias: {}, // Nível 2: Subcategorias por categoria
+    segmentos: {} // Nível 3: Segmentos por subcategoria
+  };
+
+  categorias.forEach(cat => {
+    // Nível 1: Categorias principais (registros onde subcategoria e segmento são null)
+    if (!cat.subcategoria && !cat.segmento) {
+      if (!hierarchy.categorias[cat.nome]) {
+        hierarchy.categorias[cat.nome] = {
+          id: cat.id,
+          nome: cat.nome,
+          ordem: cat.ordem,
+          ativo: cat.ativo,
+          total_unidades: cat._count.unidades
+        };
+      }
+    }
+
+    // Nível 2: Subcategorias (registros onde subcategoria existe mas segmento é null)
+    if (cat.subcategoria && !cat.segmento) {
+      const key = `${cat.nome}`;
+      if (!hierarchy.subcategorias[key]) {
+        hierarchy.subcategorias[key] = [];
+      }
+      hierarchy.subcategorias[key].push({
+        id: cat.id,
+        nome: cat.subcategoria,
+        categoriaPai: cat.nome,
+        ordem: cat.ordem,
+        ativo: cat.ativo,
+        total_unidades: cat._count.unidades
+      });
+    }
+
+    // Nível 3: Segmentos (registros onde segmento existe)
+    if (cat.subcategoria && cat.segmento) {
+      const key = `${cat.nome}|${cat.subcategoria}`;
+      if (!hierarchy.segmentos[key]) {
+        hierarchy.segmentos[key] = [];
+      }
+      hierarchy.segmentos[key].push({
+        id: cat.id,
+        nome: cat.segmento,
+        categoriaPai: cat.nome,
+        subcategoriaPai: cat.subcategoria,
+        ordem: cat.ordem,
+        ativo: cat.ativo,
+        total_unidades: cat._count.unidades
+      });
+    }
+  });
+
+  // Converter objetos para arrays ordenados
+  const result = {
+    categorias: Object.values(hierarchy.categorias).sort((a, b) => a.ordem - b.ordem || a.nome.localeCompare(b.nome)),
+    subcategorias: hierarchy.subcategorias,
+    segmentos: hierarchy.segmentos
+  };
+
+  res.json({
+    success: true,
+    data: result,
+  });
+}));
+
+/**
  * POST /api/categorias
  * Cria nova categoria turística (requer autenticação)
  * Suporta hierarquia de 3 níveis: Categoria > Subcategoria > Segmento
@@ -190,6 +311,117 @@ router.post('/', authenticate, requireAdmin, asyncHandler(async (req, res) => {
   res.status(201).json({
     success: true,
     data: categoria,
+  });
+}));
+
+/**
+ * POST /api/categorias/subcategoria
+ * Cria nova subcategoria vinculada a uma categoria pai (requer autenticação)
+ */
+router.post('/subcategoria', authenticate, requireAdmin, asyncHandler(async (req, res) => {
+  const { categoriaPai, nome, ordem = 0, ativo = true } = req.body;
+
+  if (!categoriaPai || !nome) {
+    return res.status(400).json({
+      success: false,
+      error: 'Categoria pai e nome da subcategoria são obrigatórios',
+    });
+  }
+
+  // Verificar se subcategoria já existe
+  const existing = await prisma.pROD_Categoria.findFirst({
+    where: {
+      nome: categoriaPai,
+      subcategoria: nome,
+      segmento: null
+    }
+  });
+
+  if (existing) {
+    return res.status(400).json({
+      success: false,
+      error: 'Esta subcategoria já existe nesta categoria',
+    });
+  }
+
+  const subcategoria = await prisma.pROD_Categoria.create({
+    data: {
+      nome: categoriaPai,
+      subcategoria: nome,
+      segmento: null,
+      ordem: parseInt(ordem),
+      ativo,
+    },
+  });
+
+  auditLog('CREATE', 'PROD_Categoria', subcategoria.id, req.user.id, req.user.role);
+
+  logger.info('Subcategoria criada', {
+    user_id: req.user.id,
+    subcategoria_id: subcategoria.id,
+    categoria_pai: categoriaPai,
+    subcategoria: nome,
+  });
+
+  res.status(201).json({
+    success: true,
+    data: subcategoria,
+  });
+}));
+
+/**
+ * POST /api/categorias/segmento
+ * Cria novo segmento vinculado a uma subcategoria (requer autenticação)
+ */
+router.post('/segmento', authenticate, requireAdmin, asyncHandler(async (req, res) => {
+  const { categoriaPai, subcategoriaPai, nome, ordem = 0, ativo = true } = req.body;
+
+  if (!categoriaPai || !subcategoriaPai || !nome) {
+    return res.status(400).json({
+      success: false,
+      error: 'Categoria pai, subcategoria pai e nome do segmento são obrigatórios',
+    });
+  }
+
+  // Verificar se segmento já existe
+  const existing = await prisma.pROD_Categoria.findFirst({
+    where: {
+      nome: categoriaPai,
+      subcategoria: subcategoriaPai,
+      segmento: nome
+    }
+  });
+
+  if (existing) {
+    return res.status(400).json({
+      success: false,
+      error: 'Este segmento já existe nesta subcategoria',
+    });
+  }
+
+  const segmento = await prisma.pROD_Categoria.create({
+    data: {
+      nome: categoriaPai,
+      subcategoria: subcategoriaPai,
+      segmento: nome,
+      ordem: parseInt(ordem),
+      ativo,
+    },
+  });
+
+  auditLog('CREATE', 'PROD_Categoria', segmento.id, req.user.id, req.user.role);
+
+  logger.info('Segmento criado', {
+    user_id: req.user.id,
+    segmento_id: segmento.id,
+    categoria_pai: categoriaPai,
+    subcategoria_pai: subcategoriaPai,
+    segmento: nome,
+  });
+
+  res.status(201).json({
+    success: true,
+    data: segmento,
   });
 }));
 
