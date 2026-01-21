@@ -45,6 +45,7 @@ export default function CategoriasPage() {
     form.setFieldsValue({
       nome: categoria.nome,
       subcategoria: categoria.subcategoria || '',
+      segmento: categoria.segmento || '',
       ordem: categoria.ordem,
       ativo: categoria.ativo,
     })
@@ -67,6 +68,7 @@ export default function CategoriasPage() {
       const payload = {
         nome: values.nome,
         subcategoria: values.subcategoria || null,
+        segmento: values.segmento || null,
         ordem: values.ordem || 0,
         ativo: values.ativo ?? true,
       }
@@ -127,9 +129,17 @@ export default function CategoriasPage() {
       title: 'Subcategoria',
       dataIndex: 'subcategoria',
       key: 'subcategoria',
-      width: 250,
+      width: 200,
       render: (text) => text || <Text type="secondary">-</Text>,
       sorter: (a, b) => (a.subcategoria || '').localeCompare(b.subcategoria || ''),
+    },
+    {
+      title: 'Segmento',
+      dataIndex: 'segmento',
+      key: 'segmento',
+      width: 200,
+      render: (text) => text || <Text type="secondary">-</Text>,
+      sorter: (a, b) => (a.segmento || '').localeCompare(b.segmento || ''),
     },
     {
       title: 'Unidades',
@@ -324,20 +334,28 @@ export default function CategoriasPage() {
           </Divider>
 
           <Form.Item
-            label="Nome da Categoria"
+            label="Nome da Categoria (1º nível)"
             name="nome"
             rules={[{ required: true, message: 'Por favor, insira o nome da categoria' }]}
-            tooltip="Categoria principal (ex: 'Onde Passear', 'Organize sua Viagem')"
+            tooltip="Categoria principal - 1º nível (ex: 'Onde Passear', 'Organize sua Viagem')"
           >
             <Input placeholder="Ex: Onde Passear" />
           </Form.Item>
 
           <Form.Item
-            label="Subcategoria"
+            label="Subcategoria (2º nível)"
             name="subcategoria"
             tooltip="Subcategoria opcional (ex: 'Circuitos Culturais', 'Afroturismo')"
           >
             <Input placeholder="Ex: Circuitos Culturais (opcional)" />
+          </Form.Item>
+
+          <Form.Item
+            label="Segmento (3º nível)"
+            name="segmento"
+            tooltip="Segmento específico opcional (3º nível da hierarquia)"
+          >
+            <Input placeholder="Ex: Passeios Temáticos (opcional)" />
           </Form.Item>
 
           <Form.Item

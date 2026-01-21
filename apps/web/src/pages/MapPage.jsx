@@ -287,9 +287,10 @@ export default function MapPage() {
   const [searchValue, setSearchValue] = useState(null)
   const [searchText, setSearchText] = useState('') // Busca unificada por texto
   const [selectedIconUrl, setSelectedIconUrl] = useState(null) // Filtro por ícone da legenda
-  // Filtros de categoria
+  // Filtros de categoria (3 níveis: Categoria > Subcategoria > Segmento)
   const [selectedCategoriaNome, setSelectedCategoriaNome] = useState(null)
   const [selectedSubcategoriaId, setSelectedSubcategoriaId] = useState(null)
+  const [selectedSegmentoId, setSelectedSegmentoId] = useState(null)
 
   // Detectar mobile
   useEffect(() => {
@@ -384,13 +385,21 @@ export default function MapPage() {
       filtered = filtered.filter(unidade => normalizePath(unidade.icone_url) === selNorm)
     }
 
-    // Aplicar filtro por categoria (subcategoria tem prioridade)
-    if (selectedSubcategoriaId) {
+    // Aplicar filtro por categoria (hierarquia: segmento > subcategoria > categoria)
+    if (selectedSegmentoId) {
+      // Filtrar por segmento (3º nível - mais específico)
+      const segId = Number(selectedSegmentoId)
+      filtered = filtered.filter(unidade =>
+        unidade.categorias?.some(cat => cat.id === segId)
+      )
+    } else if (selectedSubcategoriaId) {
+      // Filtrar por subcategoria (2º nível)
       const subId = Number(selectedSubcategoriaId)
       filtered = filtered.filter(unidade =>
         unidade.categorias?.some(cat => cat.id === subId)
       )
     } else if (selectedCategoriaNome) {
+      // Filtrar por categoria (1º nível - mais amplo)
       filtered = filtered.filter(unidade =>
         unidade.categorias?.some(cat => cat.nome === selectedCategoriaNome)
       )
@@ -433,7 +442,7 @@ export default function MapPage() {
       }
       return true
     })
-  }, [unidades, searchType, searchValue, searchText, selectedIconUrl, selectedCategoriaNome, selectedSubcategoriaId])
+  }, [unidades, searchType, searchValue, searchText, selectedIconUrl, selectedCategoriaNome, selectedSubcategoriaId, selectedSegmentoId])
 
   // Calcular estatísticas de busca por texto
   const searchStats = useMemo(() => {
@@ -467,6 +476,7 @@ export default function MapPage() {
     setSelectedOfertaId(null)
     setSelectedCategoriaNome(null)
     setSelectedSubcategoriaId(null)
+    setSelectedSegmentoId(null)
   }
 
   if (isLoading) {
@@ -946,6 +956,7 @@ export default function MapPage() {
                             setSearchValue(null)
                             setSelectedCategoriaNome(null)
                             setSelectedSubcategoriaId(null)
+                            setSelectedSegmentoId(null)
                           }
                         }}
                         onPressEnter={(e) => {
@@ -987,6 +998,7 @@ export default function MapPage() {
                           // Aplicar filtro automático: limpar outros filtros e aplicar categoria
                           setSelectedCategoriaNome(value)
                           setSelectedSubcategoriaId(null)
+                          setSelectedSegmentoId(null)
                           setSearchText('')
                           setSearchType(null)
                           setSearchValue(null)
@@ -1003,7 +1015,7 @@ export default function MapPage() {
                         }}
 
                         allowClear
-                        onClear={() => { setSelectedCategoriaNome(null); setSelectedSubcategoriaId(null); }}
+                        onClear={() => { setSelectedCategoriaNome(null); setSelectedSubcategoriaId(null); setSelectedSegmentoId(null); }}
                         size="large"
                         style={{
                           width: '100%',
@@ -1034,6 +1046,7 @@ export default function MapPage() {
                                 setSearchValue(null)
                                 setSelectedOfertaId(null)
                                 setSelectedIconUrl(null)
+                                setSelectedSegmentoId(null) // Limpar segmento ao mudar subcategoria
 
                                 setSelectedSubcategoriaId(value)
                                 const sub = group.subcategorias.find(s => s.id === value)
@@ -1047,6 +1060,46 @@ export default function MapPage() {
                             >
                               {group.subcategorias.map(sub => (
                                 <Select.Option key={sub.id} value={sub.id}>{sub.nome}</Select.Option>
+                              ))}
+                            </Select>
+                          )
+                        })()
+                      )}
+
+                      {/* Se selecionou subcategoria, verificar se há segmentos (3º nível) */}
+                      {selectedSubcategoriaId && selectedCategoriaNome && (
+                        (() => {
+                          const group = categoriasGrouped.find(g => g.nome === selectedCategoriaNome)
+                          const subcategoria = group?.subcategorias.find(s => s.id === selectedSubcategoriaId)
+                          const segmentos = subcategoria?.segmentos || []
+
+                          // Só mostrar select de segmentos se houver segmentos disponíveis
+                          if (segmentos.length === 0) return null
+
+                          return (
+                            <Select
+                              placeholder="Selecione um segmento (opcional)"
+                              value={selectedSegmentoId}
+                              onChange={(value) => {
+                                // Aplicar filtro de segmento
+                                setSearchText('')
+                                setSearchType(null)
+                                setSearchValue(null)
+                                setSelectedOfertaId(null)
+                                setSelectedIconUrl(null)
+
+                                setSelectedSegmentoId(value)
+                                const seg = segmentos.find(s => s.id === value)
+                                trackFiltroMapa({ tipo: 'segmento', valor: seg ? `${selectedCategoriaNome} — ${subcategoria?.nome} — ${seg.nome}` : '' })
+                              }}
+                              allowClear
+                              size="large"
+                              style={{ width: '100%', marginBottom: '16px', borderRadius: '8px' }}
+                              showSearch
+                              filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}
+                            >
+                              {segmentos.map(seg => (
+                                <Select.Option key={seg.id} value={seg.id}>{seg.nome}</Select.Option>
                               ))}
                             </Select>
                           )
@@ -1073,6 +1126,7 @@ export default function MapPage() {
                               setSearchText('')
                               setSelectedCategoriaNome(null)
                               setSelectedSubcategoriaId(null)
+                              setSelectedSegmentoId(null)
                               setSelectedOfertaId(null)
                               setSelectedIconUrl(null)
 
@@ -1241,6 +1295,14 @@ export default function MapPage() {
                     </div>
                     <div style={{ marginTop: '6px', fontSize: '10px', color: '#888' }}>
                       Última atualização: N/A
+                    </div>
+                    <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #f0f0f0' }}>
+                      <div style={{ fontSize: '10px', color: '#666' }}>
+                        Copyright © Prefeitura Municipal de Corumbá
+                      </div>
+                      <div style={{ marginTop: '4px', fontSize: '10px', color: '#666' }}>
+                        Desenvolvido: Núcleo de Gestão Estratégica e Inovação
+                      </div>
                     </div>
                   </div>
 

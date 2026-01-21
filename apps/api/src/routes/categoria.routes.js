@@ -30,7 +30,8 @@ router.get('/', asyncHandler(async (req, res) => {
     orderBy: [
       { ordem: 'asc' },
       { nome: 'asc' },
-      { subcategoria: 'asc' }
+      { subcategoria: 'asc' },
+      { segmento: 'asc' }
     ],
     include: {
       _count: {
@@ -77,6 +78,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
 /**
  * GET /api/categorias/grouped/list
  * Lista categorias agrupadas por nome principal (útil para filtros)
+ * Hierarquia de 3 níveis: Categoria > Subcategoria > Segmento
  */
 router.get('/grouped/list', asyncHandler(async (req, res) => {
   const categorias = await prisma.pROD_Categoria.findMany({
@@ -84,40 +86,64 @@ router.get('/grouped/list', asyncHandler(async (req, res) => {
     orderBy: [
       { ordem: 'asc' },
       { nome: 'asc' },
-      { subcategoria: 'asc' }
+      { subcategoria: 'asc' },
+      { segmento: 'asc' }
     ]
   });
 
-  // Agrupar por nome principal
+  // Agrupar por nome principal (1º nível) > subcategoria (2º nível) > segmento (3º nível)
   const grouped = categorias.reduce((acc, cat) => {
     if (!acc[cat.nome]) {
       acc[cat.nome] = {
         nome: cat.nome,
-        subcategorias: []
+        subcategorias: {}
       };
     }
+
     if (cat.subcategoria) {
-      acc[cat.nome].subcategorias.push({
-        id: cat.id,
-        nome: cat.subcategoria,
-        ordem: cat.ordem
-      });
+      if (!acc[cat.nome].subcategorias[cat.subcategoria]) {
+        acc[cat.nome].subcategorias[cat.subcategoria] = {
+          nome: cat.subcategoria,
+          segmentos: []
+        };
+      }
+
+      if (cat.segmento) {
+        acc[cat.nome].subcategorias[cat.subcategoria].segmentos.push({
+          id: cat.id,
+          nome: cat.segmento,
+          ordem: cat.ordem
+        });
+      } else {
+        // Se não tem segmento, adiciona a própria subcategoria como item selecionável
+        if (!acc[cat.nome].subcategorias[cat.subcategoria].id) {
+          acc[cat.nome].subcategorias[cat.subcategoria].id = cat.id;
+          acc[cat.nome].subcategorias[cat.subcategoria].ordem = cat.ordem;
+        }
+      }
     }
     return acc;
   }, {});
 
+  // Transformar objeto de subcategorias em array
+  const result = Object.values(grouped).map(cat => ({
+    nome: cat.nome,
+    subcategorias: Object.values(cat.subcategorias)
+  }));
+
   res.json({
     success: true,
-    data: Object.values(grouped),
+    data: result,
   });
 }));
 
 /**
  * POST /api/categorias
  * Cria nova categoria turística (requer autenticação)
+ * Suporta hierarquia de 3 níveis: Categoria > Subcategoria > Segmento
  */
 router.post('/', authenticate, requireAdmin, asyncHandler(async (req, res) => {
-  const { nome, subcategoria, ordem = 0 } = req.body;
+  const { nome, subcategoria, segmento, ordem = 0 } = req.body;
 
   if (!nome) {
     return res.status(400).json({
@@ -130,14 +156,15 @@ router.post('/', authenticate, requireAdmin, asyncHandler(async (req, res) => {
   const existing = await prisma.pROD_Categoria.findFirst({
     where: {
       nome,
-      subcategoria: subcategoria || null
+      subcategoria: subcategoria || null,
+      segmento: segmento || null
     }
   });
 
   if (existing) {
     return res.status(400).json({
       success: false,
-      error: 'Esta combinação de categoria e subcategoria já existe',
+      error: 'Esta combinação de categoria, subcategoria e segmento já existe',
     });
   }
 
@@ -145,6 +172,7 @@ router.post('/', authenticate, requireAdmin, asyncHandler(async (req, res) => {
     data: {
       nome,
       subcategoria: subcategoria || null,
+      segmento: segmento || null,
       ordem: parseInt(ordem),
     },
   });
@@ -156,6 +184,7 @@ router.post('/', authenticate, requireAdmin, asyncHandler(async (req, res) => {
     categoria_id: categoria.id,
     nome: categoria.nome,
     subcategoria: categoria.subcategoria,
+    segmento: categoria.segmento,
   });
 
   res.status(201).json({
@@ -170,7 +199,7 @@ router.post('/', authenticate, requireAdmin, asyncHandler(async (req, res) => {
  */
 router.put('/:id', authenticate, requireAdmin, asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { nome, subcategoria, ativo, ordem } = req.body;
+  const { nome, subcategoria, segmento, ativo, ordem } = req.body;
 
   // Verificar se categoria existe
   const existingCategoria = await prisma.pROD_Categoria.findUnique({
@@ -184,23 +213,25 @@ router.put('/:id', authenticate, requireAdmin, asyncHandler(async (req, res) => 
     });
   }
 
-  // Se mudou nome ou subcategoria, verificar duplicidade
-  if (nome !== undefined || subcategoria !== undefined) {
+  // Se mudou nome, subcategoria ou segmento, verificar duplicidade
+  if (nome !== undefined || subcategoria !== undefined || segmento !== undefined) {
     const checkNome = nome !== undefined ? nome : existingCategoria.nome;
     const checkSubcategoria = subcategoria !== undefined ? subcategoria : existingCategoria.subcategoria;
+    const checkSegmento = segmento !== undefined ? segmento : existingCategoria.segmento;
 
     const duplicate = await prisma.pROD_Categoria.findFirst({
       where: {
         id: { not: parseInt(id) },
         nome: checkNome,
-        subcategoria: checkSubcategoria || null
+        subcategoria: checkSubcategoria || null,
+        segmento: checkSegmento || null
       }
     });
 
     if (duplicate) {
       return res.status(400).json({
         success: false,
-        error: 'Esta combinação de categoria e subcategoria já existe',
+        error: 'Esta combinação de categoria, subcategoria e segmento já existe',
       });
     }
   }
@@ -209,6 +240,7 @@ router.put('/:id', authenticate, requireAdmin, asyncHandler(async (req, res) => 
   const updateData = {};
   if (nome !== undefined) updateData.nome = nome;
   if (subcategoria !== undefined) updateData.subcategoria = subcategoria || null;
+  if (segmento !== undefined) updateData.segmento = segmento || null;
   if (ativo !== undefined) updateData.ativo = ativo;
   if (ordem !== undefined) updateData.ordem = parseInt(ordem);
 
@@ -224,6 +256,7 @@ router.put('/:id', authenticate, requireAdmin, asyncHandler(async (req, res) => 
     categoria_id: categoria.id,
     nome: categoria.nome,
     subcategoria: categoria.subcategoria,
+    segmento: categoria.segmento,
   });
 
   res.json({
@@ -274,6 +307,7 @@ router.delete('/:id', authenticate, requireAdmin, asyncHandler(async (req, res) 
     categoria_id: parseInt(id),
     nome: categoria.nome,
     subcategoria: categoria.subcategoria,
+    segmento: categoria.segmento,
   });
 
   res.json({
@@ -301,6 +335,7 @@ router.get('/stats/usage', asyncHandler(async (req, res) => {
     id: cat.id,
     nome: cat.nome,
     subcategoria: cat.subcategoria,
+    segmento: cat.segmento,
     total_unidades: cat._count.unidades
   }));
 

@@ -29,6 +29,9 @@ const { errorHandler } = require('./middleware/error.middleware');
 const app = express();
 const PORT = process.env.API_PORT || 8008;
 
+// Trust proxy - Necessário quando atrás de um proxy reverso (nginx)
+app.set('trust proxy', true);
+
 // ============================================================================
 // MIDDLEWARE
 // ============================================================================
@@ -74,7 +77,7 @@ const allowedOrigins = [
   'http://localhost:5174',
   'http://localhost:5175',
   'http://localhost:5176',
-  'https://mapasaude.projetoestrategico.app',
+  'https://mapatur.corumba.ms.gov.br',
   process.env.FRONTEND_URL,
 ].filter(Boolean);
 

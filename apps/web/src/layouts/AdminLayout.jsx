@@ -127,8 +127,8 @@ export default function AdminLayout() {
       )}
 
       <Layout>
-        <Header style={{ 
-          padding: isMobile ? '0 12px' : '0 24px', 
+        <Header style={{
+          padding: isMobile ? '0 12px' : '0 24px',
           background: '#fff',
           display: 'flex',
           alignItems: 'center',
@@ -139,29 +139,29 @@ export default function AdminLayout() {
             type="text"
             icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             onClick={() => isMobile ? setMobileMenuOpen(true) : setCollapsed(!collapsed)}
-            style={{ 
-              fontSize: isMobile ? '14px' : '16px', 
-              width: isMobile ? 48 : 64, 
-              height: isMobile ? 48 : 64 
+            style={{
+              fontSize: isMobile ? '14px' : '16px',
+              width: isMobile ? 48 : 64,
+              height: isMobile ? 48 : 64
             }}
           />
           <Dropdown menu={userMenu} placement="bottomRight">
-            <div style={{ 
-              cursor: 'pointer', 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: isMobile ? 4 : 8 
+            <div style={{
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: isMobile ? 4 : 8
             }}>
               <Avatar size={isMobile ? 'small' : 'default'} icon={<UserOutlined />} />
               {!isMobile && <span>{user?.username}</span>}
             </div>
           </Dropdown>
         </Header>
-        <Content style={{ 
-          margin: isMobile ? '12px 8px' : '24px 16px', 
-          padding: isMobile ? 12 : 24, 
-          background: '#fff', 
-          minHeight: 280 
+        <Content style={{
+          margin: isMobile ? '12px 8px' : '24px 16px',
+          padding: isMobile ? 12 : 24,
+          background: '#fff',
+          minHeight: 280
         }}>
           <Outlet />
         </Content>

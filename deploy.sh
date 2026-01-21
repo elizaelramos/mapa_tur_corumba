@@ -8,7 +8,7 @@
 # ============================================================================
 
 # Configurações de caminhos
-CAMINHO_RAIZ="/dados/www/mapatur"
+CAMINHO_RAIZ="/dados/www/mapa_turismo"
 CAMINHO_API="$CAMINHO_RAIZ/apps/api"
 CAMINHO_WEB="$CAMINHO_RAIZ/apps/web"
 CAMINHO_WORKER="$CAMINHO_RAIZ/apps/etl-worker"
@@ -51,17 +51,18 @@ echo "   ✓ Hashes capturados"
 echo ""
 
 # ============================================================================
-# ETAPA 2: Atualizar código via Git
+# ETAPA 2: Atualizar código via Git (DESABILITADO - Deploy local apenas)
 # ============================================================================
-echo "📥 Sincronizando com o repositório Git..."
-cd "$CAMINHO_RAIZ" || exit 1
-
-if git pull; then
-    echo "   ✓ Código atualizado com sucesso"
-else
-    echo "   ❌ Erro ao fazer git pull. Verifique o repositório."
-    exit 1
-fi
+echo "📥 Pulando sincronização com Git (deploy local)..."
+# Comentado conforme solicitação - não fazer git pull
+# cd "$CAMINHO_RAIZ" || exit 1
+# if git pull; then
+#     echo "   ✓ Código atualizado com sucesso"
+# else
+#     echo "   ❌ Erro ao fazer git pull. Verifique o repositório."
+#     exit 1
+# fi
+echo "   ✓ Usando código local atual"
 echo ""
 
 # ============================================================================
@@ -280,14 +281,15 @@ pm2 status
 
 echo ""
 echo "🌐 Acessos:"
-echo "   Frontend: http://localhost:8007"
-echo "   API:      http://localhost:8008"
+echo "   Frontend (Local):  http://localhost:8009"
+echo "   API (Local):       http://localhost:8010"
+echo "   Produção:          https://mapatur.corumba.ms.gov.br"
 echo ""
 echo "📝 Comandos úteis:"
 echo "   Ver logs da API:    pm2 logs $PM2_API_NAME"
 echo "   Ver status PM2:     pm2 status"
 echo "   Monitorar PM2:      pm2 monit"
-echo "   Logs do Nginx:      sudo tail -f /var/log/nginx/mapareme_error.log"
+echo "   Logs do Nginx:      sudo tail -f /var/log/nginx/mapatur_error.log"
 echo ""
-echo "🎓 Sistema: Mapa Turismo - Guia de Turismo de Corumbá"
+echo "🎒 Sistema: Mapa Turismo - Guia de Turismo de Corumbá"
 echo "============================================================"

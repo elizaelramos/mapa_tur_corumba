@@ -74,8 +74,9 @@ model PROD_UnidadeTuristica_RedeSocial {
 
 model PROD_Categoria {
   id            Int                                    @id @default(autoincrement())
-  nome          String                                 @db.VarChar(100)         // "Onde Passear", "Organize sua Viagem"
-  subcategoria  String?                                @db.VarChar(100)         // "Circuitos Culturais", "Afroturismo", etc.
+  nome          String                                 @db.VarChar(100)         // "Onde Passear", "Organize sua Viagem" (1º nível)
+  subcategoria  String?                                @db.VarChar(100)         // "Circuitos Culturais", "Afroturismo", etc. (2º nível)
+  segmento      String?                                @db.VarChar(100)         // Segmento específico (3º nível)
   ativo         Boolean                                @default(true)
   ordem         Int                                    @default(0)
   created_at    DateTime                               @default(now())
@@ -84,8 +85,9 @@ model PROD_Categoria {
   // Relações
   unidades      Junction_UnidadeTuristica_Categoria[]
 
-  @@unique([nome, subcategoria])  // Cada combinação categoria+subcategoria é única
+  @@unique([nome, subcategoria, segmento])  // Cada combinação categoria+subcategoria+segmento é única
   @@index([nome])
+  @@index([subcategoria])
   @@index([ativo])
   @@map("prod_categoria")
 }
