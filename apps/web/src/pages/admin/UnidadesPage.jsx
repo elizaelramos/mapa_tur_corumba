@@ -114,6 +114,11 @@ export default function UnidadesPage() {
   const [tempSubcategoria, setTempSubcategoria] = useState(null)
   const [tempSegmento, setTempSegmento] = useState(null)
 
+  // Estado para controlar abertura dos dropdowns
+  const [openCategoriaSelect, setOpenCategoriaSelect] = useState(false)
+  const [openSubcategoriaSelect, setOpenSubcategoriaSelect] = useState(false)
+  const [openSegmentoSelect, setOpenSegmentoSelect] = useState(false)
+
   // Handle upload de imagem
   const handleUploadImagem = async (file) => {
     setUploading(true)
@@ -724,6 +729,7 @@ export default function UnidadesPage() {
                         setTempCategoria(cat || null)
                         setTempSubcategoria(null)
                         setTempSegmento(null)
+                        setOpenCategoriaSelect(false)
                       }}
                       style={{ width: '100%' }}
                       showSearch
@@ -731,6 +737,8 @@ export default function UnidadesPage() {
                         option.children.toLowerCase().includes(input.toLowerCase())
                       }
                       allowClear
+                      open={openCategoriaSelect}
+                      onDropdownVisibleChange={setOpenCategoriaSelect}
                     >
                       {hierarchy.categorias.map((cat) => (
                         <Select.Option key={cat.id} value={cat.id}>
@@ -754,6 +762,7 @@ export default function UnidadesPage() {
                         const subcat = subcats.find(s => s.id === value)
                         setTempSubcategoria(subcat || null)
                         setTempSegmento(null)
+                        setOpenSubcategoriaSelect(false)
                       }}
                       style={{ width: '100%' }}
                       disabled={!tempCategoria}
@@ -762,6 +771,8 @@ export default function UnidadesPage() {
                         option.children.toLowerCase().includes(input.toLowerCase())
                       }
                       allowClear
+                      open={openSubcategoriaSelect}
+                      onDropdownVisibleChange={setOpenSubcategoriaSelect}
                     >
                       {tempCategoria && (hierarchy.subcategorias[tempCategoria.nome] || []).map((subcat) => (
                         <Select.Option key={subcat.id} value={subcat.id}>
@@ -785,6 +796,7 @@ export default function UnidadesPage() {
                         const segs = hierarchy.segmentos[key] || []
                         const seg = segs.find(s => s.id === value)
                         setTempSegmento(seg || null)
+                        setOpenSegmentoSelect(false)
                       }}
                       style={{ width: '100%' }}
                       disabled={!tempSubcategoria}
@@ -793,6 +805,8 @@ export default function UnidadesPage() {
                         option.children.toLowerCase().includes(input.toLowerCase())
                       }
                       allowClear
+                      open={openSegmentoSelect}
+                      onDropdownVisibleChange={setOpenSegmentoSelect}
                     >
                       {tempCategoria && tempSubcategoria && (
                         hierarchy.segmentos[`${tempCategoria.nome}|${tempSubcategoria.nome}`] || []
