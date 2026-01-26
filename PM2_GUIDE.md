@@ -1,52 +1,116 @@
-# Guia de Uso do PM2 - Mapatur API
+# Guia de Uso do PM2 - Mapatur (API + Frontend)
 
-Este documento explica como gerenciar a API do Mapa de Turismo de Corumbá usando PM2.
+Este documento explica como gerenciar a API e o Frontend do Mapa de Turismo de Corumbá usando PM2.
 
 ## O que é PM2?
 
-PM2 é um gerenciador de processos para aplicações Node.js em produção. Ele garante que sua aplicação:
-- Reinicie automaticamente em caso de falhas
-- Fique rodando em background
-- Monitore uso de memória e CPU
-- Gerencie logs de forma eficiente
+PM2 é um gerenciador de processos para aplicações Node.js em produção. Ele garante que suas aplicações:
+- Reiniciem automaticamente em caso de falhas
+- Fiquem rodando em background
+- Monitorem uso de memória e CPU
+- Gerenciem logs de forma eficiente
+
+## Aplicações Gerenciadas
+
+O PM2 gerencia duas aplicações:
+
+1. **mapatur-api** - Backend API (porta 8008)
+2. **mapatur-web** - Frontend React/Vite (porta 8009)
 
 ## Comandos Rápidos
 
-### Iniciar a API
+### Iniciar TODAS as aplicações
 ```bash
 npm run pm2:start
 ```
 
-### Ver status da API
+### Iniciar apenas a API
+```bash
+npm run pm2:start:api
+```
+
+### Iniciar apenas o Frontend
+```bash
+npm run pm2:start:web
+```
+
+### Ver status de todas as aplicações
 ```bash
 npm run pm2:status
 ```
 
-### Ver logs em tempo real
+### Ver logs de todas as aplicações
 ```bash
 npm run pm2:logs
 ```
 
-### Reiniciar a API
+### Ver logs apenas da API
+```bash
+npm run pm2:logs:api
+```
+
+### Ver logs apenas do Frontend
+```bash
+npm run pm2:logs:web
+```
+
+### Reiniciar TODAS as aplicações
 ```bash
 npm run pm2:restart
 ```
 
-### Parar a API
+### Reiniciar apenas a API
+```bash
+npm run pm2:restart:api
+```
+
+### Reiniciar apenas o Frontend
+```bash
+npm run pm2:restart:web
+```
+
+### Parar TODAS as aplicações
 ```bash
 npm run pm2:stop
 ```
 
-### Remover a API do PM2
+### Parar apenas a API
+```bash
+npm run pm2:stop:api
+```
+
+### Parar apenas o Frontend
+```bash
+npm run pm2:stop:web
+```
+
+### Remover TODAS as aplicações do PM2
 ```bash
 npm run pm2:delete
 ```
 
+### Remover apenas a API do PM2
+```bash
+npm run pm2:delete:api
+```
+
+### Remover apenas o Frontend do PM2
+```bash
+npm run pm2:delete:web
+```
+
 ## Configuração de Auto-Restart
 
-A API está configurada para reiniciar automaticamente quando:
+### API (mapatur-api)
+Configurada para reiniciar automaticamente quando:
 - ✅ O processo crashar ou terminar inesperadamente
 - ✅ O uso de memória ultrapassar 500MB
+- ✅ Houver qualquer erro não tratado
+
+### Frontend (mapatur-web)
+Configurado para reiniciar automaticamente quando:
+- ✅ O processo crashar ou terminar inesperadamente
+- ✅ O uso de memória ultrapassar 1GB (Vite pode usar mais memória)
 - ✅ Houver qualquer erro não tratado
 
 ### Configurações de Restart
