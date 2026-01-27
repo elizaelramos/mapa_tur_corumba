@@ -20,6 +20,7 @@ import {
   MailOutlined,
   BookOutlined,
   TagOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons'
 import L from 'leaflet'
 
@@ -652,6 +653,22 @@ export default function MapPage() {
                     }}>
                       <ClockCircleOutlined style={{ marginRight: '8px', marginTop: '4px', fontSize: '16px' }} />
                       <span style={{ flex: 1, whiteSpace: 'pre-line' }}>{selectedUnidade.horario_funcionamento}</span>
+                    </div>
+                  )}
+
+                  {/* Serviços Oferecidos */}
+                  {selectedUnidade.descricao_servicos && (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      marginBottom: '16px',
+                      color: '#666',
+                    }}>
+                      <FileTextOutlined style={{ marginRight: '8px', marginTop: '4px', fontSize: '16px' }} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Serviços Oferecidos</div>
+                        <span style={{ whiteSpace: 'pre-line' }}>{selectedUnidade.descricao_servicos}</span>
+                      </div>
                     </div>
                   )}
 
