@@ -30,6 +30,7 @@ router.get('/', asyncHandler(async (req, res) => {
       { razao_social: { contains: search.trim() } },
       { endereco: { contains: search.trim() } },
       { setor: { contains: search.trim() } },
+      { descricao_servicos: { contains: search.trim() } },
     ];
   }
 

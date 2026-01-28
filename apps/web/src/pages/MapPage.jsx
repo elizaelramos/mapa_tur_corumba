@@ -20,6 +20,7 @@ import {
   MailOutlined,
   BookOutlined,
   TagOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons'
 import L from 'leaflet'
 
@@ -274,6 +275,57 @@ const getRedeSocialIcon = (nomeRede) => {
   }
 }
 
+// Função para normalizar URL de rede social
+const normalizarUrlRedeSocial = (urlPerfil, nomeRede) => {
+  if (!urlPerfil) return null
+
+  const url = urlPerfil.trim()
+
+  // Ignorar placeholders inválidos
+  const invalidPlaceholders = ['x', 'não localizado', 'não localizei', 'não informado', 'n/a', '-']
+  if (invalidPlaceholders.includes(url.toLowerCase())) {
+    return null
+  }
+
+  // Se já tem protocolo, retorna como está
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url
+  }
+
+  // Trata usernames do Instagram (sem www ou .com)
+  if (nomeRede === 'Instagram' && !url.includes('.') && !url.includes('/')) {
+    return `https://www.instagram.com/${url.replace('@', '')}`
+  }
+
+  // Trata usernames do Facebook
+  if (nomeRede === 'Facebook' && !url.includes('.') && !url.includes('/')) {
+    return `https://www.facebook.com/${url}`
+  }
+
+  // Trata usernames do TikTok
+  if (nomeRede === 'TikTok' && !url.includes('.') && !url.includes('/')) {
+    return `https://www.tiktok.com/@${url.replace('@', '')}`
+  }
+
+  // Trata usernames do Twitter/X
+  if ((nomeRede === 'Twitter' || nomeRede === 'X') && !url.includes('.') && !url.includes('/')) {
+    return `https://twitter.com/${url.replace('@', '')}`
+  }
+
+  // Para URLs que começam com www, adiciona https://
+  if (url.startsWith('www.')) {
+    return `https://${url}`
+  }
+
+  // Para outros casos (domínios sem www), adiciona https://
+  if (url.includes('.') && !url.includes(' ')) {
+    return `https://${url}`
+  }
+
+  // Se não se encaixar em nenhum caso, retorna null
+  return null
+}
+
 export default function MapPage() {
   const [selectedUnidade, setSelectedUnidade] = useState(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -310,9 +362,9 @@ export default function MapPage() {
     }
   }, []) // Executa apenas uma vez ao montar
 
-  const { data, isLoading, isError, error } = useGetUnidadesQuery(undefined, {
-    refetchOnMountOrArgChange: 300, // Refetch apenas se dados tiverem mais de 5 minutos
-    refetchOnFocus: false, // Não refetch ao voltar para a aba
+  const { data, isLoading, isError, error } = useGetUnidadesQuery({ limit: 1000 }, {
+    refetchOnMountOrArgChange: 30, // Refetch após 30 segundos (desenvolvimento)
+    refetchOnFocus: true, // Refetch ao voltar para a aba
   })
   const { data: lastUpdateData } = useGetLastUpdateQuery(undefined, {
     refetchOnMountOrArgChange: 300, // Refetch apenas após 5 minutos
@@ -424,7 +476,10 @@ export default function MapPage() {
         // Buscar por "sala de vacina"
         const salaVacinaMatch = (textNormalized.includes('vacina') || textNormalized.includes('sala')) && unidade.sala_vacina
 
-        return nomeMatch || bairroMatch || especialidadeMatch || salaVacinaMatch
+        // Buscar na descrição de serviços
+        const descricaoMatch = normalizeText(unidade.descricao_servicos).includes(textNormalized)
+
+        return nomeMatch || bairroMatch || especialidadeMatch || salaVacinaMatch || descricaoMatch
       })
       return filtered
     }
@@ -453,6 +508,7 @@ export default function MapPage() {
     let byBairro = 0
     let byEspecialidade = 0
     let bySalaVacina = 0
+    let byDescricao = 0
 
     filteredUnidades.forEach(unidade => {
       if (unidade.nome?.toLowerCase().includes(textLower)) byName++
@@ -463,9 +519,10 @@ export default function MapPage() {
       if ((textLower.includes('vacina') || textLower.includes('sala')) && unidade.sala_vacina) {
         bySalaVacina++
       }
+      if (unidade.descricao_servicos?.toLowerCase().includes(textLower)) byDescricao++
     })
 
-    return { byName, byBairro, byEspecialidade, bySalaVacina }
+    return { byName, byBairro, byEspecialidade, bySalaVacina, byDescricao }
   }, [searchText, filteredUnidades])
 
   // Handler para reset da busca
@@ -473,7 +530,6 @@ export default function MapPage() {
     setSearchType(null)
     setSearchValue(null)
     setSearchText('')
-    setSelectedOfertaId(null)
     setSelectedCategoriaNome(null)
     setSelectedSubcategoriaId(null)
     setSelectedSegmentoId(null)
@@ -665,6 +721,22 @@ export default function MapPage() {
                     </div>
                   )}
 
+                  {/* Serviços Oferecidos */}
+                  {selectedUnidade.descricao_servicos && (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      marginBottom: '16px',
+                      color: '#666',
+                    }}>
+                      <FileTextOutlined style={{ marginRight: '8px', marginTop: '4px', fontSize: '16px' }} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Serviços Oferecidos</div>
+                        <span style={{ whiteSpace: 'pre-line' }}>{selectedUnidade.descricao_servicos}</span>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Diretor Responsável */}
                   {selectedUnidade.diretor_responsavel && (
                     <div style={{
@@ -677,6 +749,22 @@ export default function MapPage() {
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: '12px', color: '#999', marginBottom: '2px' }}>Diretor(a) Responsável</div>
                         <div style={{ fontWeight: 'bold', color: '#1890ff', fontSize: '16px' }}>{selectedUnidade.diretor_responsavel}</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Diretor Adjunto */}
+                  {selectedUnidade.diretor_adjunto && (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      marginBottom: '16px',
+                      color: '#666',
+                    }}>
+                      <UserOutlined style={{ marginRight: '8px', marginTop: '4px', fontSize: '16px' }} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '12px', color: '#999', marginBottom: '2px' }}>Diretor(a) Adjunto</div>
+                        <div style={{ fontWeight: 'bold', color: '#1890ff', fontSize: '16px' }}>{selectedUnidade.diretor_adjunto}</div>
                       </div>
                     </div>
                   )}
@@ -830,63 +918,76 @@ export default function MapPage() {
                   <Divider />
 
                   {/* Redes Sociais */}
-                  {selectedUnidade.redes_sociais && selectedUnidade.redes_sociais.length > 0 && (
-                    <div style={{ marginBottom: '24px' }}>
-                      <h3 style={{
-                        fontSize: '16px',
-                        fontWeight: 'bold',
-                        marginBottom: '12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                      }}>
-                        <GlobalOutlined style={{ marginRight: '8px', color: '#1890ff' }} />
-                        Redes Sociais
-                      </h3>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-                        {selectedUnidade.redes_sociais.map((rede) => (
-                          <a
-                            key={rede.id}
-                            href={rede.url_perfil}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              padding: '8px 12px',
-                              backgroundColor: '#f0f7ff',
-                              borderRadius: '6px',
-                              textDecoration: 'none',
-                              color: '#1890ff',
-                              fontSize: '14px',
-                              fontWeight: '500',
-                              transition: 'all 0.3s',
-                              border: '1px solid #d6e4ff',
-                            }}
-                            onClick={() => {
-                              // Rastrear clique em rede social
-                              trackRedeSocialUnidade({
-                                redeSocial: rede.nome_rede,
-                                unidadeId: selectedUnidade.id,
-                                unidadeNome: selectedUnidade.nome,
-                              })
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = '#e6f7ff'
-                              e.currentTarget.style.borderColor = '#1890ff'
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = '#f0f7ff'
-                              e.currentTarget.style.borderColor = '#d6e4ff'
-                            }}
-                          >
-                            {getRedeSocialIcon(rede.nome_rede)}
-                            <span>{rede.nome_rede}</span>
-                          </a>
-                        ))}
+                  {selectedUnidade.redes_sociais && selectedUnidade.redes_sociais.length > 0 && (() => {
+                    // Filtrar apenas redes sociais com URLs válidos
+                    const redesValidas = selectedUnidade.redes_sociais.filter(rede =>
+                      normalizarUrlRedeSocial(rede.url_perfil, rede.nome_rede) !== null
+                    )
+
+                    if (redesValidas.length === 0) return null
+
+                    return (
+                      <div style={{ marginBottom: '24px' }}>
+                        <h3 style={{
+                          fontSize: '16px',
+                          fontWeight: 'bold',
+                          marginBottom: '12px',
+                          display: 'flex',
+                          alignItems: 'center',
+                        }}>
+                          <GlobalOutlined style={{ marginRight: '8px', color: '#1890ff' }} />
+                          Redes Sociais
+                        </h3>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+                          {redesValidas.map((rede) => {
+                            const urlNormalizada = normalizarUrlRedeSocial(rede.url_perfil, rede.nome_rede)
+
+                            return (
+                              <a
+                                key={rede.id}
+                                href={urlNormalizada}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                  padding: '8px 12px',
+                                  backgroundColor: '#f0f7ff',
+                                  borderRadius: '6px',
+                                  textDecoration: 'none',
+                                  color: '#1890ff',
+                                  fontSize: '14px',
+                                  fontWeight: '500',
+                                  transition: 'all 0.3s',
+                                  border: '1px solid #d6e4ff',
+                                }}
+                                onClick={() => {
+                                  // Rastrear clique em rede social
+                                  trackRedeSocialUnidade({
+                                    redeSocial: rede.nome_rede,
+                                    unidadeId: selectedUnidade.id,
+                                    unidadeNome: selectedUnidade.nome,
+                                  })
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.backgroundColor = '#e6f7ff'
+                                  e.currentTarget.style.borderColor = '#1890ff'
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.backgroundColor = '#f0f7ff'
+                                  e.currentTarget.style.borderColor = '#d6e4ff'
+                                }}
+                              >
+                                {getRedeSocialIcon(rede.nome_rede)}
+                                <span>{rede.nome_rede}</span>
+                              </a>
+                            )
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )
+                  })()}
                 </div>
               </div>
             ) : (
@@ -990,7 +1091,7 @@ export default function MapPage() {
                       />
 
                       {/* Filtro por Categoria */}
-                      
+
                       <Select
                         placeholder="Filtrar por categoria"
                         value={selectedCategoriaNome}
@@ -1002,7 +1103,6 @@ export default function MapPage() {
                           setSearchText('')
                           setSearchType(null)
                           setSearchValue(null)
-                          setSelectedOfertaId(null)
                           setSelectedIconUrl(null)
 
                           // Rastrear filtro por categoria principal
@@ -1013,9 +1113,12 @@ export default function MapPage() {
                             })
                           }
                         }}
-
                         allowClear
-                        onClear={() => { setSelectedCategoriaNome(null); setSelectedSubcategoriaId(null); setSelectedSegmentoId(null); }}
+                        onClear={() => {
+                          setSelectedCategoriaNome(null)
+                          setSelectedSubcategoriaId(null)
+                          setSelectedSegmentoId(null)
+                        }}
                         size="large"
                         style={{
                           width: '100%',
@@ -1023,6 +1126,7 @@ export default function MapPage() {
                           borderRadius: '8px',
                         }}
                         suffixIcon={<TagOutlined />}
+                        getPopupContainer={(trigger) => trigger.parentElement}
                       >
                         {categoriasGrouped.map((c) => (
                           <Select.Option key={c.nome} value={c.nome}>
@@ -1044,19 +1148,23 @@ export default function MapPage() {
                                 setSearchText('')
                                 setSearchType(null)
                                 setSearchValue(null)
-                                setSelectedOfertaId(null)
                                 setSelectedIconUrl(null)
                                 setSelectedSegmentoId(null) // Limpar segmento ao mudar subcategoria
 
                                 setSelectedSubcategoriaId(value)
+
                                 const sub = group.subcategorias.find(s => s.id === value)
                                 trackFiltroMapa({ tipo: 'subcategoria', valor: sub ? `${selectedCategoriaNome} — ${sub.nome}` : selectedCategoriaNome })
                               }}
                               allowClear
+                              onClear={() => {
+                                setSelectedSegmentoId(null)
+                              }}
                               size="large"
                               style={{ width: '100%', marginBottom: '16px', borderRadius: '8px' }}
                               showSearch
                               filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}
+                              getPopupContainer={(trigger) => trigger.parentElement}
                             >
                               {group.subcategorias.map(sub => (
                                 <Select.Option key={sub.id} value={sub.id}>{sub.nome}</Select.Option>
@@ -1085,10 +1193,10 @@ export default function MapPage() {
                                 setSearchText('')
                                 setSearchType(null)
                                 setSearchValue(null)
-                                setSelectedOfertaId(null)
                                 setSelectedIconUrl(null)
 
                                 setSelectedSegmentoId(value)
+
                                 const seg = segmentos.find(s => s.id === value)
                                 trackFiltroMapa({ tipo: 'segmento', valor: seg ? `${selectedCategoriaNome} — ${subcategoria?.nome} — ${seg.nome}` : '' })
                               }}
@@ -1097,6 +1205,7 @@ export default function MapPage() {
                               style={{ width: '100%', marginBottom: '16px', borderRadius: '8px' }}
                               showSearch
                               filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}
+                              getPopupContainer={(trigger) => trigger.parentElement}
                             >
                               {segmentos.map(seg => (
                                 <Select.Option key={seg.id} value={seg.id}>{seg.nome}</Select.Option>
@@ -1127,7 +1236,6 @@ export default function MapPage() {
                               setSelectedCategoriaNome(null)
                               setSelectedSubcategoriaId(null)
                               setSelectedSegmentoId(null)
-                              setSelectedOfertaId(null)
                               setSelectedIconUrl(null)
 
                               // Rastrear busca por unidade
@@ -1220,6 +1328,12 @@ export default function MapPage() {
                                 <div>
                                   • <Tag color="green" style={{ fontSize: '11px' }}>{searchStats.byBairro}</Tag>
                                   no bairro
+                                </div>
+                              )}
+                              {searchStats.byDescricao > 0 && (
+                                <div>
+                                  • <Tag color="cyan" style={{ fontSize: '11px' }}>{searchStats.byDescricao}</Tag>
+                                  na descrição de serviços
                                 </div>
                               )}
                               {searchStats.byEspecialidade > 0 && (
