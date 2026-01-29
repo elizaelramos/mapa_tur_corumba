@@ -69,6 +69,36 @@ const getFullImageUrl = (url) => {
   return url
 }
 
+// Helper para formatar telefone automaticamente
+const formatPhone = (value) => {
+  if (!value) return ''
+
+  // Remove todos os caracteres não numéricos
+  let numbers = value.replace(/\D/g, '')
+
+  // Remove zero inicial se houver
+  if (numbers.startsWith('0')) {
+    numbers = numbers.substring(1)
+  }
+
+  // Limita a 11 dígitos (DDD + número)
+  numbers = numbers.substring(0, 11)
+
+  // Formata conforme a quantidade de dígitos
+  if (numbers.length <= 2) {
+    return numbers
+  } else if (numbers.length <= 6) {
+    // (99) 9999
+    return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`
+  } else if (numbers.length <= 10) {
+    // (99) 9999-9999 (fixo)
+    return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 6)}-${numbers.slice(6)}`
+  } else {
+    // (99) 99999-9999 (celular)
+    return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`
+  }
+}
+
 export default function UnidadesPage() {
   const [page, setPage] = useState(1)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -923,13 +953,25 @@ export default function UnidadesPage() {
               key="4"
             >
               <Form.Item label="Telefone" name="telefone">
-                <Input placeholder="(67) 3234-5678" />
+                <Input
+                  placeholder="(67) 3234-5678"
+                  onChange={(e) => {
+                    const formatted = formatPhone(e.target.value)
+                    form.setFieldValue('telefone', formatted)
+                  }}
+                />
               </Form.Item>
 
               <Form.Item label="WhatsApp">
                 <Space.Compact style={{ width: '100%' }}>
                   <Form.Item name="whatsapp" noStyle>
-                    <Input placeholder="(67) 99999-9999" />
+                    <Input
+                      placeholder="(67) 99999-9999"
+                      onChange={(e) => {
+                        const formatted = formatPhone(e.target.value)
+                        form.setFieldValue('whatsapp', formatted)
+                      }}
+                    />
                   </Form.Item>
                   <Button
                     icon={<WhatsAppOutlined />}
