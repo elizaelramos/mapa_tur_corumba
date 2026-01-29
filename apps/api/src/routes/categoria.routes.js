@@ -121,11 +121,19 @@ router.get('/grouped/list', asyncHandler(async (req, res) => {
       { nome: 'asc' },
       { subcategoria: 'asc' },
       { segmento: 'asc' }
-    ]
+    ],
+    include: {
+      _count: {
+        select: { unidades: true }
+      }
+    }
   });
 
+  // Filtrar apenas categorias com unidades vinculadas
+  const categoriasComUnidades = categorias.filter(cat => cat._count.unidades > 0);
+
   // Agrupar por nome principal (1º nível) > subcategoria (2º nível) > segmento (3º nível)
-  const grouped = categorias.reduce((acc, cat) => {
+  const grouped = categoriasComUnidades.reduce((acc, cat) => {
     if (!acc[cat.nome]) {
       acc[cat.nome] = {
         nome: cat.nome,
@@ -197,30 +205,50 @@ router.get('/hierarchy/admin', asyncHandler(async (req, res) => {
     segmentos: {} // Nível 3: Segmentos por subcategoria
   };
 
+  // Normalizar nomes para agrupar variações (ex: "Onde Passear-ok" -> "Onde Passear")
+  const normalizeName = (raw) => {
+    if (!raw && raw !== '') return raw;
+    let s = String(raw).trim();
+    // Remover sufixos comuns como '-ok', '_ok' ou ' ok' no final
+    s = s.replace(/[-_ ]?ok$/i, '');
+    // Remover dois-pontos e espaços finais
+    s = s.replace(/[:\s]+$/g, '');
+    // Colapsar espaços múltiplos
+    s = s.replace(/\s+/g, ' ');
+    return s;
+  };
+
   categorias.forEach(cat => {
+    const nomeCan = normalizeName(cat.nome);
+    const subCan = cat.subcategoria ? normalizeName(cat.subcategoria) : null;
+    const segCan = cat.segmento ? normalizeName(cat.segmento) : null;
+
     // Nível 1: Categorias principais (registros onde subcategoria e segmento são null)
     if (!cat.subcategoria && !cat.segmento) {
-      if (!hierarchy.categorias[cat.nome]) {
-        hierarchy.categorias[cat.nome] = {
+      if (!hierarchy.categorias[nomeCan]) {
+        hierarchy.categorias[nomeCan] = {
           id: cat.id,
-          nome: cat.nome,
+          nome: nomeCan,
           ordem: cat.ordem,
           ativo: cat.ativo,
           total_unidades: cat._count.unidades
         };
+      } else {
+        // somar contagem de unidades caso haja múltiplos registros canônicos
+        hierarchy.categorias[nomeCan].total_unidades += (cat._count.unidades || 0);
       }
     }
 
     // Nível 2: Subcategorias (registros onde subcategoria existe mas segmento é null)
     if (cat.subcategoria && !cat.segmento) {
-      const key = `${cat.nome}`;
+      const key = `${nomeCan}`;
       if (!hierarchy.subcategorias[key]) {
         hierarchy.subcategorias[key] = [];
       }
       hierarchy.subcategorias[key].push({
         id: cat.id,
-        nome: cat.subcategoria,
-        categoriaPai: cat.nome,
+        nome: subCan,
+        categoriaPai: nomeCan,
         ordem: cat.ordem,
         ativo: cat.ativo,
         total_unidades: cat._count.unidades
@@ -229,15 +257,15 @@ router.get('/hierarchy/admin', asyncHandler(async (req, res) => {
 
     // Nível 3: Segmentos (registros onde segmento existe)
     if (cat.subcategoria && cat.segmento) {
-      const key = `${cat.nome}|${cat.subcategoria}`;
+      const key = `${nomeCan}|${subCan}`;
       if (!hierarchy.segmentos[key]) {
         hierarchy.segmentos[key] = [];
       }
       hierarchy.segmentos[key].push({
         id: cat.id,
-        nome: cat.segmento,
-        categoriaPai: cat.nome,
-        subcategoriaPai: cat.subcategoria,
+        nome: segCan,
+        categoriaPai: nomeCan,
+        subcategoriaPai: subCan,
         ordem: cat.ordem,
         ativo: cat.ativo,
         total_unidades: cat._count.unidades
@@ -245,11 +273,42 @@ router.get('/hierarchy/admin', asyncHandler(async (req, res) => {
     }
   });
 
+  // Garantir que exista uma entrada de "categoria principal" para
+  // cada nome de categoria encontrado nos registros. Isso corrige casos
+  // em que existem subcategorias/segmentos para um nome de categoria,
+  // mas não existe o registro pai (subcategoria IS NULL, segmento IS NULL).
+  // Garantir que exista uma entrada de "categoria principal" para cada nome canônico
+  const nomesPresentesCan = new Set(categorias.map(c => normalizeName(c.nome)));
+
+  for (const nome of nomesPresentesCan) {
+    if (!hierarchy.categorias[nome]) {
+      const regs = categorias.filter(c => normalizeName(c.nome) === nome);
+      const total_unidades = regs.reduce((s, r) => s + (r._count?.unidades || 0), 0);
+      const ordem = regs.reduce((min, r) => (r.ordem < min ? r.ordem : min), regs[0].ordem || 0);
+      const ativo = regs.some(r => r.ativo === true);
+      const id = regs.reduce((min, r) => (r.id < min ? r.id : min), regs[0].id);
+
+      hierarchy.categorias[nome] = {
+        id,
+        nome,
+        ordem,
+        ativo,
+        total_unidades
+      };
+    }
+  }
+
   // Converter objetos para arrays ordenados
   const result = {
     categorias: Object.values(hierarchy.categorias).sort((a, b) => a.ordem - b.ordem || a.nome.localeCompare(b.nome)),
-    subcategorias: hierarchy.subcategorias,
-    segmentos: hierarchy.segmentos
+    subcategorias: Object.keys(hierarchy.subcategorias).reduce((acc, key) => {
+      acc[key] = hierarchy.subcategorias[key].sort((a, b) => a.ordem - b.ordem || a.nome.localeCompare(b.nome));
+      return acc;
+    }, {}),
+    segmentos: Object.keys(hierarchy.segmentos).reduce((acc, key) => {
+      acc[key] = hierarchy.segmentos[key].sort((a, b) => a.ordem - b.ordem || a.nome.localeCompare(b.nome));
+      return acc;
+    }, {})
   };
 
   res.json({

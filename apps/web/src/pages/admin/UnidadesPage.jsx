@@ -116,7 +116,7 @@ export default function UnidadesPage() {
   const [form] = Form.useForm()
 
   // API hooks
-  const { data, isLoading } = useGetUnidadesQuery({ page, limit: 20, search: searchTerm })
+  const { data, isLoading } = useGetUnidadesQuery({ page, limit: 20, search: searchTerm, ativo: 'all' })
   const { data: bairrosData } = useGetBairrosQuery({ ativo: true })
   const { data: iconesData } = useGetIconesQuery({ ativo: 'true' })
   const { data: categoriasData } = useGetCategoriasQuery({ ativo: 'true' })

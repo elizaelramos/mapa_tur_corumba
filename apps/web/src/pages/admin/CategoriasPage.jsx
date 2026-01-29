@@ -35,8 +35,8 @@ export default function CategoriasPage() {
   const [viewingCategoria, setViewingCategoria] = useState(null)
 
   // API hooks
-  const { data: hierarchyData, isLoading } = useGetCategoriasHierarchyQuery()
-  const { data: statsData } = useGetCategoriasStatsQuery()
+  const { data: hierarchyData, isLoading, refetch: refetchHierarchy } = useGetCategoriasHierarchyQuery()
+  const { data: statsData, refetch: refetchStats } = useGetCategoriasStatsQuery()
   const { data: categoriaUnidadesData, isLoading: unidadesLoading } = useGetUnidadesByCategoriaQuery(
     viewingCategoria?.id,
     { skip: !viewingCategoria }
@@ -154,12 +154,37 @@ export default function CategoriasPage() {
   const handleSubmit = async (values) => {
     try {
       if (editingItem) {
-        // Edição - sempre usa o endpoint genérico
-        await updateCategoria({
+        // Edição - montar payload correto baseado no tipo de item
+        let payload = {
           id: editingItem.id,
-          ...values
-        }).unwrap()
+          ordem: values.ordem,
+          ativo: values.ativo
+        }
+
+        // Montar hierarquia correta para cada tipo
+        if (modalType === 'categoria') {
+          // Categoria: apenas nome (1º nível)
+          payload.nome = values.nome
+        } else if (modalType === 'subcategoria' && selectedCategoria) {
+          // Subcategoria: nome (categoria pai) + subcategoria (nome editado - 2º nível)
+          payload.nome = selectedCategoria.nome
+          payload.subcategoria = values.nome
+        } else if (modalType === 'segmento' && selectedCategoria && selectedSubcategoria) {
+          // Segmento: nome + subcategoria (pais) + segmento (nome editado - 3º nível)
+          payload.nome = selectedCategoria.nome
+          payload.subcategoria = selectedSubcategoria.nome
+          payload.segmento = values.nome
+        }
+
+        const result = await updateCategoria(payload).unwrap()
         message.success('Item atualizado com sucesso!')
+
+        // Atualizar estados locais com dados editados
+        if (modalType === 'categoria' && selectedCategoria?.id === editingItem.id) {
+          setSelectedCategoria({ ...selectedCategoria, ...result.data })
+        } else if (modalType === 'subcategoria' && selectedSubcategoria?.id === editingItem.id) {
+          setSelectedSubcategoria({ ...selectedSubcategoria, ...result.data })
+        }
       } else {
         // Criação - usa endpoint específico
         if (modalType === 'categoria') {
@@ -184,6 +209,9 @@ export default function CategoriasPage() {
           message.success('Segmento criado com sucesso!')
         }
       }
+
+      // Forçar atualização dos dados
+      await Promise.all([refetchHierarchy(), refetchStats()])
 
       setIsModalOpen(false)
       form.resetFields()

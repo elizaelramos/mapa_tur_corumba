@@ -1256,7 +1256,7 @@ export default function MapPage() {
                               option.children.toLowerCase().includes(input.toLowerCase())
                             }
                           >
-                            {unidades.map((unidade) => (
+                            {filteredUnidades.map((unidade) => (
                               <Select.Option key={unidade.id} value={unidade.id}>
                                 {unidade.nome}
                               </Select.Option>
