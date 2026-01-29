@@ -75,7 +75,9 @@ export default function PublicLayout() {
                 alignSelf: 'center',
                 height: '48px',
                 objectFit: 'contain',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                imageRendering: 'auto',
+                WebkitFontSmoothing: 'antialiased'
               }}
             />
           </a>
@@ -117,7 +119,9 @@ export default function PublicLayout() {
                 display: 'block',
                 alignSelf: 'center',
                 height: '28px',
-                objectFit: 'contain'
+                objectFit: 'contain',
+                imageRendering: 'auto',
+                WebkitFontSmoothing: 'antialiased'
               }}
             />
           </a>

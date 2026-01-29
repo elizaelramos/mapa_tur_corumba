@@ -29,6 +29,9 @@ model PROD_UnidadeTuristica {
   horario_funcionamento  String?                              @db.Text
   imagem_url             String?                              @db.VarChar(500)
   icone_url              String?                              @db.VarChar(500)
+  // Gestão escolar
+  diretor_responsavel    String?                              @db.VarChar(255)
+  diretor_adjunto        String?                              @db.VarChar(255)
   ativo                  Boolean                              @default(true)
   created_at             DateTime                             @default(now())
   updated_at             DateTime                             @updatedAt

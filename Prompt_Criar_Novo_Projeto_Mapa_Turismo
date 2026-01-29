@@ -1,9 +1,0 @@
-Estou no diretório "mapa_turismo_corumba" (cópia de "mapa-reme").
-Copiei estas pastas: apps/web, apps/api, packages/shared, packages/database, scripts, uploads.
-Objetivo: transformar em projeto "Mapa Turismo" com slug "mapatur".
-Ações iniciais que quero: remover .git e iniciar novo repositório, renomear package.json (name/description), substituir "mapa-reme"→"mapa-turismo", rodar npm install, aplicar migrations Prisma.
-Package manager: npm.
-Arquivo .env está com a descrição do banco criado para o novo projeto mapatur, o Banco de dados criado para ess no va aplicação é DB_NAME="mapa_tur".
-Erros/saídas importantes: (vou colar outputs quando chamar).
-Permissões: posso remover histórico Git? sim.
-Próximo passo que quero que você execute: gerar script bash que faça a cópia e as substituições iniciais.
