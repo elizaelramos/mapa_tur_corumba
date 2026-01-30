@@ -69,6 +69,17 @@ const getFullImageUrl = (url) => {
   return url
 }
 
+// Helper para garantir que URL tenha protocolo
+const ensureUrlProtocol = (url) => {
+  if (!url) return ''
+  // Se já tem protocolo, retorna como está
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url
+  }
+  // Adiciona https:// por padrão
+  return `https://${url}`
+}
+
 // Helper para formatar telefone automaticamente
 const formatPhone = (value) => {
   if (!value) return ''
@@ -1131,7 +1142,7 @@ export default function UnidadesPage() {
                           <Button
                             type="link"
                             size="small"
-                            onClick={() => window.open(rede.url_perfil, '_blank')}
+                            onClick={() => window.open(ensureUrlProtocol(rede.url_perfil), '_blank')}
                           >
                             Abrir
                           </Button>,
