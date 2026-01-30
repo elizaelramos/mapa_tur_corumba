@@ -1006,7 +1006,7 @@ export default function MapPage() {
                     Bem-vindo ao Mapa Turismo
                   </h2>
                   <p style={{ fontSize: '16px', color: '#666', lineHeight: 1.6, marginTop: '16px', marginBottom: '24px' }}>
-                    Explore os pontos turísticos de Corumbá.
+                    Explore os pontos, produtos e serviços turíscos de Corumbá - Capital do Pantanal.
                     <br />
                     Clique em um ponto no mapa para ver os detalhes.
                   </p>
