@@ -238,9 +238,15 @@ router.get('/search-terms', authenticate, requireAdmin, asyncHandler(async (req,
     take: parseInt(limit),
   });
 
+  // Converter BigInt para String para serialização JSON
+  const serializedData = searchTerms.map(term => ({
+    ...term,
+    id: term.id.toString(),
+  }));
+
   res.json({
     success: true,
-    data: searchTerms,
+    data: serializedData,
   });
 }));
 
