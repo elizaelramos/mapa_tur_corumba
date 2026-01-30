@@ -19,6 +19,7 @@ const iconeRoutes = require('./routes/icone.routes');
 const auditRoutes = require('./routes/audit.routes');
 const etlRoutes = require('./routes/etl.routes');
 const uploadRoutes = require('./routes/upload.routes');
+const analyticsRoutes = require('./routes/analytics.routes');
 
 const { errorHandler } = require('./middleware/error.middleware');
 
@@ -56,6 +57,15 @@ const loginLimiter = rateLimit({
   max: 5, // 5 tentativas de login
   skipSuccessfulRequests: true,
   message: { success: false, error: 'Muitas tentativas de login. Tente novamente em 15 minutos.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Rate limiter específico para analytics (mais permissivo)
+const analyticsLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minuto
+  max: 100, // 100 eventos por minuto por IP
+  message: { success: false, error: 'Limite de eventos excedido' },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -134,6 +144,7 @@ app.use('/api/icones', iconeRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/etl', etlRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/analytics', analyticsLimiter, analyticsRoutes);
 
 // 404 handler
 app.use((req, res) => {

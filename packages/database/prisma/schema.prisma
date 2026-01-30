@@ -210,3 +210,145 @@ model PROD_Icone {
   @@index([ordem])
   @@map("prod_icone")
 }
+
+// ============================================================================
+// ANALYTICS - Sistema de Analytics Proprietário
+// ============================================================================
+
+// Tabela principal de eventos de analytics
+model ANALYTICS_Event {
+  id                 BigInt          @id @default(autoincrement())
+
+  // Identificação de sessão (anônima)
+  session_id         String          @db.VarChar(100)        // UUID gerado no frontend
+
+  // Tipo de evento
+  event_type         EventType
+
+  // Dados do evento (JSON flexível para diferentes tipos)
+  event_data         String          @db.Text                // JSON com dados específicos do evento
+
+  // Contexto da requisição
+  user_agent         String?         @db.VarChar(500)
+  ip_hash            String?         @db.VarChar(64)         // IP anonimizado (SHA256)
+  referrer           String?         @db.VarChar(500)
+
+  // Timestamp
+  created_at         DateTime        @default(now())
+
+  @@index([event_type])
+  @@index([session_id])
+  @@index([created_at])
+  @@index([event_type, created_at])
+  @@map("analytics_event")
+}
+
+enum EventType {
+  PAGE_VIEW           // Visualização de página
+  SEARCH              // Busca realizada
+  UNIT_VIEW           // Visualização de unidade
+  MAP_CLICK           // Clique no mapa
+  CONTACT_CLICK       // Clique em contato (WhatsApp, Email, Telefone, Como Chegar)
+  SOCIAL_CLICK        // Clique em rede social
+  FILTER_APPLIED      // Filtro aplicado
+  ERROR               // Erro de frontend
+}
+
+// Tabela de sessões agregadas (para performance em queries)
+model ANALYTICS_Session {
+  id                 BigInt          @id @default(autoincrement())
+  session_id         String          @unique @db.VarChar(100)
+
+  // Contadores agregados
+  page_views         Int             @default(0)
+  searches           Int             @default(0)
+  unit_views         Int             @default(0)
+  contacts           Int             @default(0)
+
+  // Primeira e última atividade
+  first_seen         DateTime
+  last_seen          DateTime
+
+  // Duração calculada (segundos)
+  duration_seconds   Int?
+
+  // Dados do navegador
+  user_agent         String?         @db.VarChar(500)
+  ip_hash            String?         @db.VarChar(64)
+
+  @@index([first_seen])
+  @@index([last_seen])
+  @@map("analytics_session")
+}
+
+// Tabela de popularidade de unidades (agregação diária)
+model ANALYTICS_UnitStats {
+  id                 BigInt          @id @default(autoincrement())
+
+  unit_id            Int                                     // ID da unidade
+  date               DateTime        @db.Date                // Data da estatística
+
+  // Métricas
+  views              Int             @default(0)             // Visualizações
+  map_clicks         Int             @default(0)             // Cliques no mapa
+  contacts_whatsapp  Int             @default(0)
+  contacts_phone     Int             @default(0)
+  contacts_email     Int             @default(0)
+  contacts_directions Int            @default(0)             // Como chegar
+  social_clicks      Int             @default(0)
+
+  // Taxa de conversão calculada
+  conversion_rate    Decimal?        @db.Decimal(5, 2)       // % (views → contacts)
+
+  created_at         DateTime        @default(now())
+  updated_at         DateTime        @updatedAt
+
+  @@unique([unit_id, date])
+  @@index([date])
+  @@index([unit_id])
+  @@index([views])
+  @@index([conversion_rate])
+  @@map("analytics_unit_stats")
+}
+
+// Tabela de buscas populares (agregação)
+model ANALYTICS_SearchStats {
+  id                 BigInt          @id @default(autoincrement())
+
+  search_term        String          @db.VarChar(255)
+  search_type        String          @db.VarChar(50)         // 'texto_livre', 'unidade', 'categoria', etc.
+
+  count              Int             @default(1)
+  last_searched      DateTime        @default(now())
+
+  @@unique([search_term, search_type])
+  @@index([count])
+  @@index([last_searched])
+  @@map("analytics_search_stats")
+}
+
+// Tabela de performance técnica
+model ANALYTICS_Performance {
+  id                 BigInt          @id @default(autoincrement())
+
+  metric_type        PerformanceMetric
+  metric_value       Decimal         @db.Decimal(10, 2)      // Valor numérico
+  metric_unit        String          @db.VarChar(20)         // 'ms', 'bytes', 'count'
+
+  // Contexto
+  page               String?         @db.VarChar(255)
+  session_id         String?         @db.VarChar(100)
+
+  created_at         DateTime        @default(now())
+
+  @@index([metric_type])
+  @@index([created_at])
+  @@map("analytics_performance")
+}
+
+enum PerformanceMetric {
+  PAGE_LOAD_TIME
+  API_RESPONSE_TIME
+  ERROR_COUNT
+  NETWORK_LATENCY
+}

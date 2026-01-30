@@ -1,14 +1,56 @@
 /**
- * Google Analytics 4 - Helper de Eventos
+ * Analytics Proprietário - MapaTur
  *
- * Funções utilitárias para rastrear eventos customizados no GA4
+ * Sistema de tracking customizado que envia eventos para API própria
  */
 
-/**
- * Verifica se o gtag está disponível
- */
-const isGtagAvailable = () => {
-  return typeof window !== 'undefined' && typeof window.gtag === 'function';
+// Gerar ou recuperar session_id (UUID v4)
+const getSessionId = () => {
+  let sessionId = sessionStorage.getItem('mapatur_session_id');
+  if (!sessionId) {
+    sessionId = generateUUID();
+    sessionStorage.setItem('mapatur_session_id', sessionId);
+  }
+  return sessionId;
+};
+
+// Gerar UUID v4 simples
+const generateUUID = () => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+};
+
+// Enviar evento para API (assíncrono, não bloqueia UI)
+const sendEvent = async (eventType, eventData) => {
+  try {
+    const payload = {
+      session_id: getSessionId(),
+      event_type: eventType,
+      event_data: eventData,
+    };
+
+    // Usar fetch com keepalive para garantir envio mesmo ao fechar página
+    await fetch('/api/analytics/event', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+      keepalive: true, // Importante para eventos ao sair da página
+    });
+
+    if (import.meta.env.DEV) {
+      console.log('[Analytics] Event tracked:', eventType, eventData);
+    }
+  } catch (error) {
+    // Falha silenciosa - não quebrar UX se analytics falhar
+    if (import.meta.env.DEV) {
+      console.error('[Analytics] Error tracking event:', error);
+    }
+  }
 };
 
 /**
@@ -20,21 +62,15 @@ const isGtagAvailable = () => {
  * @param {number} params.resultados - Número de resultados encontrados
  */
 export const trackBusca = ({ tipo, termo, resultados = 0 }) => {
-  if (!isGtagAvailable()) return;
-
-  window.gtag('event', 'busca_realizada', {
-    search_term: termo,
+  sendEvent('SEARCH', {
     search_type: tipo,
+    search_term: termo,
     results_count: resultados,
-    event_category: 'Busca',
-    event_label: `${tipo}: ${termo}`,
   });
-
-  console.log('[Analytics] Busca rastreada:', { tipo, termo, resultados });
 };
 
 /**
- * Rastreia visualização de uma unidade de saúde
+ * Rastreia visualização de uma unidade turística
  *
  * @param {Object} params
  * @param {number} params.unidadeId - ID da unidade
@@ -42,18 +78,11 @@ export const trackBusca = ({ tipo, termo, resultados = 0 }) => {
  * @param {string} params.origem - Origem da visualização ('mapa', 'lista', 'busca')
  */
 export const trackVisualizacaoUnidade = ({ unidadeId, unidadeNome, origem = 'mapa' }) => {
-  if (!isGtagAvailable()) return;
-
-  window.gtag('event', 'visualizacao_unidade', {
-    unidade_id: unidadeId,
-    unidade_nome: unidadeNome,
-    origem: origem,
-    event_category: 'Unidade',
-    event_label: unidadeNome,
-    value: unidadeId,
+  sendEvent('UNIT_VIEW', {
+    unit_id: unidadeId,
+    unit_name: unidadeNome,
+    source: origem,
   });
-
-  console.log('[Analytics] Visualização de unidade rastreada:', { unidadeId, unidadeNome, origem });
 };
 
 /**
@@ -66,40 +95,28 @@ export const trackVisualizacaoUnidade = ({ unidadeId, unidadeNome, origem = 'map
  * @param {number} params.longitude - Longitude da unidade
  */
 export const trackCliqueMapaUnidade = ({ unidadeId, unidadeNome, latitude, longitude }) => {
-  if (!isGtagAvailable()) return;
-
-  window.gtag('event', 'clique_mapa', {
-    unidade_id: unidadeId,
-    unidade_nome: unidadeNome,
+  sendEvent('MAP_CLICK', {
+    unit_id: unidadeId,
+    unit_name: unidadeNome,
     latitude: latitude,
     longitude: longitude,
-    event_category: 'Mapa',
-    event_label: unidadeNome,
   });
-
-  console.log('[Analytics] Clique no mapa rastreado:', { unidadeId, unidadeNome });
 };
 
 /**
- * Rastreia clique em contato (telefone/WhatsApp)
+ * Rastreia clique em contato (telefone/WhatsApp/email/como_chegar)
  *
  * @param {Object} params
- * @param {string} params.tipo - Tipo de contato ('telefone', 'whatsapp')
+ * @param {string} params.tipo - Tipo de contato ('telefone', 'whatsapp', 'email', 'como_chegar')
  * @param {number} params.unidadeId - ID da unidade
  * @param {string} params.unidadeNome - Nome da unidade
  */
 export const trackContatoUnidade = ({ tipo, unidadeId, unidadeNome }) => {
-  if (!isGtagAvailable()) return;
-
-  window.gtag('event', 'contato_unidade', {
-    contact_type: tipo,
-    unidade_id: unidadeId,
-    unidade_nome: unidadeNome,
-    event_category: 'Contato',
-    event_label: `${tipo} - ${unidadeNome}`,
+  sendEvent('CONTACT_CLICK', {
+    contact_type: tipo, // 'whatsapp', 'phone', 'email', 'como_chegar'
+    unit_id: unidadeId,
+    unit_name: unidadeNome,
   });
-
-  console.log('[Analytics] Contato rastreado:', { tipo, unidadeId, unidadeNome });
 };
 
 /**
@@ -111,39 +128,27 @@ export const trackContatoUnidade = ({ tipo, unidadeId, unidadeNome }) => {
  * @param {string} params.unidadeNome - Nome da unidade
  */
 export const trackRedeSocialUnidade = ({ redeSocial, unidadeId, unidadeNome }) => {
-  if (!isGtagAvailable()) return;
-
-  window.gtag('event', 'clique_rede_social', {
+  sendEvent('SOCIAL_CLICK', {
     social_network: redeSocial,
-    unidade_id: unidadeId,
-    unidade_nome: unidadeNome,
-    event_category: 'Rede Social',
-    event_label: `${redeSocial} - ${unidadeNome}`,
+    unit_id: unidadeId,
+    unit_name: unidadeNome,
   });
-
-  console.log('[Analytics] Rede social rastreada:', { redeSocial, unidadeId, unidadeNome });
 };
 
 /**
  * Rastreia filtro aplicado no mapa
  *
  * @param {Object} params
- * @param {string} params.tipoFiltro - Tipo do filtro ('especialidade', 'bairro', 'sala_vacina', 'icone')
+ * @param {string} params.tipoFiltro - Tipo do filtro ('especialidade', 'bairro', 'categoria', 'icone')
  * @param {string} params.valorFiltro - Valor do filtro aplicado
  * @param {number} params.resultados - Número de resultados após filtro
  */
 export const trackFiltroMapa = ({ tipoFiltro, valorFiltro, resultados = 0 }) => {
-  if (!isGtagAvailable()) return;
-
-  window.gtag('event', 'filtro_aplicado', {
+  sendEvent('FILTER_APPLIED', {
     filter_type: tipoFiltro,
     filter_value: valorFiltro,
     results_count: resultados,
-    event_category: 'Filtro',
-    event_label: `${tipoFiltro}: ${valorFiltro}`,
   });
-
-  console.log('[Analytics] Filtro aplicado:', { tipoFiltro, valorFiltro, resultados });
 };
 
 /**
@@ -154,16 +159,8 @@ export const trackFiltroMapa = ({ tipoFiltro, valorFiltro, resultados = 0 }) => 
  * @param {string} params.unidadeNome - Nome da unidade
  */
 export const trackAbrirPopup = ({ unidadeId, unidadeNome }) => {
-  if (!isGtagAvailable()) return;
-
-  window.gtag('event', 'abrir_popup', {
-    unidade_id: unidadeId,
-    unidade_nome: unidadeNome,
-    event_category: 'Popup',
-    event_label: unidadeNome,
-  });
-
-  console.log('[Analytics] Popup aberto:', { unidadeId, unidadeNome });
+  // Popup é tratado como visualização de unidade
+  trackVisualizacaoUnidade({ unidadeId, unidadeNome, origem: 'popup' });
 };
 
 /**
@@ -172,15 +169,7 @@ export const trackAbrirPopup = ({ unidadeId, unidadeNome }) => {
  * @param {string} pagina - Nome da página acessada
  */
 export const trackAcessoAdmin = (pagina) => {
-  if (!isGtagAvailable()) return;
-
-  window.gtag('event', 'acesso_admin', {
-    page_name: pagina,
-    event_category: 'Admin',
-    event_label: pagina,
-  });
-
-  console.log('[Analytics] Acesso admin:', { pagina });
+  trackPageView(`/admin/${pagina}`, `Admin - ${pagina}`);
 };
 
 /**
@@ -191,30 +180,27 @@ export const trackAcessoAdmin = (pagina) => {
  * @param {string} params.pagina - Página onde ocorreu o erro
  */
 export const trackErro = ({ mensagem, pagina }) => {
-  if (!isGtagAvailable()) return;
-
-  window.gtag('event', 'exception', {
-    description: mensagem,
+  sendEvent('ERROR', {
+    error_message: mensagem,
     page: pagina,
-    fatal: false,
   });
-
-  console.log('[Analytics] Erro rastreado:', { mensagem, pagina });
 };
 
 /**
- * Rastreia pageview customizado (caso precise além do automático)
+ * Rastreia pageview customizado
  *
  * @param {string} path - Caminho da página
  * @param {string} title - Título da página
  */
 export const trackPageView = (path, title) => {
-  if (!isGtagAvailable()) return;
-
-  window.gtag('event', 'page_view', {
+  sendEvent('PAGE_VIEW', {
     page_path: path,
     page_title: title,
   });
-
-  console.log('[Analytics] Pageview rastreado:', { path, title });
 };
+
+// Rastrear pageview automaticamente ao carregar (opcional)
+if (typeof window !== 'undefined') {
+  // Rastrear primeira pageview
+  trackPageView(window.location.pathname, document.title);
+}

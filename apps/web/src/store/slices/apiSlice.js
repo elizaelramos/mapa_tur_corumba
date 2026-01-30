@@ -30,7 +30,7 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 export const apiSlice = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Unidades', 'Categorias', 'Medicos', 'Especialidades', 'Staging', 'Users', 'Audit', 'ETL', 'Mapeamentos', 'Bairros', 'OfertasEnsino', 'Icones'],
+  tagTypes: ['Unidades', 'Categorias', 'Medicos', 'Especialidades', 'Staging', 'Users', 'Audit', 'ETL', 'Mapeamentos', 'Bairros', 'OfertasEnsino', 'Icones', 'Analytics'],
   keepUnusedDataFor: 30, // Cache por 30 segundos (desenvolvimento)
   endpoints: (builder) => ({
     // Auth
@@ -525,6 +525,47 @@ export const apiSlice = createApi({
       }),
       invalidatesTags: ['Icones'],
     }),
+
+    // Analytics
+    getAnalyticsOverview: builder.query({
+      query: (params) => ({
+        url: '/analytics/overview',
+        params,
+      }),
+      providesTags: ['Analytics'],
+    }),
+
+    getPopularUnits: builder.query({
+      query: (params) => ({
+        url: '/analytics/popular-units',
+        params,
+      }),
+      providesTags: ['Analytics'],
+    }),
+
+    getSearchTerms: builder.query({
+      query: (params) => ({
+        url: '/analytics/search-terms',
+        params,
+      }),
+      providesTags: ['Analytics'],
+    }),
+
+    getConversionFunnel: builder.query({
+      query: (params) => ({
+        url: '/analytics/conversion-funnel',
+        params,
+      }),
+      providesTags: ['Analytics'],
+    }),
+
+    getAnalyticsTimeline: builder.query({
+      query: (params) => ({
+        url: '/analytics/timeline',
+        params,
+      }),
+      providesTags: ['Analytics'],
+    }),
   }),
 })
 
@@ -592,4 +633,9 @@ export const {
   useUpdateIconeMutation,
   useDeleteIconeMutation,
   useReordenarIconesMutation,
+  useGetAnalyticsOverviewQuery,
+  useGetPopularUnitsQuery,
+  useGetSearchTermsQuery,
+  useGetConversionFunnelQuery,
+  useGetAnalyticsTimelineQuery,
 } = apiSlice

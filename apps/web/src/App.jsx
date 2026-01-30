@@ -17,6 +17,7 @@ import CategoriasPage from './pages/admin/CategoriasPage'
 import UsersPage from './pages/admin/UsersPage'
 import AuditPage from './pages/admin/AuditPage'
 import ETLPage from './pages/admin/ETLPage'
+import AnalyticsPage from './pages/admin/AnalyticsPage'
 
 function App() {
   return (
@@ -48,6 +49,7 @@ function App() {
           <Route path="bairros" element={<BairrosPage />} />
           <Route path="ofertas-ensino" element={<OfertasEnsinoPage />} />
           <Route path="categorias" element={<CategoriasPage />} />
+          <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="users" element={<SuperadminRoute><UsersPage /></SuperadminRoute>} />
           <Route path="audit" element={<SuperadminRoute><AuditPage /></SuperadminRoute>} />
           <Route path="etl" element={<SuperadminRoute><ETLPage /></SuperadminRoute>} />

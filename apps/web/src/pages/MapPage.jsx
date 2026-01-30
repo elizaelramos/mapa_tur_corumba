@@ -1216,54 +1216,50 @@ export default function MapPage() {
                       )}
 
                       {/* Select direto para Buscar por Ponto Turístico */}
-                      {!searchText && (
-                        <>
-                          <Select
-                            placeholder="Buscar local"
-                            className="custom-select"
-                            style={{
-                              width: '100%',
-                              marginBottom: '12px',
-                            }}
-                            value={searchValue}
-                            onChange={(value) => {
-                              // Aplicar seleção de unidade diretamente
-                              setSearchType('unidade')
-                              setSearchValue(value)
+                      <Select
+                        placeholder="Buscar local"
+                        className="custom-select"
+                        style={{
+                          width: '100%',
+                          marginBottom: '12px',
+                        }}
+                        value={searchValue}
+                        onChange={(value) => {
+                          // Aplicar seleção de unidade diretamente
+                          setSearchType('unidade')
+                          setSearchValue(value)
 
-                              // Limpar outros filtros
-                              setSearchText('')
-                              setSelectedCategoriaNome(null)
-                              setSelectedSubcategoriaId(null)
-                              setSelectedSegmentoId(null)
-                              setSelectedIconUrl(null)
+                          // Limpar outros filtros
+                          setSearchText('')
+                          setSelectedCategoriaNome(null)
+                          setSelectedSubcategoriaId(null)
+                          setSelectedSegmentoId(null)
+                          setSelectedIconUrl(null)
 
-                              // Rastrear busca por unidade
-                              const unidade = unidades.find(u => u.id === value)
-                              if (unidade) {
-                                trackBusca({
-                                  tipo: 'unidade',
-                                  termo: unidade.nome,
-                                  resultados: 1,
-                                })
-                              }
-                            }}
-                            allowClear
-                            onClear={handleResetSearch}
-                            showSearch
-                            size="large"
-                            filterOption={(input, option) =>
-                              option.children.toLowerCase().includes(input.toLowerCase())
-                            }
-                          >
-                            {filteredUnidades.map((unidade) => (
-                              <Select.Option key={unidade.id} value={unidade.id}>
-                                {unidade.nome}
-                              </Select.Option>
-                            ))}
-                          </Select>
-                        </>
-                      )} 
+                          // Rastrear busca por unidade
+                          const unidade = unidades.find(u => u.id === value)
+                          if (unidade) {
+                            trackBusca({
+                              tipo: 'unidade',
+                              termo: unidade.nome,
+                              resultados: 1,
+                            })
+                          }
+                        }}
+                        allowClear
+                        onClear={handleResetSearch}
+                        showSearch
+                        size="large"
+                        filterOption={(input, option) =>
+                          option.children.toLowerCase().includes(input.toLowerCase())
+                        }
+                      >
+                        {filteredUnidades.map((unidade) => (
+                          <Select.Option key={unidade.id} value={unidade.id}>
+                            {unidade.nome}
+                          </Select.Option>
+                        ))}
+                      </Select> 
 
                     </div>
 

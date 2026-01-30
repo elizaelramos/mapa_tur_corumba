@@ -76,7 +76,12 @@ const formatPhone = (value) => {
   // Remove todos os caracteres não numéricos
   let numbers = value.replace(/\D/g, '')
 
-  // Remove zero inicial se houver
+  // Não formata números curtos (emergência: 193, 190; serviços: 4004, etc.)
+  if (numbers.length <= 4) {
+    return numbers
+  }
+
+  // Remove zero inicial se houver (para números mais longos)
   if (numbers.startsWith('0')) {
     numbers = numbers.substring(1)
   }
