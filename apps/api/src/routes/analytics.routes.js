@@ -105,6 +105,64 @@ router.post('/event', asyncHandler(async (req, res) => {
 // ============================================================================
 
 /**
+ * GET /api/analytics/access-stats
+ * Retorna estatísticas de acessos por período (sessões únicas)
+ */
+router.get('/access-stats', authenticate, requireAdmin, asyncHandler(async (req, res) => {
+  const now = new Date();
+
+  // Início do dia atual (00:00:00)
+  const startOfToday = new Date(now);
+  startOfToday.setHours(0, 0, 0, 0);
+
+  // Início da semana (domingo)
+  const startOfWeek = new Date(now);
+  const dayOfWeek = now.getDay(); // 0 = domingo, 6 = sábado
+  startOfWeek.setDate(now.getDate() - dayOfWeek);
+  startOfWeek.setHours(0, 0, 0, 0);
+
+  // Início do mês
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+
+  // Início do ano
+  const startOfYear = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
+
+  // Contar sessões únicas por período
+  const [today, thisWeek, thisMonth, thisYear] = await Promise.all([
+    prisma.aNALYTICS_Session.count({
+      where: {
+        first_seen: { gte: startOfToday },
+      },
+    }),
+    prisma.aNALYTICS_Session.count({
+      where: {
+        first_seen: { gte: startOfWeek },
+      },
+    }),
+    prisma.aNALYTICS_Session.count({
+      where: {
+        first_seen: { gte: startOfMonth },
+      },
+    }),
+    prisma.aNALYTICS_Session.count({
+      where: {
+        first_seen: { gte: startOfYear },
+      },
+    }),
+  ]);
+
+  res.json({
+    success: true,
+    data: {
+      today,
+      this_week: thisWeek,
+      this_month: thisMonth,
+      this_year: thisYear,
+    },
+  });
+}));
+
+/**
  * GET /api/analytics/overview
  * Retorna overview das estatísticas gerais
  */

@@ -149,13 +149,21 @@ router.get('/stats/summary', asyncHandler(async (req, res) => {
     }),
   ]);
   
+  // Converter BigInt para Number para serialização JSON
+  const serializeGroupBy = (items) => items.map(item => ({
+    ...item,
+    _count: typeof item._count === 'object'
+      ? Object.fromEntries(Object.entries(item._count).map(([k, v]) => [k, Number(v)]))
+      : Number(item._count),
+  }));
+
   res.json({
     success: true,
     data: {
       total: totalLogs,
-      by_operation: byOperation,
-      by_table: byTable,
-      by_user: byUser,
+      by_operation: serializeGroupBy(byOperation),
+      by_table: serializeGroupBy(byTable),
+      by_user: serializeGroupBy(byUser),
     },
   });
 }));

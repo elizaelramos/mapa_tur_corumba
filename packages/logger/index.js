@@ -1,6 +1,7 @@
 const winston = require('winston');
 const DailyRotateFile = require('winston-daily-rotate-file');
 const path = require('path');
+const { prisma } = require('@mapatur/database');
 
 // ============================================================================
 // WINSTON LOGGER - Sistema de logs estruturados (JSON)
@@ -148,17 +149,45 @@ function generateCorrelationId() {
 
 /**
  * Log de operação de auditoria
+ * Registra no banco de dados e nos logs de arquivo
  */
-function auditLog(operation, table, recordId, userId, role, data = {}) {
+async function auditLog(operation, table, recordId, userId, role, data = {}) {
+  // Normalizar operation (CREATE -> INSERT para compatibilidade com enum)
+  const normalizedOperation = operation === 'CREATE' ? 'INSERT' : operation;
+
+  // Log estruturado em arquivo (Winston)
   logger.info('Audit operation', {
     audit: true,
-    operation,
+    operation: normalizedOperation,
     table,
     record_id: recordId,
     user_id: userId,
     role,
     ...data,
   });
+
+  // Salvar no banco de dados
+  try {
+    await prisma.aUDIT_LOG.create({
+      data: {
+        tabela: table,
+        operacao: normalizedOperation,
+        registro_id: recordId,
+        valor_antigo: data.oldValue ? JSON.stringify(data.oldValue) : null,
+        valor_novo: data.newValue || data.updateData ? JSON.stringify(data.newValue || data.updateData) : null,
+        user_id: userId,
+        correlation_id: data.correlation_id || null,
+      },
+    });
+  } catch (error) {
+    // Log de erro mas não propaga (auditoria não deve quebrar a aplicação)
+    logger.error('Falha ao salvar log de auditoria no banco', {
+      error: error.message,
+      operation: normalizedOperation,
+      table,
+      record_id: recordId,
+    });
+  }
 }
 
 /**
