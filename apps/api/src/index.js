@@ -20,6 +20,7 @@ const auditRoutes = require('./routes/audit.routes');
 const etlRoutes = require('./routes/etl.routes');
 const uploadRoutes = require('./routes/upload.routes');
 const analyticsRoutes = require('./routes/analytics.routes');
+const guiaRoutes = require('./routes/guia.routes');
 
 const { errorHandler } = require('./middleware/error.middleware');
 
@@ -145,6 +146,7 @@ app.use('/api/audit', auditRoutes);
 app.use('/api/etl', etlRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/analytics', analyticsLimiter, analyticsRoutes);
+app.use('/api/guias', publicLimiter, guiaRoutes); // Guias turísticos (público com rate limit)
 
 // 404 handler
 app.use((req, res) => {

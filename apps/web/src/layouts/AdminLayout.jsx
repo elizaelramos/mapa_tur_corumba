@@ -16,6 +16,7 @@ import {
   PictureOutlined,
   BookOutlined,
   BarChartOutlined,
+  CompassOutlined,
 } from '@ant-design/icons'
 import { logout } from '../store/slices/authSlice'
 
@@ -52,6 +53,7 @@ export default function AdminLayout() {
     { key: '/admin/unidades', icon: <EnvironmentOutlined />, label: 'Unidades Turísticas' },
     { key: '/admin/categorias', icon: <TagsOutlined />, label: 'Categorias' },
     { key: '/admin/icones', icon: <PictureOutlined />, label: 'Ícones' },
+    { key: '/admin/guias', icon: <CompassOutlined />, label: 'Guias Turísticos' },
     { key: '/admin/bairros', icon: <EnvironmentOutlined />, label: 'Bairros' },
     { key: '/admin/analytics', icon: <BarChartOutlined />, label: 'Analytics' },
     ...(isSuperadmin ? [

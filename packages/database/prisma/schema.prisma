@@ -212,6 +212,27 @@ model PROD_Icone {
 }
 
 // ============================================================================
+// GUIAS TURÍSTICOS - Profissionais de turismo sem localização no mapa
+// ============================================================================
+
+model PROD_GuiaTuristico {
+  id         Int      @id @default(autoincrement())
+  nome       String   @db.VarChar(255)
+  whatsapp   String   @db.VarChar(100)  // Telefone/WhatsApp principal
+  idiomas    String   @db.VarChar(255)  // Ex: "Português, Espanhol, Inglês"
+  foto_url   String?  @db.VarChar(500)  // Foto do guia (opcional)
+  descricao  String?  @db.Text          // Descrição/apresentação do guia
+  ativo      Boolean  @default(true)
+  ordem      Int      @default(0)       // Para ordenação personalizada
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([ativo])
+  @@index([ordem])
+  @@map("prod_guia_turistico")
+}
+
+// ============================================================================
 // ANALYTICS - Sistema de Analytics Proprietário
 // ============================================================================
 

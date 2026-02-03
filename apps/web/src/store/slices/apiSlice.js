@@ -30,7 +30,7 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 export const apiSlice = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Unidades', 'Categorias', 'Medicos', 'Especialidades', 'Staging', 'Users', 'Audit', 'ETL', 'Mapeamentos', 'Bairros', 'OfertasEnsino', 'Icones', 'Analytics'],
+  tagTypes: ['Unidades', 'Categorias', 'Medicos', 'Especialidades', 'Staging', 'Users', 'Audit', 'ETL', 'Mapeamentos', 'Bairros', 'OfertasEnsino', 'Icones', 'Analytics', 'Guias'],
   keepUnusedDataFor: 30, // Cache por 30 segundos (desenvolvimento)
   endpoints: (builder) => ({
     // Auth
@@ -527,6 +527,13 @@ export const apiSlice = createApi({
     }),
 
     // Analytics
+    getAccessStats: builder.query({
+      query: () => ({
+        url: '/analytics/access-stats',
+      }),
+      providesTags: ['Analytics'],
+    }),
+
     getAnalyticsOverview: builder.query({
       query: (params) => ({
         url: '/analytics/overview',
@@ -565,6 +572,51 @@ export const apiSlice = createApi({
         params,
       }),
       providesTags: ['Analytics'],
+    }),
+
+    // ========================================
+    // Guias Turísticos
+    // ========================================
+
+    // Público - Lista guias ativos
+    getGuias: builder.query({
+      query: () => ({ url: '/guias' }),
+      providesTags: ['Guias'],
+    }),
+
+    // Admin - Lista todos os guias
+    getAllGuias: builder.query({
+      query: () => ({ url: '/guias/admin/all' }),
+      providesTags: ['Guias'],
+    }),
+
+    // Admin - Criar guia
+    createGuia: builder.mutation({
+      query: (guia) => ({
+        url: '/guias/admin',
+        method: 'POST',
+        body: guia,
+      }),
+      invalidatesTags: ['Guias'],
+    }),
+
+    // Admin - Atualizar guia
+    updateGuia: builder.mutation({
+      query: ({ id, ...guia }) => ({
+        url: `/guias/admin/${id}`,
+        method: 'PUT',
+        body: guia,
+      }),
+      invalidatesTags: ['Guias'],
+    }),
+
+    // Admin - Deletar guia
+    deleteGuia: builder.mutation({
+      query: (id) => ({
+        url: `/guias/admin/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Guias'],
     }),
   }),
 })
@@ -633,9 +685,15 @@ export const {
   useUpdateIconeMutation,
   useDeleteIconeMutation,
   useReordenarIconesMutation,
+  useGetAccessStatsQuery,
   useGetAnalyticsOverviewQuery,
   useGetPopularUnitsQuery,
   useGetSearchTermsQuery,
   useGetConversionFunnelQuery,
   useGetAnalyticsTimelineQuery,
+  useGetGuiasQuery,
+  useGetAllGuiasQuery,
+  useCreateGuiaMutation,
+  useUpdateGuiaMutation,
+  useDeleteGuiaMutation,
 } = apiSlice

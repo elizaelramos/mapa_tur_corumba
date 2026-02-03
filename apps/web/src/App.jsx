@@ -11,6 +11,7 @@ import MedicosPage from './pages/admin/MedicosPage'
 import EspecialidadesPage from './pages/admin/EspecialidadesPage'
 import EspecialidadesNormalizacaoPage from './pages/admin/EspecialidadesNormalizacaoPage'
 import IconesPage from './pages/admin/IconesPage'
+import GuiasPage from './pages/admin/GuiasPage'
 import BairrosPage from './pages/admin/BairrosPage'
 import OfertasEnsinoPage from './pages/admin/OfertasEnsinoPage'
 import CategoriasPage from './pages/admin/CategoriasPage'
@@ -46,6 +47,7 @@ function App() {
           <Route path="especialidades" element={<EspecialidadesPage />} />
           <Route path="especialidades-normalizacao" element={<EspecialidadesNormalizacaoPage />} />
           <Route path="icones" element={<IconesPage />} />
+          <Route path="guias" element={<GuiasPage />} />
           <Route path="bairros" element={<BairrosPage />} />
           <Route path="ofertas-ensino" element={<OfertasEnsinoPage />} />
           <Route path="categorias" element={<CategoriasPage />} />
