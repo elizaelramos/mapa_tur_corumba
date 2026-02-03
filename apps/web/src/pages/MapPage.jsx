@@ -47,10 +47,11 @@ const normalizeText = (text) => {
     .replace(/[\u0300-\u036f]/g, '')
     .trim()
 }
-import { useGetUnidadesQuery, useGetLastUpdateQuery, useGetIconesQuery, useGetCategoriasGroupedQuery } from '../store/slices/apiSlice' 
+import { useGetUnidadesQuery, useGetLastUpdateQuery, useGetIconesQuery, useGetCategoriasGroupedQuery } from '../store/slices/apiSlice'
 import MapLegend from '../components/MapLegend'
+import GuiasTuristicosModal from '../components/GuiasTuristicosModal'
 import 'leaflet/dist/leaflet.css'
-import { trackBusca, trackVisualizacaoUnidade, trackCliqueMapaUnidade, trackContatoUnidade, trackRedeSocialUnidade, trackFiltroMapa } from '../utils/analytics'
+import { trackBusca, trackVisualizacaoUnidade, trackCliqueMapaUnidade, trackContatoUnidade, trackRedeSocialUnidade, trackFiltroMapa, trackPageView } from '../utils/analytics'
 
 // Custom Marker component to handle zoom on click and hover effects
 const CustomMarker = ({ unidade, onClick, customIcon, isSelected }) => {
@@ -251,7 +252,7 @@ const CORUMBA_CONFIG = {
 }
 
 // Imagem padrão a ser usada quando a unidade não possuir imagem própria
-const DEFAULT_UNIDADE_IMAGE = '/uploads/Logo-Prefeitura-Padr--o-1767631304429-148006191.png' 
+const DEFAULT_UNIDADE_IMAGE = '/uploads/imagem_Padrão_Mapas_Carnaval_2026.png' 
 
 // Função auxiliar para obter ícone da rede social
 const getRedeSocialIcon = (nomeRede) => {
@@ -333,6 +334,7 @@ export default function MapPage() {
   const [especialidadeModalVisible, setEspecialidadeModalVisible] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [isZooming, setIsZooming] = useState(false)
+  const [guiasModalVisible, setGuiasModalVisible] = useState(false)
 
   // Estados de busca
   const [searchType, setSearchType] = useState(null) // 'bairro', 'unidade'
@@ -355,6 +357,11 @@ export default function MapPage() {
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
+  // Rastrear pageview ao carregar a página
+  useEffect(() => {
+    trackPageView('/', 'Mapa de Turismo - Corumbá')
+  }, [])
+
   // Iniciar sidebar recolhida no mobile apenas na primeira renderização
   useEffect(() => {
     if (isMobile) {
@@ -362,7 +369,10 @@ export default function MapPage() {
     }
   }, []) // Executa apenas uma vez ao montar
 
-  const { data, isLoading, isError, error } = useGetUnidadesQuery({ limit: 1000 }, {
+  const { data, isLoading, isError, error } = useGetUnidadesQuery({
+    limit: 1000,
+    search: searchText.trim() || undefined, // Envia busca para API
+  }, {
     refetchOnMountOrArgChange: 30, // Refetch após 30 segundos (desenvolvimento)
     refetchOnFocus: true, // Refetch ao voltar para a aba
   })
@@ -457,31 +467,11 @@ export default function MapPage() {
       )
     }
 
-    // Se tem busca por texto, usar ela (prioritária)
+    // Se tem busca por texto, usar apenas resultados da API (já filtrados no backend)
+    // A API busca em: nome, nome_fantasia, razao_social, endereco, setor, descricao_servicos,
+    // subcategorias e segmentos - com normalização de texto (remove hífens, espaços, acentos)
     if (searchText.trim()) {
-      const textNormalized = normalizeText(searchText)
-
-      filtered = filtered.filter(unidade => {
-        // Buscar no nome da unidade
-        const nomeMatch = normalizeText(unidade.nome).includes(textNormalized)
-
-        // Buscar no bairro
-        const bairroMatch = normalizeText(unidade.bairro).includes(textNormalized)
-
-        // Buscar nas especialidades
-        const especialidadeMatch = unidade.especialidades?.some(
-          esp => normalizeText(esp.nome).includes(textNormalized)
-        )
-
-        // Buscar por "sala de vacina"
-        const salaVacinaMatch = (textNormalized.includes('vacina') || textNormalized.includes('sala')) && unidade.sala_vacina
-
-        // Buscar na descrição de serviços
-        const descricaoMatch = normalizeText(unidade.descricao_servicos).includes(textNormalized)
-
-        return nomeMatch || bairroMatch || especialidadeMatch || salaVacinaMatch || descricaoMatch
-      })
-      return filtered
+      return filtered // Retorna resultados da API sem filtrar localmente
     }
 
     // Se não tem busca por texto, usar busca por select (comportamento antigo)
@@ -660,14 +650,24 @@ export default function MapPage() {
                 </div>
 
                 {/* Imagem da Unidade (usa imagem padrão quando não houver imagem própria) */}
-                <div style={{
-                  width: '100%',
-                  height: '200px',
-                  backgroundImage: `url(${apiBaseUrl}${encodeURI(selectedUnidade.imagem_url || DEFAULT_UNIDADE_IMAGE)})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                  backgroundColor: '#f0f0f0', // Fallback color
-                }} />
+                <div
+                  onClick={() => window.open('https://corumba.ms.gov.br/paginas/ver/carnaval-2026', '_blank')}
+                  style={{
+                    width: '100%',
+                    height: '200px',
+                    backgroundImage: `url(${apiBaseUrl}${encodeURI(selectedUnidade.imagem_url || DEFAULT_UNIDADE_IMAGE)})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    backgroundColor: '#f0f0f0', // Fallback color
+                    cursor: 'pointer',
+                    position: 'relative',
+                    transition: 'transform 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                  title="Clique para ver a programação do Carnaval 2026"
+                />
+
 
                 {/* Conteúdo */}
                 <div style={{ padding: '24px' }}>
@@ -994,20 +994,34 @@ export default function MapPage() {
               <div style={{ padding: '24px' }}>
                 <div style={{ textAlign: 'center', paddingTop: '40px' }}>
                   <img
-                    src="/uploads/Logo-da-Prefeitura-de-Corumba-MS.png"
-                    alt="Prefeitura de Corumbá"
+                    src="/uploads/imagem_Padrão_Mapas_Carnaval_2026.png"
+                    alt="Carnaval Corumbá 2026"
+                    onClick={() => window.open('https://corumba.ms.gov.br/paginas/ver/carnaval-2026', '_blank')}
+                    title="Clique para ver a programação do Carnaval 2026"
                     style={{
-                      maxWidth: '180px',
+                      maxWidth: '100%',
+                      width: '100%',
                       height: 'auto',
-                      marginBottom: '24px'
+                      marginBottom: '24px',
+                      cursor: 'pointer',
+                      transition: 'transform 0.2s ease, opacity 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'scale(1.02)';
+                      e.currentTarget.style.opacity = '0.9';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.opacity = '1';
                     }}
                   />
                   <h2 style={{ fontSize: '22px', fontWeight: 'bold', color: '#333' }}>
                     Bem-vindo ao Mapa Turismo
                   </h2>
-                  <p style={{ fontSize: '16px', color: '#666', lineHeight: 1.6, marginTop: '16px', marginBottom: '24px' }}>
+                  <p style={{ fontSize: '16px', color: '#666', lineHeight: 1.6, marginTop: '16px', marginBottom: '8px' }}>
                     Explore os pontos, produtos e serviços turíscos de Corumbá - Capital do Pantanal.
-                    <br />
+                  </p>
+                  <p style={{ fontSize: '14px', color: '#666', lineHeight: 1.6, marginBottom: '24px', fontStyle: 'italic' }}>
                     Clique em um ponto no mapa para ver os detalhes.
                   </p>
 
@@ -1390,9 +1404,44 @@ export default function MapPage() {
                     )}
                   </Card>
 
-                  {/* Rodapé com informações da fonte de dados */}
+                  {/* Botão Guias Turísticos */}
+                  <Button
+                    type="primary"
+                    size="large"
+                    icon={<CompassOutlined style={{ fontSize: '20px' }} />}
+                    onClick={() => setGuiasModalVisible(true)}
+                    style={{
+                      width: '100%',
+                      height: '60px',
+                      marginTop: '24px',
+                      marginBottom: '16px',
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      border: 'none',
+                      borderRadius: '12px',
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '12px',
+                      transition: 'all 0.3s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-3px)';
+                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.5)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
+                    }}
+                  >
+                    <span>🧭 Procuro um Guia Turístico</span>
+                  </Button>
+
+                  {/* Rodapé */}
                   <div style={{
-                    marginTop: '24px',
+                    marginTop: '8px',
                     padding: '12px',
                     fontSize: '11px',
                     color: '#666',
@@ -1400,19 +1449,11 @@ export default function MapPage() {
                     lineHeight: 1.5,
                     borderTop: '1px solid #f0f0f0'
                   }}>
-                    <div style={{ marginBottom: '4px' }}>
-                      Fonte de dados: <strong>Fundação de Turismo do Pantanal</strong>
+                    <div style={{ fontSize: '10px', color: '#666' }}>
+                      Copyright © Prefeitura Municipal de Corumbá
                     </div>
-                    <div style={{ marginTop: '6px', fontSize: '10px', color: '#888' }}>
-                      Última atualização: N/A
-                    </div>
-                    <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #f0f0f0' }}>
-                      <div style={{ fontSize: '10px', color: '#666' }}>
-                        Copyright © Prefeitura Municipal de Corumbá
-                      </div>
-                      <div style={{ marginTop: '4px', fontSize: '10px', color: '#666' }}>
-                        Desenvolvido: Núcleo de Gestão Estratégica e Inovação
-                      </div>
+                    <div style={{ marginTop: '4px', fontSize: '10px', color: '#666' }}>
+                      Desenvolvido: Núcleo de Gestão Estratégica e Inovação
                     </div>
                   </div>
 
@@ -1558,6 +1599,9 @@ export default function MapPage() {
               const isDeselecting = normalizePath(selectedIconUrl) === normalizePath(iconUrl)
               setSelectedIconUrl(isDeselecting ? null : iconUrl)
 
+              // Fechar unidade selecionada e voltar para busca
+              setSelectedUnidade(null)
+
               // Limpar outros filtros ao usar filtro de ícone
               setSearchType(null)
               setSearchValue(null)
@@ -1578,8 +1622,13 @@ export default function MapPage() {
           />
         </div>
 
-
       </div>
+
+      {/* Modal de Guias Turísticos */}
+      <GuiasTuristicosModal
+        visible={guiasModalVisible}
+        onClose={() => setGuiasModalVisible(false)}
+      />
     </>
   )
 }
