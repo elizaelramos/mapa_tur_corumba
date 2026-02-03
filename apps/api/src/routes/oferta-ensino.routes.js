@@ -65,7 +65,7 @@ router.post('/', authenticate, requireAdmin, asyncHandler(async (req, res) => {
     },
   });
 
-  auditLog('CREATE', 'PROD_OfertaEnsino', oferta.id, req.user.id, req.user.role);
+  await auditLog('CREATE', 'PROD_OfertaEnsino', oferta.id, req.user.id, req.user.role);
 
   logger.info('Oferta de ensino created', {
     user_id: req.user.id,
@@ -120,7 +120,7 @@ router.put('/:id', authenticate, requireAdmin, asyncHandler(async (req, res) => 
     data: updateData,
   });
 
-  auditLog('UPDATE', 'PROD_OfertaEnsino', parseInt(id), req.user.id, req.user.role, {
+  await auditLog('UPDATE', 'PROD_OfertaEnsino', parseInt(id), req.user.id, req.user.role, {
     updated_fields: Object.keys(updateData),
   });
 
@@ -149,7 +149,7 @@ router.delete('/:id', authenticate, requireAdmin, asyncHandler(async (req, res) 
     data: { ativo: false },
   });
 
-  auditLog('DELETE', 'PROD_OfertaEnsino', parseInt(id), req.user.id, req.user.role);
+  await auditLog('DELETE', 'PROD_OfertaEnsino', parseInt(id), req.user.id, req.user.role);
 
   logger.info('Oferta de ensino deleted (soft)', {
     user_id: req.user.id,

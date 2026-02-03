@@ -116,7 +116,7 @@ router.post('/', requireSuperadmin, asyncHandler(async (req, res) => {
     },
   });
   
-  auditLog('CREATE', 'User', user.id, req.user.id, req.user.role, {
+  await auditLog('CREATE', 'User', user.id, req.user.id, req.user.role, {
     new_user: user.username,
     new_role: user.role,
   });
@@ -163,7 +163,7 @@ router.put('/:id', requireSuperadmin, asyncHandler(async (req, res) => {
     },
   });
   
-  auditLog('UPDATE', 'User', user.id, req.user.id, req.user.role, {
+  await auditLog('UPDATE', 'User', user.id, req.user.id, req.user.role, {
     updated_fields: Object.keys(updateData),
   });
   
@@ -198,7 +198,7 @@ router.delete('/:id', requireSuperadmin, asyncHandler(async (req, res) => {
     where: { id: parseInt(id) },
   });
   
-  auditLog('DELETE', 'User', parseInt(id), req.user.id, req.user.role);
+  await auditLog('DELETE', 'User', parseInt(id), req.user.id, req.user.role);
   
   logger.info('User deleted', {
     user_id: req.user.id,

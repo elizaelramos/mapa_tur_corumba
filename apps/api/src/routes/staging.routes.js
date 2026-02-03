@@ -292,7 +292,7 @@ router.post('/:id/validate', asyncHandler(async (req, res) => {
     },
   });
 
-  auditLog('VALIDATE_GROUPED', 'STAGING_Info_Origem', parseInt(id), req.user.id, req.user.role, {
+  await auditLog('VALIDATE_GROUPED', 'STAGING_Info_Origem', parseInt(id), req.user.id, req.user.role, {
     promoted_to_prod: prodEscola.id,
     records_grouped: allRecordsFromEscola.length,
     professores_count: professoresMap.size,

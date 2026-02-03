@@ -357,7 +357,7 @@ router.post('/', authenticate, requireAdmin, asyncHandler(async (req, res) => {
     },
   });
 
-  auditLog('CREATE', 'PROD_Categoria', categoria.id, req.user.id, req.user.role);
+  await auditLog('CREATE', 'PROD_Categoria', categoria.id, req.user.id, req.user.role);
 
   logger.info('Categoria criada', {
     user_id: req.user.id,
@@ -413,7 +413,7 @@ router.post('/subcategoria', authenticate, requireAdmin, asyncHandler(async (req
     },
   });
 
-  auditLog('CREATE', 'PROD_Categoria', subcategoria.id, req.user.id, req.user.role);
+  await auditLog('CREATE', 'PROD_Categoria', subcategoria.id, req.user.id, req.user.role);
 
   logger.info('Subcategoria criada', {
     user_id: req.user.id,
@@ -468,7 +468,7 @@ router.post('/segmento', authenticate, requireAdmin, asyncHandler(async (req, re
     },
   });
 
-  auditLog('CREATE', 'PROD_Categoria', segmento.id, req.user.id, req.user.role);
+  await auditLog('CREATE', 'PROD_Categoria', segmento.id, req.user.id, req.user.role);
 
   logger.info('Segmento criado', {
     user_id: req.user.id,
@@ -540,7 +540,7 @@ router.put('/:id', authenticate, requireAdmin, asyncHandler(async (req, res) => 
     data: updateData,
   });
 
-  auditLog('UPDATE', 'PROD_Categoria', categoria.id, req.user.id, req.user.role, { updateData });
+  await auditLog('UPDATE', 'PROD_Categoria', categoria.id, req.user.id, req.user.role, { updateData });
 
   logger.info('Categoria atualizada', {
     user_id: req.user.id,
@@ -591,7 +591,7 @@ router.delete('/:id', authenticate, requireAdmin, asyncHandler(async (req, res) 
     where: { id: parseInt(id) },
   });
 
-  auditLog('DELETE', 'PROD_Categoria', parseInt(id), req.user.id, req.user.role);
+  await auditLog('DELETE', 'PROD_Categoria', parseInt(id), req.user.id, req.user.role);
 
   logger.info('Categoria deletada', {
     user_id: req.user.id,

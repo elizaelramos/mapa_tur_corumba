@@ -91,7 +91,7 @@ router.post('/', authenticate, requireAdmin, asyncHandler(async (req, res) => {
     },
   });
 
-  auditLog('CREATE', 'PROD_Professor', professor.id, req.user.id, req.user.role);
+  await auditLog('CREATE', 'PROD_Professor', professor.id, req.user.id, req.user.role);
 
   logger.info('Professor created', {
     user_id: req.user.id,
@@ -123,7 +123,7 @@ router.put('/:id', authenticate, requireAdmin, asyncHandler(async (req, res) => 
     data: updateData,
   });
 
-  auditLog('UPDATE', 'PROD_Professor', parseInt(id), req.user.id, req.user.role, {
+  await auditLog('UPDATE', 'PROD_Professor', parseInt(id), req.user.id, req.user.role, {
     updated_fields: Object.keys(updateData),
   });
 
@@ -150,7 +150,7 @@ router.delete('/:id', authenticate, requireAdmin, asyncHandler(async (req, res) 
     where: { id: parseInt(id) },
   });
 
-  auditLog('DELETE', 'PROD_Professor', parseInt(id), req.user.id, req.user.role);
+  await auditLog('DELETE', 'PROD_Professor', parseInt(id), req.user.id, req.user.role);
 
   logger.info('Professor deleted', {
     user_id: req.user.id,

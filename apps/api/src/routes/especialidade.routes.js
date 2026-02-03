@@ -103,7 +103,7 @@ router.post('/', authenticate, requireAdmin, asyncHandler(async (req, res) => {
     data: { nome: nome.toUpperCase() },
   });
   
-  auditLog('CREATE', 'PROD_Especialidade', especialidade.id, req.user.id, req.user.role);
+  await auditLog('CREATE', 'PROD_Especialidade', especialidade.id, req.user.id, req.user.role);
   
   logger.info('Especialidade created', {
     user_id: req.user.id,
@@ -134,7 +134,7 @@ router.put('/:id', authenticate, requireAdmin, asyncHandler(async (req, res) => 
     data: updateData,
   });
   
-  auditLog('UPDATE', 'PROD_Especialidade', parseInt(id), req.user.id, req.user.role, {
+  await auditLog('UPDATE', 'PROD_Especialidade', parseInt(id), req.user.id, req.user.role, {
     updated_fields: Object.keys(updateData),
   });
   
@@ -161,7 +161,7 @@ router.delete('/:id', authenticate, requireAdmin, asyncHandler(async (req, res) 
     where: { id: parseInt(id) },
   });
 
-  auditLog('DELETE', 'PROD_Especialidade', parseInt(id), req.user.id, req.user.role);
+  await auditLog('DELETE', 'PROD_Especialidade', parseInt(id), req.user.id, req.user.role);
 
   logger.info('Especialidade deleted', {
     user_id: req.user.id,

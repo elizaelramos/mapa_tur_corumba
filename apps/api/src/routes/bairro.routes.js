@@ -65,7 +65,7 @@ router.post('/', authenticate, requireAdmin, asyncHandler(async (req, res) => {
     },
   });
 
-  auditLog('CREATE', 'PROD_Bairro', bairro.id, req.user.id, req.user.role);
+  await auditLog('CREATE', 'PROD_Bairro', bairro.id, req.user.id, req.user.role);
 
   logger.info('Bairro created', {
     user_id: req.user.id,
@@ -120,7 +120,7 @@ router.put('/:id', authenticate, requireAdmin, asyncHandler(async (req, res) => 
     data: updateData,
   });
 
-  auditLog('UPDATE', 'PROD_Bairro', parseInt(id), req.user.id, req.user.role, {
+  await auditLog('UPDATE', 'PROD_Bairro', parseInt(id), req.user.id, req.user.role, {
     updated_fields: Object.keys(updateData),
   });
 
@@ -149,7 +149,7 @@ router.delete('/:id', authenticate, requireAdmin, asyncHandler(async (req, res) 
     data: { ativo: false },
   });
 
-  auditLog('DELETE', 'PROD_Bairro', parseInt(id), req.user.id, req.user.role);
+  await auditLog('DELETE', 'PROD_Bairro', parseInt(id), req.user.id, req.user.role);
 
   logger.info('Bairro deleted (soft)', {
     user_id: req.user.id,
