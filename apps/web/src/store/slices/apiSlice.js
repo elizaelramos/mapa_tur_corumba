@@ -414,6 +414,42 @@ export const apiSlice = createApi({
     //   invalidatesTags: ['Mapeamentos', 'Especialidades'],
     // }),
 
+    // Analytics - Dashboard queries
+    getAnalyticsOverview: builder.query({
+      query: ({ start_date, end_date } = {}) => ({
+        url: '/analytics/overview',
+        params: { start_date, end_date },
+      }),
+    }),
+
+    getPopularUnits: builder.query({
+      query: ({ start_date, end_date, limit } = {}) => ({
+        url: '/analytics/popular-units',
+        params: { start_date, end_date, limit },
+      }),
+    }),
+
+    getSearchTerms: builder.query({
+      query: ({ limit } = {}) => ({
+        url: '/analytics/search-terms',
+        params: { limit },
+      }),
+    }),
+
+    getConversionFunnel: builder.query({
+      query: ({ start_date, end_date } = {}) => ({
+        url: '/analytics/conversion-funnel',
+        params: { start_date, end_date },
+      }),
+    }),
+
+    getAnalyticsTimeline: builder.query({
+      query: ({ start_date, end_date } = {}) => ({
+        url: '/analytics/timeline',
+        params: { start_date, end_date },
+      }),
+    }),
+
     // Upload de imagem
     uploadUnidadeImagem: builder.mutation({
       query: (formData) => ({
@@ -543,6 +579,11 @@ export const {
   useGetETLExecutionsQuery,
   useGetETLStatsQuery,
   useGetLastUpdateQuery,
+  useGetAnalyticsOverviewQuery,
+  useGetPopularUnitsQuery,
+  useGetSearchTermsQuery,
+  useGetConversionFunnelQuery,
+  useGetAnalyticsTimelineQuery,
   // useGetEspecialidadesBrutasQuery, // DESATIVADO - migração para turismo
   // useGetMapeamentosQuery, // DESATIVADO - migração para turismo
   // useGetEstatisticasNormalizacaoQuery, // DESATIVADO - migração para turismo
