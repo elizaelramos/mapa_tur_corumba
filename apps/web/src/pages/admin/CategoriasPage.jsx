@@ -1,18 +1,15 @@
 import { useState } from 'react'
 import {
-  Button, Space, Tag, Modal, Form, Input, InputNumber, Switch,
-  message, Popconfirm, Typography, Badge, Card, Empty
+  Table, Button, Space, Tag, Modal, Form, Input, InputNumber, Switch,
+  message, Popconfirm, Typography, Divider, Badge
 } from 'antd'
 import {
   TagsOutlined, PlusOutlined, EditOutlined, DeleteOutlined, BarChartOutlined
 } from '@ant-design/icons'
 import {
-  useGetCategoriasHierarchyQuery,
+  useGetCategoriasQuery,
   useGetCategoriasStatsQuery,
-  useGetUnidadesByCategoriaQuery,
   useCreateCategoriaMutation,
-  useCreateSubcategoriaMutation,
-  useCreateSegmentoMutation,
   useUpdateCategoriaMutation,
   useDeleteCategoriaMutation,
 } from '../../store/slices/apiSlice'
@@ -20,331 +17,199 @@ import {
 const { Title, Text } = Typography
 
 export default function CategoriasPage() {
-  // State para seleções nas colunas Miller
-  const [selectedCategoria, setSelectedCategoria] = useState(null)
-  const [selectedSubcategoria, setSelectedSubcategoria] = useState(null)
-
-  // State para modais
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [modalType, setModalType] = useState(null) // 'categoria', 'subcategoria', 'segmento'
-  const [editingItem, setEditingItem] = useState(null)
+  const [editingCategoria, setEditingCategoria] = useState(null)
   const [form] = Form.useForm()
 
-  // Modal de unidades
-  const [unitsModalOpen, setUnitsModalOpen] = useState(false)
-  const [viewingCategoria, setViewingCategoria] = useState(null)
-
   // API hooks
-  const { data: hierarchyData, isLoading, refetch: refetchHierarchy } = useGetCategoriasHierarchyQuery()
-  const { data: statsData, refetch: refetchStats } = useGetCategoriasStatsQuery()
-  const { data: categoriaUnidadesData, isLoading: unidadesLoading } = useGetUnidadesByCategoriaQuery(
-    viewingCategoria?.id,
-    { skip: !viewingCategoria }
-  )
-
+  const { data, isLoading } = useGetCategoriasQuery()
+  const { data: statsData } = useGetCategoriasStatsQuery()
   const [createCategoria, { isLoading: creating }] = useCreateCategoriaMutation()
-  const [createSubcategoria, { isLoading: creatingSub }] = useCreateSubcategoriaMutation()
-  const [createSegmento, { isLoading: creatingSeg }] = useCreateSegmentoMutation()
   const [updateCategoria, { isLoading: updating }] = useUpdateCategoriaMutation()
   const [deleteCategoria] = useDeleteCategoriaMutation()
 
-  const hierarchy = hierarchyData?.data || { categorias: [], subcategorias: {}, segmentos: {} }
+  const categorias = data?.data || []
   const stats = statsData?.data || []
 
-  // Obter subcategorias da categoria selecionada
-  const subcategorias = selectedCategoria
-    ? (hierarchy.subcategorias[selectedCategoria.nome] || [])
-    : []
-
-  // Obter segmentos da subcategoria selecionada
-  const segmentos = selectedSubcategoria
-    ? (hierarchy.segmentos[`${selectedCategoria.nome}|${selectedSubcategoria.nome}`] || [])
-    : []
-
-  // Funções de manipulação de seleção
-  const handleSelectCategoria = (categoria) => {
-    setSelectedCategoria(categoria)
-    setSelectedSubcategoria(null)
-  }
-
-  const handleSelectSubcategoria = (subcategoria) => {
-    setSelectedSubcategoria(subcategoria)
-  }
-
-  // Funções de criação
-  const handleCreateCategoria = () => {
-    setModalType('categoria')
-    setEditingItem(null)
+  // Handle create new categoria
+  const handleCreate = () => {
+    setEditingCategoria(null)
     form.resetFields()
     form.setFieldsValue({ ativo: true, ordem: 0 })
     setIsModalOpen(true)
   }
 
-  const handleCreateSubcategoria = () => {
-    if (!selectedCategoria) {
-      message.warning('Selecione uma categoria primeiro')
-      return
-    }
-    setModalType('subcategoria')
-    setEditingItem(null)
-    form.resetFields()
-    form.setFieldsValue({ ativo: true, ordem: 0 })
+  // Handle edit categoria
+  const handleEdit = (categoria) => {
+    setEditingCategoria(categoria)
+    form.setFieldsValue({
+      nome: categoria.nome,
+      subcategoria: categoria.subcategoria || '',
+      ordem: categoria.ordem,
+      ativo: categoria.ativo,
+    })
     setIsModalOpen(true)
   }
 
-  const handleCreateSegmento = () => {
-    if (!selectedSubcategoria) {
-      message.warning('Selecione uma subcategoria primeiro')
-      return
-    }
-    setModalType('segmento')
-    setEditingItem(null)
-    form.resetFields()
-    form.setFieldsValue({ ativo: true, ordem: 0 })
-    setIsModalOpen(true)
-  }
-
-  // Funções de edição
-  const handleEdit = (item, type) => {
-    setModalType(type)
-    setEditingItem(item)
-
-    if (type === 'categoria') {
-      form.setFieldsValue({
-        nome: item.nome,
-        ordem: item.ordem,
-        ativo: item.ativo,
-      })
-    } else if (type === 'subcategoria') {
-      form.setFieldsValue({
-        nome: item.nome,
-        ordem: item.ordem,
-        ativo: item.ativo,
-      })
-    } else if (type === 'segmento') {
-      form.setFieldsValue({
-        nome: item.nome,
-        ordem: item.ordem,
-        ativo: item.ativo,
-      })
-    }
-
-    setIsModalOpen(true)
-  }
-
-  // Função de exclusão
-  const handleDelete = async (item) => {
+  // Handle delete categoria
+  const handleDelete = async (id) => {
     try {
-      await deleteCategoria(item.id).unwrap()
-      message.success('Item excluído com sucesso!')
-
-      // Limpar seleções se necessário
-      if (item === selectedCategoria) {
-        setSelectedCategoria(null)
-        setSelectedSubcategoria(null)
-      } else if (item === selectedSubcategoria) {
-        setSelectedSubcategoria(null)
-      }
+      await deleteCategoria(id).unwrap()
+      message.success('Categoria excluída com sucesso!')
     } catch (error) {
-      message.error('Erro ao excluir: ' + (error.data?.error || error.message))
+      message.error('Erro ao excluir categoria: ' + (error.data?.error || error.message))
     }
   }
 
-  // Função de submit do modal
+  // Handle modal submit
   const handleSubmit = async (values) => {
     try {
-      if (editingItem) {
-        // Edição - montar payload correto baseado no tipo de item
-        let payload = {
-          id: editingItem.id,
-          ordem: values.ordem,
-          ativo: values.ativo
-        }
-
-        // Montar hierarquia correta para cada tipo
-        if (modalType === 'categoria') {
-          // Categoria: apenas nome (1º nível)
-          payload.nome = values.nome
-        } else if (modalType === 'subcategoria' && selectedCategoria) {
-          // Subcategoria: nome (categoria pai) + subcategoria (nome editado - 2º nível)
-          payload.nome = selectedCategoria.nome
-          payload.subcategoria = values.nome
-        } else if (modalType === 'segmento' && selectedCategoria && selectedSubcategoria) {
-          // Segmento: nome + subcategoria (pais) + segmento (nome editado - 3º nível)
-          payload.nome = selectedCategoria.nome
-          payload.subcategoria = selectedSubcategoria.nome
-          payload.segmento = values.nome
-        }
-
-        const result = await updateCategoria(payload).unwrap()
-        message.success('Item atualizado com sucesso!')
-
-        // Atualizar estados locais com dados editados
-        if (modalType === 'categoria' && selectedCategoria?.id === editingItem.id) {
-          setSelectedCategoria({ ...selectedCategoria, ...result.data })
-        } else if (modalType === 'subcategoria' && selectedSubcategoria?.id === editingItem.id) {
-          setSelectedSubcategoria({ ...selectedSubcategoria, ...result.data })
-        }
-      } else {
-        // Criação - usa endpoint específico
-        if (modalType === 'categoria') {
-          await createCategoria(values).unwrap()
-          message.success('Categoria criada com sucesso!')
-        } else if (modalType === 'subcategoria') {
-          await createSubcategoria({
-            categoriaPai: selectedCategoria.nome,
-            nome: values.nome,
-            ordem: values.ordem,
-            ativo: values.ativo,
-          }).unwrap()
-          message.success('Subcategoria criada com sucesso!')
-        } else if (modalType === 'segmento') {
-          await createSegmento({
-            categoriaPai: selectedCategoria.nome,
-            subcategoriaPai: selectedSubcategoria.nome,
-            nome: values.nome,
-            ordem: values.ordem,
-            ativo: values.ativo,
-          }).unwrap()
-          message.success('Segmento criado com sucesso!')
-        }
+      const payload = {
+        nome: values.nome,
+        subcategoria: values.subcategoria || null,
+        ordem: values.ordem || 0,
+        ativo: values.ativo ?? true,
       }
 
-      // Forçar atualização dos dados
-      await Promise.all([refetchHierarchy(), refetchStats()])
+      if (editingCategoria) {
+        await updateCategoria({ id: editingCategoria.id, ...payload }).unwrap()
+        message.success('Categoria atualizada com sucesso!')
+      } else {
+        await createCategoria(payload).unwrap()
+        message.success('Categoria criada com sucesso!')
+      }
 
       setIsModalOpen(false)
       form.resetFields()
-      setEditingItem(null)
+      setEditingCategoria(null)
     } catch (error) {
-      message.error('Erro ao salvar: ' + (error.data?.error || error.message))
+      message.error('Erro ao salvar categoria: ' + (error.data?.error || error.message))
     }
   }
 
-  // Funções de visualização de unidades
-  const handleShowUnidades = (item) => {
-    setViewingCategoria(item)
-    setUnitsModalOpen(true)
-  }
-
-  const handleCloseUnidades = () => {
-    setUnitsModalOpen(false)
-    setViewingCategoria(null)
+  // Handle modal cancel
+  const handleCancel = () => {
+    setIsModalOpen(false)
+    form.resetFields()
+    setEditingCategoria(null)
   }
 
   // Get usage count from stats
-  const getUsageCount = (itemId) => {
-    const stat = stats.find(s => s.id === itemId)
+  const getUsageCount = (categoriaId) => {
+    const stat = stats.find(s => s.id === categoriaId)
     return stat?.total_unidades || 0
   }
 
-  // Renderizar item de coluna
-  const renderColumnItem = (item, isSelected, onSelect, onEdit, type) => {
-    const usageCount = getUsageCount(item.id)
-    const canDelete = usageCount === 0
-
-    return (
-      <div
-        key={item.id}
-        onClick={() => onSelect(item)}
-        style={{
-          padding: '12px 16px',
-          marginBottom: '8px',
-          background: isSelected ? '#e6f7ff' : '#fff',
-          border: isSelected ? '2px solid #1890ff' : '1px solid #d9d9d9',
-          borderRadius: '4px',
-          cursor: 'pointer',
-          transition: 'all 0.2s',
-        }}
-        onMouseEnter={(e) => {
-          if (!isSelected) {
-            e.currentTarget.style.borderColor = '#40a9ff'
-            e.currentTarget.style.background = '#f5f5f5'
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (!isSelected) {
-            e.currentTarget.style.borderColor = '#d9d9d9'
-            e.currentTarget.style.background = '#fff'
-          }
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{
-              fontWeight: isSelected ? 600 : 400,
-              marginBottom: '4px',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}>
-              {item.nome}
-            </div>
-            <Space size={4}>
-              <Tag color={item.ativo ? 'green' : 'red'} style={{ margin: 0, fontSize: '11px' }}>
-                {item.ativo ? 'Ativo' : 'Inativo'}
-              </Tag>
-              {usageCount > 0 && (
-                <Badge
-                  count={usageCount}
-                  showZero={false}
-                  style={{ backgroundColor: '#52c41a', fontSize: '11px', cursor: 'pointer' }}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleShowUnidades(item)
-                  }}
-                />
-              )}
-              <Text type="secondary" style={{ fontSize: '11px' }}>
-                Ord: {item.ordem}
-              </Text>
-            </Space>
-          </div>
-          <Space size={4} onClick={(e) => e.stopPropagation()}>
+  // Table columns
+  const columns = [
+    {
+      title: 'ID',
+      dataIndex: 'id',
+      key: 'id',
+      width: 80,
+    },
+    {
+      title: 'Ordem',
+      dataIndex: 'ordem',
+      key: 'ordem',
+      width: 100,
+      sorter: (a, b) => a.ordem - b.ordem,
+    },
+    {
+      title: 'Categoria',
+      dataIndex: 'nome',
+      key: 'nome',
+      width: 250,
+      render: (text) => <Text strong>{text}</Text>,
+      sorter: (a, b) => a.nome.localeCompare(b.nome),
+    },
+    {
+      title: 'Subcategoria',
+      dataIndex: 'subcategoria',
+      key: 'subcategoria',
+      width: 250,
+      render: (text) => text || <Text type="secondary">-</Text>,
+      sorter: (a, b) => (a.subcategoria || '').localeCompare(b.subcategoria || ''),
+    },
+    {
+      title: 'Unidades',
+      key: 'unidades',
+      width: 120,
+      render: (_, record) => {
+        const count = getUsageCount(record.id)
+        return (
+          <Badge
+            count={count}
+            showZero
+            style={{ backgroundColor: count > 0 ? '#52c41a' : '#d9d9d9' }}
+          />
+        )
+      },
+      sorter: (a, b) => getUsageCount(a.id) - getUsageCount(b.id),
+    },
+    {
+      title: 'Status',
+      dataIndex: 'ativo',
+      key: 'ativo',
+      width: 120,
+      render: (ativo) => (
+        <Tag color={ativo ? 'green' : 'red'}>
+          {ativo ? 'Ativo' : 'Inativo'}
+        </Tag>
+      ),
+      filters: [
+        { text: 'Ativo', value: true },
+        { text: 'Inativo', value: false },
+      ],
+      onFilter: (value, record) => record.ativo === value,
+    },
+    {
+      title: 'Ações',
+      key: 'actions',
+      width: 150,
+      render: (_, record) => {
+        const usageCount = getUsageCount(record.id)
+        return (
+          <Space>
             <Button
-              type="text"
-              size="small"
+              type="link"
               icon={<EditOutlined />}
-              onClick={(e) => {
-                e.stopPropagation()
-                onEdit(item, type)
-              }}
-            />
+              onClick={() => handleEdit(record)}
+            >
+              Editar
+            </Button>
             <Popconfirm
               title="Confirmar exclusão"
               description={
                 usageCount > 0
-                  ? `Este item está sendo usado por ${usageCount} unidade(s). Tem certeza?`
-                  : `Tem certeza que deseja excluir "${item.nome}"?`
+                  ? `Esta categoria está sendo usada por ${usageCount} unidade(s). Tem certeza que deseja excluir?`
+                  : `Tem certeza que deseja excluir ${record.nome}?`
               }
-              onConfirm={(e) => {
-                e?.stopPropagation()
-                handleDelete(item)
-              }}
+              onConfirm={() => handleDelete(record.id)}
               okText="Sim"
               cancelText="Não"
-              disabled={!canDelete}
+              disabled={usageCount > 0}
             >
               <Button
-                type="text"
-                size="small"
+                type="link"
                 danger
                 icon={<DeleteOutlined />}
-                disabled={!canDelete}
-                onClick={(e) => e.stopPropagation()}
-              />
+                disabled={usageCount > 0}
+                title={usageCount > 0 ? 'Não é possível excluir categoria em uso' : ''}
+              >
+                Excluir
+              </Button>
             </Popconfirm>
           </Space>
-        </div>
-      </div>
-    )
-  }
+        )
+      },
+    },
+  ]
 
-  // Calcular estatísticas
-  const totalCategorias = hierarchy.categorias.length
-  const totalSubcategorias = Object.values(hierarchy.subcategorias).flat().length
-  const totalSegmentos = Object.values(hierarchy.segmentos).flat().length
-  const totalItens = totalCategorias + totalSubcategorias + totalSegmentos
+  // Calculate statistics
+  const totalCategorias = categorias.length
+  const ativas = categorias.filter(c => c.ativo).length
+  const inativas = categorias.filter(c => !c.ativo).length
   const totalUnidadesCategorizadas = stats.reduce((sum, s) => sum + s.total_unidades, 0)
 
   return (
@@ -354,236 +219,99 @@ export default function CategoriasPage() {
           <TagsOutlined style={{ marginRight: '12px' }} />
           Categorias Turísticas
         </Title>
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={handleCreate}
+          size="large"
+        >
+          Nova Categoria
+        </Button>
       </div>
 
       {/* Statistics Cards */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
         gap: 16,
         marginBottom: 24
       }}>
-        <Card size="small" style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 13, color: '#8c8c8c', marginBottom: 8 }}>
-            <BarChartOutlined /> Total de Itens
+        <div style={{
+          background: '#fff',
+          padding: '20px',
+          borderRadius: '8px',
+          border: '1px solid #f0f0f0'
+        }}>
+          <div style={{ fontSize: 14, color: '#8c8c8c', marginBottom: 8 }}>
+            <BarChartOutlined /> Total de Categorias
           </div>
           <div style={{ fontSize: 24, fontWeight: 'bold', color: '#1890ff' }}>
-            {totalItens}
-          </div>
-        </Card>
-
-        <Card size="small" style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 13, color: '#8c8c8c', marginBottom: 8 }}>
-            Categorias
-          </div>
-          <div style={{ fontSize: 24, fontWeight: 'bold', color: '#722ed1' }}>
             {totalCategorias}
           </div>
-        </Card>
+        </div>
 
-        <Card size="small" style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 13, color: '#8c8c8c', marginBottom: 8 }}>
-            Subcategorias
-          </div>
-          <div style={{ fontSize: 24, fontWeight: 'bold', color: '#13c2c2' }}>
-            {totalSubcategorias}
-          </div>
-        </Card>
-
-        <Card size="small" style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 13, color: '#8c8c8c', marginBottom: 8 }}>
-            Segmentos
-          </div>
-          <div style={{ fontSize: 24, fontWeight: 'bold', color: '#fa8c16' }}>
-            {totalSegmentos}
-          </div>
-        </Card>
-
-        <Card size="small" style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 13, color: '#8c8c8c', marginBottom: 8 }}>
-            Unidades Categorizadas
+        <div style={{
+          background: '#fff',
+          padding: '20px',
+          borderRadius: '8px',
+          border: '1px solid #f0f0f0'
+        }}>
+          <div style={{ fontSize: 14, color: '#8c8c8c', marginBottom: 8 }}>
+            Ativas
           </div>
           <div style={{ fontSize: 24, fontWeight: 'bold', color: '#52c41a' }}>
+            {ativas}
+          </div>
+        </div>
+
+        <div style={{
+          background: '#fff',
+          padding: '20px',
+          borderRadius: '8px',
+          border: '1px solid #f0f0f0'
+        }}>
+          <div style={{ fontSize: 14, color: '#8c8c8c', marginBottom: 8 }}>
+            Inativas
+          </div>
+          <div style={{ fontSize: 24, fontWeight: 'bold', color: '#ff4d4f' }}>
+            {inativas}
+          </div>
+        </div>
+
+        <div style={{
+          background: '#fff',
+          padding: '20px',
+          borderRadius: '8px',
+          border: '1px solid #f0f0f0'
+        }}>
+          <div style={{ fontSize: 14, color: '#8c8c8c', marginBottom: 8 }}>
+            Unidades Categorizadas
+          </div>
+          <div style={{ fontSize: 24, fontWeight: 'bold', color: '#722ed1' }}>
             {totalUnidadesCategorizadas}
           </div>
-        </Card>
+        </div>
       </div>
 
-      {/* Miller Columns */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: 16,
-        marginBottom: 24
-      }}>
-        {/* Coluna 1: Categorias */}
-        <Card
-          title={<span><TagsOutlined /> Categorias (1º nível)</span>}
-          extra={
-            <Button
-              type="primary"
-              size="small"
-              icon={<PlusOutlined />}
-              onClick={handleCreateCategoria}
-            >
-              Adicionar
-            </Button>
-          }
-          bodyStyle={{ padding: 12, maxHeight: '600px', overflowY: 'auto' }}
-          loading={isLoading}
-        >
-          {hierarchy.categorias.length === 0 ? (
-            <Empty description="Nenhuma categoria" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-          ) : (
-            hierarchy.categorias.map(cat =>
-              renderColumnItem(
-                cat,
-                selectedCategoria?.id === cat.id,
-                handleSelectCategoria,
-                handleEdit,
-                'categoria'
-              )
-            )
-          )}
-        </Card>
-
-        {/* Coluna 2: Subcategorias */}
-        <Card
-          title={
-            <span>
-              <TagsOutlined /> Subcategorias (2º nível)
-              {selectedCategoria && <Text type="secondary" style={{ fontSize: 12, marginLeft: 8 }}>
-                de "{selectedCategoria.nome}"
-              </Text>}
-            </span>
-          }
-          extra={
-            <Button
-              type="primary"
-              size="small"
-              icon={<PlusOutlined />}
-              onClick={handleCreateSubcategoria}
-              disabled={!selectedCategoria}
-            >
-              Adicionar
-            </Button>
-          }
-          bodyStyle={{ padding: 12, maxHeight: '600px', overflowY: 'auto' }}
-        >
-          {!selectedCategoria ? (
-            <Empty
-              description="Selecione uma categoria"
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-            />
-          ) : subcategorias.length === 0 ? (
-            <Empty
-              description="Nenhuma subcategoria"
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-            />
-          ) : (
-            subcategorias.map(sub =>
-              renderColumnItem(
-                sub,
-                selectedSubcategoria?.id === sub.id,
-                handleSelectSubcategoria,
-                handleEdit,
-                'subcategoria'
-              )
-            )
-          )}
-        </Card>
-
-        {/* Coluna 3: Segmentos */}
-        <Card
-          title={
-            <span>
-              <TagsOutlined /> Segmentos (3º nível)
-              {selectedSubcategoria && <Text type="secondary" style={{ fontSize: 12, marginLeft: 8 }}>
-                de "{selectedSubcategoria.nome}"
-              </Text>}
-            </span>
-          }
-          extra={
-            <Button
-              type="primary"
-              size="small"
-              icon={<PlusOutlined />}
-              onClick={handleCreateSegmento}
-              disabled={!selectedSubcategoria}
-            >
-              Adicionar
-            </Button>
-          }
-          bodyStyle={{ padding: 12, maxHeight: '600px', overflowY: 'auto' }}
-        >
-          {!selectedSubcategoria ? (
-            <Empty
-              description="Selecione uma subcategoria"
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-            />
-          ) : segmentos.length === 0 ? (
-            <Empty
-              description="Nenhum segmento"
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-            />
-          ) : (
-            segmentos.map(seg =>
-              renderColumnItem(
-                seg,
-                false,
-                () => {},
-                handleEdit,
-                'segmento'
-              )
-            )
-          )}
-        </Card>
-      </div>
-
-      {/* Modal de Unidades */}
-      <Modal
-        title={`Unidades - ${viewingCategoria?.nome || ''}`}
-        open={unitsModalOpen}
-        onCancel={handleCloseUnidades}
-        footer={null}
-        width={800}
-      >
-        {unidadesLoading ? (
-          <div style={{ textAlign: 'center', padding: 20 }}>Carregando unidades...</div>
-        ) : categoriaUnidadesData?.data?.length > 0 ? (
-          <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-            {categoriaUnidadesData.data.map((unidade) => (
-              <Card key={unidade.id} size="small" style={{ marginBottom: 8 }}>
-                <div>
-                  <Text strong>{unidade.nome}</Text>
-                  <br />
-                  <Text type="secondary" style={{ fontSize: 12 }}>
-                    {unidade.endereco} - {unidade.bairro}
-                  </Text>
-                </div>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <Empty description="Nenhuma unidade encontrada" />
-        )}
-      </Modal>
-
-      {/* Modal de Create/Edit */}
-      <Modal
-        title={
-          editingItem
-            ? `Editar ${modalType === 'categoria' ? 'Categoria' : modalType === 'subcategoria' ? 'Subcategoria' : 'Segmento'}`
-            : `Nova ${modalType === 'categoria' ? 'Categoria' : modalType === 'subcategoria' ? 'Subcategoria' : 'Segmento'}`
-        }
-        open={isModalOpen}
-        onCancel={() => {
-          setIsModalOpen(false)
-          form.resetFields()
-          setEditingItem(null)
+      <Table
+        columns={columns}
+        dataSource={categorias}
+        loading={isLoading}
+        rowKey="id"
+        scroll={{ x: 1000 }}
+        pagination={{
+          pageSize: 20,
+          showTotal: (total) => `Total: ${total} categorias`,
         }}
+      />
+
+      {/* Create/Edit Modal */}
+      <Modal
+        title={editingCategoria ? 'Editar Categoria' : 'Nova Categoria'}
+        open={isModalOpen}
+        onCancel={handleCancel}
         footer={null}
-        width={500}
+        width={600}
       >
         <Form
           form={form}
@@ -591,35 +319,31 @@ export default function CategoriasPage() {
           onFinish={handleSubmit}
           initialValues={{ ativo: true, ordem: 0 }}
         >
-          {modalType === 'subcategoria' && !editingItem && (
-            <Form.Item label="Categoria Pai">
-              <Input value={selectedCategoria?.nome} disabled />
-            </Form.Item>
-          )}
-
-          {modalType === 'segmento' && !editingItem && (
-            <>
-              <Form.Item label="Categoria Pai">
-                <Input value={selectedCategoria?.nome} disabled />
-              </Form.Item>
-              <Form.Item label="Subcategoria Pai">
-                <Input value={selectedSubcategoria?.nome} disabled />
-              </Form.Item>
-            </>
-          )}
+          <Divider orientation="left">
+            <Text strong><TagsOutlined /> Informações da Categoria</Text>
+          </Divider>
 
           <Form.Item
-            label={`Nome ${modalType === 'categoria' ? 'da Categoria' : modalType === 'subcategoria' ? 'da Subcategoria' : 'do Segmento'}`}
+            label="Nome da Categoria"
             name="nome"
-            rules={[{ required: true, message: 'Por favor, insira o nome' }]}
+            rules={[{ required: true, message: 'Por favor, insira o nome da categoria' }]}
+            tooltip="Categoria principal (ex: 'Onde Passear', 'Organize sua Viagem')"
           >
             <Input placeholder="Ex: Onde Passear" />
           </Form.Item>
 
           <Form.Item
+            label="Subcategoria"
+            name="subcategoria"
+            tooltip="Subcategoria opcional (ex: 'Circuitos Culturais', 'Afroturismo')"
+          >
+            <Input placeholder="Ex: Circuitos Culturais (opcional)" />
+          </Form.Item>
+
+          <Form.Item
             label="Ordem de Exibição"
             name="ordem"
-            tooltip="Menor número aparece primeiro"
+            tooltip="Define a ordem de exibição nos filtros (menor = aparece primeiro)"
           >
             <InputNumber min={0} style={{ width: '100%' }} />
           </Form.Item>
@@ -632,21 +356,15 @@ export default function CategoriasPage() {
             <Switch checkedChildren="Ativo" unCheckedChildren="Inativo" />
           </Form.Item>
 
+          <Divider />
+
           <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
             <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-              <Button onClick={() => {
-                setIsModalOpen(false)
-                form.resetFields()
-                setEditingItem(null)
-              }}>
+              <Button onClick={handleCancel}>
                 Cancelar
               </Button>
-              <Button
-                type="primary"
-                htmlType="submit"
-                loading={creating || creatingSub || creatingSeg || updating}
-              >
-                {editingItem ? 'Atualizar' : 'Criar'}
+              <Button type="primary" htmlType="submit" loading={creating || updating}>
+                {editingCategoria ? 'Atualizar' : 'Criar'} Categoria
               </Button>
             </Space>
           </Form.Item>

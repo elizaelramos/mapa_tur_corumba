@@ -47,11 +47,10 @@ const normalizeText = (text) => {
     .replace(/[\u0300-\u036f]/g, '')
     .trim()
 }
-import { useGetUnidadesQuery, useGetLastUpdateQuery, useGetIconesQuery, useGetCategoriasGroupedQuery } from '../store/slices/apiSlice'
+import { useGetUnidadesQuery, useGetLastUpdateQuery, useGetIconesQuery, useGetCategoriasGroupedQuery } from '../store/slices/apiSlice' 
 import MapLegend from '../components/MapLegend'
-import GuiasTuristicosModal from '../components/GuiasTuristicosModal'
 import 'leaflet/dist/leaflet.css'
-import { trackBusca, trackVisualizacaoUnidade, trackCliqueMapaUnidade, trackContatoUnidade, trackRedeSocialUnidade, trackFiltroMapa, trackPageView } from '../utils/analytics'
+import { trackBusca, trackVisualizacaoUnidade, trackCliqueMapaUnidade, trackContatoUnidade, trackRedeSocialUnidade, trackFiltroMapa } from '../utils/analytics'
 
 // Custom Marker component to handle zoom on click and hover effects
 const CustomMarker = ({ unidade, onClick, customIcon, isSelected }) => {
@@ -252,7 +251,7 @@ const CORUMBA_CONFIG = {
 }
 
 // Imagem padrão a ser usada quando a unidade não possuir imagem própria
-const DEFAULT_UNIDADE_IMAGE = '/uploads/imagem_Padrão_Mapas_Carnaval_2026.png' 
+const DEFAULT_UNIDADE_IMAGE = '/uploads/Logo-Prefeitura-Padr--o-1767631304429-148006191.png' 
 
 // Função auxiliar para obter ícone da rede social
 const getRedeSocialIcon = (nomeRede) => {
@@ -276,57 +275,6 @@ const getRedeSocialIcon = (nomeRede) => {
   }
 }
 
-// Função para normalizar URL de rede social
-const normalizarUrlRedeSocial = (urlPerfil, nomeRede) => {
-  if (!urlPerfil) return null
-
-  const url = urlPerfil.trim()
-
-  // Ignorar placeholders inválidos
-  const invalidPlaceholders = ['x', 'não localizado', 'não localizei', 'não informado', 'n/a', '-']
-  if (invalidPlaceholders.includes(url.toLowerCase())) {
-    return null
-  }
-
-  // Se já tem protocolo, retorna como está
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url
-  }
-
-  // Trata usernames do Instagram (sem www ou .com)
-  if (nomeRede === 'Instagram' && !url.includes('.') && !url.includes('/')) {
-    return `https://www.instagram.com/${url.replace('@', '')}`
-  }
-
-  // Trata usernames do Facebook
-  if (nomeRede === 'Facebook' && !url.includes('.') && !url.includes('/')) {
-    return `https://www.facebook.com/${url}`
-  }
-
-  // Trata usernames do TikTok
-  if (nomeRede === 'TikTok' && !url.includes('.') && !url.includes('/')) {
-    return `https://www.tiktok.com/@${url.replace('@', '')}`
-  }
-
-  // Trata usernames do Twitter/X
-  if ((nomeRede === 'Twitter' || nomeRede === 'X') && !url.includes('.') && !url.includes('/')) {
-    return `https://twitter.com/${url.replace('@', '')}`
-  }
-
-  // Para URLs que começam com www, adiciona https://
-  if (url.startsWith('www.')) {
-    return `https://${url}`
-  }
-
-  // Para outros casos (domínios sem www), adiciona https://
-  if (url.includes('.') && !url.includes(' ')) {
-    return `https://${url}`
-  }
-
-  // Se não se encaixar em nenhum caso, retorna null
-  return null
-}
-
 export default function MapPage() {
   const [selectedUnidade, setSelectedUnidade] = useState(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -334,17 +282,15 @@ export default function MapPage() {
   const [especialidadeModalVisible, setEspecialidadeModalVisible] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [isZooming, setIsZooming] = useState(false)
-  const [guiasModalVisible, setGuiasModalVisible] = useState(false)
 
   // Estados de busca
   const [searchType, setSearchType] = useState(null) // 'bairro', 'unidade'
   const [searchValue, setSearchValue] = useState(null)
   const [searchText, setSearchText] = useState('') // Busca unificada por texto
   const [selectedIconUrl, setSelectedIconUrl] = useState(null) // Filtro por ícone da legenda
-  // Filtros de categoria (3 níveis: Categoria > Subcategoria > Segmento)
+  // Filtros de categoria
   const [selectedCategoriaNome, setSelectedCategoriaNome] = useState(null)
   const [selectedSubcategoriaId, setSelectedSubcategoriaId] = useState(null)
-  const [selectedSegmentoId, setSelectedSegmentoId] = useState(null)
 
   // Detectar mobile
   useEffect(() => {
@@ -357,11 +303,6 @@ export default function MapPage() {
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  // Rastrear pageview ao carregar a página
-  useEffect(() => {
-    trackPageView('/', 'Mapa de Turismo - Corumbá')
-  }, [])
-
   // Iniciar sidebar recolhida no mobile apenas na primeira renderização
   useEffect(() => {
     if (isMobile) {
@@ -369,12 +310,9 @@ export default function MapPage() {
     }
   }, []) // Executa apenas uma vez ao montar
 
-  const { data, isLoading, isError, error } = useGetUnidadesQuery({
-    limit: 1000,
-    search: searchText.trim() || undefined, // Envia busca para API
-  }, {
-    refetchOnMountOrArgChange: 30, // Refetch após 30 segundos (desenvolvimento)
-    refetchOnFocus: true, // Refetch ao voltar para a aba
+  const { data, isLoading, isError, error } = useGetUnidadesQuery(undefined, {
+    refetchOnMountOrArgChange: 300, // Refetch apenas se dados tiverem mais de 5 minutos
+    refetchOnFocus: false, // Não refetch ao voltar para a aba
   })
   const { data: lastUpdateData } = useGetLastUpdateQuery(undefined, {
     refetchOnMountOrArgChange: 300, // Refetch apenas após 5 minutos
@@ -447,31 +385,40 @@ export default function MapPage() {
       filtered = filtered.filter(unidade => normalizePath(unidade.icone_url) === selNorm)
     }
 
-    // Aplicar filtro por categoria (hierarquia: segmento > subcategoria > categoria)
-    if (selectedSegmentoId) {
-      // Filtrar por segmento (3º nível - mais específico)
-      const segId = Number(selectedSegmentoId)
-      filtered = filtered.filter(unidade =>
-        unidade.categorias?.some(cat => cat.id === segId)
-      )
-    } else if (selectedSubcategoriaId) {
-      // Filtrar por subcategoria (2º nível)
+    // Aplicar filtro por categoria (subcategoria tem prioridade)
+    if (selectedSubcategoriaId) {
       const subId = Number(selectedSubcategoriaId)
       filtered = filtered.filter(unidade =>
         unidade.categorias?.some(cat => cat.id === subId)
       )
     } else if (selectedCategoriaNome) {
-      // Filtrar por categoria (1º nível - mais amplo)
       filtered = filtered.filter(unidade =>
         unidade.categorias?.some(cat => cat.nome === selectedCategoriaNome)
       )
     }
 
-    // Se tem busca por texto, usar apenas resultados da API (já filtrados no backend)
-    // A API busca em: nome, nome_fantasia, razao_social, endereco, setor, descricao_servicos,
-    // subcategorias e segmentos - com normalização de texto (remove hífens, espaços, acentos)
+    // Se tem busca por texto, usar ela (prioritária)
     if (searchText.trim()) {
-      return filtered // Retorna resultados da API sem filtrar localmente
+      const textNormalized = normalizeText(searchText)
+
+      filtered = filtered.filter(unidade => {
+        // Buscar no nome da unidade
+        const nomeMatch = normalizeText(unidade.nome).includes(textNormalized)
+
+        // Buscar no bairro
+        const bairroMatch = normalizeText(unidade.bairro).includes(textNormalized)
+
+        // Buscar nas especialidades
+        const especialidadeMatch = unidade.especialidades?.some(
+          esp => normalizeText(esp.nome).includes(textNormalized)
+        )
+
+        // Buscar por "sala de vacina"
+        const salaVacinaMatch = (textNormalized.includes('vacina') || textNormalized.includes('sala')) && unidade.sala_vacina
+
+        return nomeMatch || bairroMatch || especialidadeMatch || salaVacinaMatch
+      })
+      return filtered
     }
 
     // Se não tem busca por texto, usar busca por select (comportamento antigo)
@@ -487,7 +434,7 @@ export default function MapPage() {
       }
       return true
     })
-  }, [unidades, searchType, searchValue, searchText, selectedIconUrl, selectedCategoriaNome, selectedSubcategoriaId, selectedSegmentoId])
+  }, [unidades, searchType, searchValue, searchText, selectedIconUrl, selectedCategoriaNome, selectedSubcategoriaId])
 
   // Calcular estatísticas de busca por texto
   const searchStats = useMemo(() => {
@@ -498,7 +445,6 @@ export default function MapPage() {
     let byBairro = 0
     let byEspecialidade = 0
     let bySalaVacina = 0
-    let byDescricao = 0
 
     filteredUnidades.forEach(unidade => {
       if (unidade.nome?.toLowerCase().includes(textLower)) byName++
@@ -509,10 +455,9 @@ export default function MapPage() {
       if ((textLower.includes('vacina') || textLower.includes('sala')) && unidade.sala_vacina) {
         bySalaVacina++
       }
-      if (unidade.descricao_servicos?.toLowerCase().includes(textLower)) byDescricao++
     })
 
-    return { byName, byBairro, byEspecialidade, bySalaVacina, byDescricao }
+    return { byName, byBairro, byEspecialidade, bySalaVacina }
   }, [searchText, filteredUnidades])
 
   // Handler para reset da busca
@@ -520,9 +465,9 @@ export default function MapPage() {
     setSearchType(null)
     setSearchValue(null)
     setSearchText('')
+    setSelectedOfertaId(null)
     setSelectedCategoriaNome(null)
     setSelectedSubcategoriaId(null)
-    setSelectedSegmentoId(null)
   }
 
   if (isLoading) {
@@ -650,24 +595,14 @@ export default function MapPage() {
                 </div>
 
                 {/* Imagem da Unidade (usa imagem padrão quando não houver imagem própria) */}
-                <div
-                  onClick={() => window.open('https://corumba.ms.gov.br/paginas/ver/carnaval-2026', '_blank')}
-                  style={{
-                    width: '100%',
-                    height: '200px',
-                    backgroundImage: `url(${apiBaseUrl}${encodeURI(selectedUnidade.imagem_url || DEFAULT_UNIDADE_IMAGE)})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    backgroundColor: '#f0f0f0', // Fallback color
-                    cursor: 'pointer',
-                    position: 'relative',
-                    transition: 'transform 0.2s ease',
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
-                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                  title="Clique para ver a programação do Carnaval 2026"
-                />
-
+                <div style={{
+                  width: '100%',
+                  height: '200px',
+                  backgroundImage: `url(${apiBaseUrl}${encodeURI(selectedUnidade.imagem_url || DEFAULT_UNIDADE_IMAGE)})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  backgroundColor: '#f0f0f0', // Fallback color
+                }} />
 
                 {/* Conteúdo */}
                 <div style={{ padding: '24px' }}>
@@ -749,22 +684,6 @@ export default function MapPage() {
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: '12px', color: '#999', marginBottom: '2px' }}>Diretor(a) Responsável</div>
                         <div style={{ fontWeight: 'bold', color: '#1890ff', fontSize: '16px' }}>{selectedUnidade.diretor_responsavel}</div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Diretor Adjunto */}
-                  {selectedUnidade.diretor_adjunto && (
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      marginBottom: '16px',
-                      color: '#666',
-                    }}>
-                      <UserOutlined style={{ marginRight: '8px', marginTop: '4px', fontSize: '16px' }} />
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: '12px', color: '#999', marginBottom: '2px' }}>Diretor(a) Adjunto</div>
-                        <div style={{ fontWeight: 'bold', color: '#1890ff', fontSize: '16px' }}>{selectedUnidade.diretor_adjunto}</div>
                       </div>
                     </div>
                   )}
@@ -918,110 +837,83 @@ export default function MapPage() {
                   <Divider />
 
                   {/* Redes Sociais */}
-                  {selectedUnidade.redes_sociais && selectedUnidade.redes_sociais.length > 0 && (() => {
-                    // Filtrar apenas redes sociais com URLs válidos
-                    const redesValidas = selectedUnidade.redes_sociais.filter(rede =>
-                      normalizarUrlRedeSocial(rede.url_perfil, rede.nome_rede) !== null
-                    )
-
-                    if (redesValidas.length === 0) return null
-
-                    return (
-                      <div style={{ marginBottom: '24px' }}>
-                        <h3 style={{
-                          fontSize: '16px',
-                          fontWeight: 'bold',
-                          marginBottom: '12px',
-                          display: 'flex',
-                          alignItems: 'center',
-                        }}>
-                          <GlobalOutlined style={{ marginRight: '8px', color: '#1890ff' }} />
-                          Redes Sociais
-                        </h3>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-                          {redesValidas.map((rede) => {
-                            const urlNormalizada = normalizarUrlRedeSocial(rede.url_perfil, rede.nome_rede)
-
-                            return (
-                              <a
-                                key={rede.id}
-                                href={urlNormalizada}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '6px',
-                                  padding: '8px 12px',
-                                  backgroundColor: '#f0f7ff',
-                                  borderRadius: '6px',
-                                  textDecoration: 'none',
-                                  color: '#1890ff',
-                                  fontSize: '14px',
-                                  fontWeight: '500',
-                                  transition: 'all 0.3s',
-                                  border: '1px solid #d6e4ff',
-                                }}
-                                onClick={() => {
-                                  // Rastrear clique em rede social
-                                  trackRedeSocialUnidade({
-                                    redeSocial: rede.nome_rede,
-                                    unidadeId: selectedUnidade.id,
-                                    unidadeNome: selectedUnidade.nome,
-                                  })
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.backgroundColor = '#e6f7ff'
-                                  e.currentTarget.style.borderColor = '#1890ff'
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.backgroundColor = '#f0f7ff'
-                                  e.currentTarget.style.borderColor = '#d6e4ff'
-                                }}
-                              >
-                                {getRedeSocialIcon(rede.nome_rede)}
-                                <span>{rede.nome_rede}</span>
-                              </a>
-                            )
-                          })}
-                        </div>
+                  {selectedUnidade.redes_sociais && selectedUnidade.redes_sociais.length > 0 && (
+                    <div style={{ marginBottom: '24px' }}>
+                      <h3 style={{
+                        fontSize: '16px',
+                        fontWeight: 'bold',
+                        marginBottom: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}>
+                        <GlobalOutlined style={{ marginRight: '8px', color: '#1890ff' }} />
+                        Redes Sociais
+                      </h3>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+                        {selectedUnidade.redes_sociais.map((rede) => (
+                          <a
+                            key={rede.id}
+                            href={rede.url_perfil}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              padding: '8px 12px',
+                              backgroundColor: '#f0f7ff',
+                              borderRadius: '6px',
+                              textDecoration: 'none',
+                              color: '#1890ff',
+                              fontSize: '14px',
+                              fontWeight: '500',
+                              transition: 'all 0.3s',
+                              border: '1px solid #d6e4ff',
+                            }}
+                            onClick={() => {
+                              // Rastrear clique em rede social
+                              trackRedeSocialUnidade({
+                                redeSocial: rede.nome_rede,
+                                unidadeId: selectedUnidade.id,
+                                unidadeNome: selectedUnidade.nome,
+                              })
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = '#e6f7ff'
+                              e.currentTarget.style.borderColor = '#1890ff'
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = '#f0f7ff'
+                              e.currentTarget.style.borderColor = '#d6e4ff'
+                            }}
+                          >
+                            {getRedeSocialIcon(rede.nome_rede)}
+                            <span>{rede.nome_rede}</span>
+                          </a>
+                        ))}
                       </div>
-                    )
-                  })()}
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
               <div style={{ padding: '24px' }}>
                 <div style={{ textAlign: 'center', paddingTop: '40px' }}>
                   <img
-                    src="/uploads/imagem_Padrão_Mapas_Carnaval_2026.png"
-                    alt="Carnaval Corumbá 2026"
-                    onClick={() => window.open('https://corumba.ms.gov.br/paginas/ver/carnaval-2026', '_blank')}
-                    title="Clique para ver a programação do Carnaval 2026"
+                    src="/uploads/Logo-da-Prefeitura-de-Corumba-MS.png"
+                    alt="Prefeitura de Corumbá"
                     style={{
-                      maxWidth: '100%',
-                      width: '100%',
+                      maxWidth: '180px',
                       height: 'auto',
-                      marginBottom: '24px',
-                      cursor: 'pointer',
-                      transition: 'transform 0.2s ease, opacity 0.2s ease',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'scale(1.02)';
-                      e.currentTarget.style.opacity = '0.9';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'scale(1)';
-                      e.currentTarget.style.opacity = '1';
+                      marginBottom: '24px'
                     }}
                   />
                   <h2 style={{ fontSize: '22px', fontWeight: 'bold', color: '#333' }}>
                     Bem-vindo ao Mapa Turismo
                   </h2>
-                  <p style={{ fontSize: '16px', color: '#666', lineHeight: 1.6, marginTop: '16px', marginBottom: '8px' }}>
-                    Explore os pontos, produtos e serviços turíscos de Corumbá - Capital do Pantanal.
-                  </p>
-                  <p style={{ fontSize: '14px', color: '#666', lineHeight: 1.6, marginBottom: '24px', fontStyle: 'italic' }}>
+                  <p style={{ fontSize: '16px', color: '#666', lineHeight: 1.6, marginTop: '16px', marginBottom: '24px' }}>
+                    Explore os pontos turísticos de Corumbá.
+                    <br />
                     Clique em um ponto no mapa para ver os detalhes.
                   </p>
 
@@ -1071,7 +963,6 @@ export default function MapPage() {
                             setSearchValue(null)
                             setSelectedCategoriaNome(null)
                             setSelectedSubcategoriaId(null)
-                            setSelectedSegmentoId(null)
                           }
                         }}
                         onPressEnter={(e) => {
@@ -1105,7 +996,7 @@ export default function MapPage() {
                       />
 
                       {/* Filtro por Categoria */}
-
+                      
                       <Select
                         placeholder="Filtrar por categoria"
                         value={selectedCategoriaNome}
@@ -1113,10 +1004,10 @@ export default function MapPage() {
                           // Aplicar filtro automático: limpar outros filtros e aplicar categoria
                           setSelectedCategoriaNome(value)
                           setSelectedSubcategoriaId(null)
-                          setSelectedSegmentoId(null)
                           setSearchText('')
                           setSearchType(null)
                           setSearchValue(null)
+                          setSelectedOfertaId(null)
                           setSelectedIconUrl(null)
 
                           // Rastrear filtro por categoria principal
@@ -1127,12 +1018,9 @@ export default function MapPage() {
                             })
                           }
                         }}
+
                         allowClear
-                        onClear={() => {
-                          setSelectedCategoriaNome(null)
-                          setSelectedSubcategoriaId(null)
-                          setSelectedSegmentoId(null)
-                        }}
+                        onClear={() => { setSelectedCategoriaNome(null); setSelectedSubcategoriaId(null); }}
                         size="large"
                         style={{
                           width: '100%',
@@ -1140,7 +1028,6 @@ export default function MapPage() {
                           borderRadius: '8px',
                         }}
                         suffixIcon={<TagOutlined />}
-                        getPopupContainer={(trigger) => trigger.parentElement}
                       >
                         {categoriasGrouped.map((c) => (
                           <Select.Option key={c.nome} value={c.nome}>
@@ -1162,23 +1049,18 @@ export default function MapPage() {
                                 setSearchText('')
                                 setSearchType(null)
                                 setSearchValue(null)
+                                setSelectedOfertaId(null)
                                 setSelectedIconUrl(null)
-                                setSelectedSegmentoId(null) // Limpar segmento ao mudar subcategoria
 
                                 setSelectedSubcategoriaId(value)
-
                                 const sub = group.subcategorias.find(s => s.id === value)
                                 trackFiltroMapa({ tipo: 'subcategoria', valor: sub ? `${selectedCategoriaNome} — ${sub.nome}` : selectedCategoriaNome })
                               }}
                               allowClear
-                              onClear={() => {
-                                setSelectedSegmentoId(null)
-                              }}
                               size="large"
                               style={{ width: '100%', marginBottom: '16px', borderRadius: '8px' }}
                               showSearch
                               filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}
-                              getPopupContainer={(trigger) => trigger.parentElement}
                             >
                               {group.subcategorias.map(sub => (
                                 <Select.Option key={sub.id} value={sub.id}>{sub.nome}</Select.Option>
@@ -1188,92 +1070,55 @@ export default function MapPage() {
                         })()
                       )}
 
-                      {/* Se selecionou subcategoria, verificar se há segmentos (3º nível) */}
-                      {selectedSubcategoriaId && selectedCategoriaNome && (
-                        (() => {
-                          const group = categoriasGrouped.find(g => g.nome === selectedCategoriaNome)
-                          const subcategoria = group?.subcategorias.find(s => s.id === selectedSubcategoriaId)
-                          const segmentos = subcategoria?.segmentos || []
-
-                          // Só mostrar select de segmentos se houver segmentos disponíveis
-                          if (segmentos.length === 0) return null
-
-                          return (
-                            <Select
-                              placeholder="Selecione um segmento (opcional)"
-                              value={selectedSegmentoId}
-                              onChange={(value) => {
-                                // Aplicar filtro de segmento
-                                setSearchText('')
-                                setSearchType(null)
-                                setSearchValue(null)
-                                setSelectedIconUrl(null)
-
-                                setSelectedSegmentoId(value)
-
-                                const seg = segmentos.find(s => s.id === value)
-                                trackFiltroMapa({ tipo: 'segmento', valor: seg ? `${selectedCategoriaNome} — ${subcategoria?.nome} — ${seg.nome}` : '' })
-                              }}
-                              allowClear
-                              size="large"
-                              style={{ width: '100%', marginBottom: '16px', borderRadius: '8px' }}
-                              showSearch
-                              filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}
-                              getPopupContainer={(trigger) => trigger.parentElement}
-                            >
-                              {segmentos.map(seg => (
-                                <Select.Option key={seg.id} value={seg.id}>{seg.nome}</Select.Option>
-                              ))}
-                            </Select>
-                          )
-                        })()
-                      )}
-
                       {/* Select direto para Buscar por Ponto Turístico */}
-                      <Select
-                        placeholder="Buscar local"
-                        className="custom-select"
-                        style={{
-                          width: '100%',
-                          marginBottom: '12px',
-                        }}
-                        value={searchValue}
-                        onChange={(value) => {
-                          // Aplicar seleção de unidade diretamente
-                          setSearchType('unidade')
-                          setSearchValue(value)
+                      {!searchText && (
+                        <>
+                          <Select
+                            placeholder="Buscar local"
+                            className="custom-select"
+                            style={{
+                              width: '100%',
+                              marginBottom: '12px',
+                            }}
+                            value={searchValue}
+                            onChange={(value) => {
+                              // Aplicar seleção de unidade diretamente
+                              setSearchType('unidade')
+                              setSearchValue(value)
 
-                          // Limpar outros filtros
-                          setSearchText('')
-                          setSelectedCategoriaNome(null)
-                          setSelectedSubcategoriaId(null)
-                          setSelectedSegmentoId(null)
-                          setSelectedIconUrl(null)
+                              // Limpar outros filtros
+                              setSearchText('')
+                              setSelectedCategoriaNome(null)
+                              setSelectedSubcategoriaId(null)
+                              setSelectedOfertaId(null)
+                              setSelectedIconUrl(null)
 
-                          // Rastrear busca por unidade
-                          const unidade = unidades.find(u => u.id === value)
-                          if (unidade) {
-                            trackBusca({
-                              tipo: 'unidade',
-                              termo: unidade.nome,
-                              resultados: 1,
-                            })
-                          }
-                        }}
-                        allowClear
-                        onClear={handleResetSearch}
-                        showSearch
-                        size="large"
-                        filterOption={(input, option) =>
-                          option.children.toLowerCase().includes(input.toLowerCase())
-                        }
-                      >
-                        {filteredUnidades.map((unidade) => (
-                          <Select.Option key={unidade.id} value={unidade.id}>
-                            {unidade.nome}
-                          </Select.Option>
-                        ))}
-                      </Select> 
+                              // Rastrear busca por unidade
+                              const unidade = unidades.find(u => u.id === value)
+                              if (unidade) {
+                                trackBusca({
+                                  tipo: 'unidade',
+                                  termo: unidade.nome,
+                                  resultados: 1,
+                                })
+                              }
+                            }}
+                            allowClear
+                            onClear={handleResetSearch}
+                            showSearch
+                            size="large"
+                            filterOption={(input, option) =>
+                              option.children.toLowerCase().includes(input.toLowerCase())
+                            }
+                          >
+                            {unidades.map((unidade) => (
+                              <Select.Option key={unidade.id} value={unidade.id}>
+                                {unidade.nome}
+                              </Select.Option>
+                            ))}
+                          </Select>
+                        </>
+                      )} 
 
                     </div>
 
@@ -1340,12 +1185,6 @@ export default function MapPage() {
                                   no bairro
                                 </div>
                               )}
-                              {searchStats.byDescricao > 0 && (
-                                <div>
-                                  • <Tag color="cyan" style={{ fontSize: '11px' }}>{searchStats.byDescricao}</Tag>
-                                  na descrição de serviços
-                                </div>
-                              )}
                               {searchStats.byEspecialidade > 0 && (
                                 <div>
                                   • <Tag color="purple" style={{ fontSize: '11px' }}>{searchStats.byEspecialidade}</Tag>
@@ -1404,44 +1243,9 @@ export default function MapPage() {
                     )}
                   </Card>
 
-                  {/* Botão Guias Turísticos */}
-                  <Button
-                    type="primary"
-                    size="large"
-                    icon={<CompassOutlined style={{ fontSize: '20px' }} />}
-                    onClick={() => setGuiasModalVisible(true)}
-                    style={{
-                      width: '100%',
-                      height: '60px',
-                      marginTop: '24px',
-                      marginBottom: '16px',
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                      border: 'none',
-                      borderRadius: '12px',
-                      fontSize: '16px',
-                      fontWeight: 'bold',
-                      boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '12px',
-                      transition: 'all 0.3s ease',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-3px)';
-                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.5)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
-                    }}
-                  >
-                    <span>🧭 Procuro um Guia Turístico</span>
-                  </Button>
-
-                  {/* Rodapé */}
+                  {/* Rodapé com informações da fonte de dados */}
                   <div style={{
-                    marginTop: '8px',
+                    marginTop: '24px',
                     padding: '12px',
                     fontSize: '11px',
                     color: '#666',
@@ -1449,11 +1253,11 @@ export default function MapPage() {
                     lineHeight: 1.5,
                     borderTop: '1px solid #f0f0f0'
                   }}>
-                    <div style={{ fontSize: '10px', color: '#666' }}>
-                      Copyright © Prefeitura Municipal de Corumbá
+                    <div style={{ marginBottom: '4px' }}>
+                      Fonte de dados: <strong>Fundação de Turismo do Pantanal</strong>
                     </div>
-                    <div style={{ marginTop: '4px', fontSize: '10px', color: '#666' }}>
-                      Desenvolvido: Núcleo de Gestão Estratégica e Inovação
+                    <div style={{ marginTop: '6px', fontSize: '10px', color: '#888' }}>
+                      Última atualização: N/A
                     </div>
                   </div>
 
@@ -1599,9 +1403,6 @@ export default function MapPage() {
               const isDeselecting = normalizePath(selectedIconUrl) === normalizePath(iconUrl)
               setSelectedIconUrl(isDeselecting ? null : iconUrl)
 
-              // Fechar unidade selecionada e voltar para busca
-              setSelectedUnidade(null)
-
               // Limpar outros filtros ao usar filtro de ícone
               setSearchType(null)
               setSearchValue(null)
@@ -1622,13 +1423,8 @@ export default function MapPage() {
           />
         </div>
 
-      </div>
 
-      {/* Modal de Guias Turísticos */}
-      <GuiasTuristicosModal
-        visible={guiasModalVisible}
-        onClose={() => setGuiasModalVisible(false)}
-      />
+      </div>
     </>
   )
 }

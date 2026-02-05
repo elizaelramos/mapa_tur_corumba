@@ -24,7 +24,6 @@ import {
   useGetBairrosQuery,
   useGetIconesQuery,
   useGetCategoriasQuery,
-  useGetCategoriasHierarchyQuery,
 } from '../../store/slices/apiSlice'
 import LocationPicker from '../../components/LocationPicker'
 import dayjs from 'dayjs'
@@ -69,52 +68,6 @@ const getFullImageUrl = (url) => {
   return url
 }
 
-// Helper para garantir que URL tenha protocolo
-const ensureUrlProtocol = (url) => {
-  if (!url) return ''
-  // Se já tem protocolo, retorna como está
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url
-  }
-  // Adiciona https:// por padrão
-  return `https://${url}`
-}
-
-// Helper para formatar telefone automaticamente
-const formatPhone = (value) => {
-  if (!value) return ''
-
-  // Remove todos os caracteres não numéricos
-  let numbers = value.replace(/\D/g, '')
-
-  // Não formata números curtos (emergência: 193, 190; serviços: 4004, etc.)
-  if (numbers.length <= 4) {
-    return numbers
-  }
-
-  // Remove zero inicial se houver (para números mais longos)
-  if (numbers.startsWith('0')) {
-    numbers = numbers.substring(1)
-  }
-
-  // Limita a 11 dígitos (DDD + número)
-  numbers = numbers.substring(0, 11)
-
-  // Formata conforme a quantidade de dígitos
-  if (numbers.length <= 2) {
-    return numbers
-  } else if (numbers.length <= 6) {
-    // (99) 9999
-    return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`
-  } else if (numbers.length <= 10) {
-    // (99) 9999-9999 (fixo)
-    return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 6)}-${numbers.slice(6)}`
-  } else {
-    // (99) 99999-9999 (celular)
-    return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`
-  }
-}
-
 export default function UnidadesPage() {
   const [page, setPage] = useState(1)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -132,11 +85,10 @@ export default function UnidadesPage() {
   const [form] = Form.useForm()
 
   // API hooks
-  const { data, isLoading } = useGetUnidadesQuery({ page, limit: 20, search: searchTerm, ativo: 'all' })
+  const { data, isLoading } = useGetUnidadesQuery({ page, limit: 20, search: searchTerm })
   const { data: bairrosData } = useGetBairrosQuery({ ativo: true })
   const { data: iconesData } = useGetIconesQuery({ ativo: 'true' })
   const { data: categoriasData } = useGetCategoriasQuery({ ativo: 'true' })
-  const { data: hierarchyData } = useGetCategoriasHierarchyQuery()
   const [createUnidade, { isLoading: creating }] = useCreateUnidadeMutation()
   const [updateUnidade, { isLoading: updating }] = useUpdateUnidadeMutation()
   const [deleteUnidade] = useDeleteUnidadeMutation()
@@ -153,17 +105,6 @@ export default function UnidadesPage() {
 
   const bairros = bairrosData?.data?.map(b => b.nome).sort() || []
   const categorias = categoriasData?.data || []
-  const hierarchy = hierarchyData?.data || { categorias: [], subcategorias: {}, segmentos: {} }
-
-  // Estado para seleção em cascata de categorias
-  const [tempCategoria, setTempCategoria] = useState(null)
-  const [tempSubcategoria, setTempSubcategoria] = useState(null)
-  const [tempSegmento, setTempSegmento] = useState(null)
-
-  // Estado para controlar abertura dos dropdowns
-  const [openCategoriaSelect, setOpenCategoriaSelect] = useState(false)
-  const [openSubcategoriaSelect, setOpenSubcategoriaSelect] = useState(false)
-  const [openSegmentoSelect, setOpenSegmentoSelect] = useState(false)
 
   // Handle upload de imagem
   const handleUploadImagem = async (file) => {
@@ -191,94 +132,9 @@ export default function UnidadesPage() {
     setImageUrl(null)
     setSelectedIcon(null)
     setCurrentNome('')
-    setTempCategoria(null)
-    setTempSubcategoria(null)
-    setTempSegmento(null)
     form.resetFields()
     form.setFieldsValue({ ativo: true })
     setIsModalOpen(true)
-  }
-
-  // Handle adicionar categoria em cascata
-  const handleAdicionarCategoria = () => {
-    if (!tempCategoria) {
-      message.warning('Selecione uma categoria primeiro')
-      return
-    }
-
-    // Buscar o ID correto baseado na seleção
-    let categoriaId = null
-
-    // Se tem segmento, buscar pelo segmento
-    if (tempSegmento) {
-      const key = `${tempCategoria.nome}|${tempSubcategoria.nome}`
-      const segmento = hierarchy.segmentos[key]?.find(s => s.id === tempSegmento.id)
-      if (segmento) {
-        categoriaId = segmento.id
-      }
-    }
-    // Se tem subcategoria mas não tem segmento, buscar pela subcategoria
-    else if (tempSubcategoria) {
-      const subcategoria = hierarchy.subcategorias[tempCategoria.nome]?.find(s => s.id === tempSubcategoria.id)
-      if (subcategoria) {
-        categoriaId = subcategoria.id
-      }
-    }
-    // Se não tem subcategoria, buscar pela categoria
-    else {
-      categoriaId = tempCategoria.id
-    }
-
-    if (!categoriaId) {
-      message.error('Erro ao adicionar categoria')
-      return
-    }
-
-    // Verificar se já existe
-    if (selectedCategorias.includes(categoriaId)) {
-      message.warning('Esta categoria já foi adicionada')
-      return
-    }
-
-    // Adicionar à lista
-    setSelectedCategorias([...selectedCategorias, categoriaId])
-
-    // Construir label para exibir
-    let label = tempCategoria.nome
-    if (tempSubcategoria) {
-      label += ` → ${tempSubcategoria.nome}`
-    }
-    if (tempSegmento) {
-      label += ` → ${tempSegmento.nome}`
-    }
-
-    message.success(`Categoria adicionada: ${label}`)
-
-    // Limpar seleção temporária
-    setTempCategoria(null)
-    setTempSubcategoria(null)
-    setTempSegmento(null)
-  }
-
-  // Handle remover categoria
-  const handleRemoverCategoria = (categoriaId) => {
-    setSelectedCategorias(selectedCategorias.filter(id => id !== categoriaId))
-    message.success('Categoria removida')
-  }
-
-  // Obter label de uma categoria pelo ID
-  const getCategoriaLabel = (categoriaId) => {
-    const categoria = categorias.find(c => c.id === categoriaId)
-    if (!categoria) return 'Categoria não encontrada'
-
-    let label = categoria.nome
-    if (categoria.subcategoria) {
-      label += ` → ${categoria.subcategoria}`
-    }
-    if (categoria.segmento) {
-      label += ` → ${categoria.segmento}`
-    }
-    return label
   }
 
   // Handle edit unit
@@ -297,11 +153,6 @@ export default function UnidadesPage() {
     } else {
       setSelectedCategorias([])
     }
-
-    // Reset temporary category selection
-    setTempCategoria(null)
-    setTempSubcategoria(null)
-    setTempSegmento(null)
 
     // Set basic form fields
     form.setFieldsValue({
@@ -452,9 +303,6 @@ export default function UnidadesPage() {
     setNovaRedeSocial({ nome_rede: '', url_perfil: '' })
     setActiveTab('1')
     setCurrentNome('')
-    setTempCategoria(null)
-    setTempSubcategoria(null)
-    setTempSegmento(null)
   }
 
   // Handle adding rede social
@@ -753,171 +601,31 @@ export default function UnidadesPage() {
               }
               key="2"
             >
-              <Alert
-                message="Adicionar Categoria"
-                description="Selecione a categoria, subcategoria (opcional) e segmento (opcional), depois clique em Adicionar."
-                type="info"
-                showIcon
-                style={{ marginBottom: 16 }}
-              />
-
-              {/* Seleção em Cascata */}
-              <Card size="small" style={{ marginBottom: 16, backgroundColor: '#fafafa' }}>
-                <Space direction="vertical" style={{ width: '100%' }} size="middle">
-                  {/* Categoria (1º nível) */}
-                  <div>
-                    <Text strong style={{ display: 'block', marginBottom: 8 }}>1. Categoria</Text>
-                    <Select
-                      placeholder="Selecione a categoria"
-                      value={tempCategoria?.id}
-                      onChange={(value) => {
-                        const cat = hierarchy.categorias.find(c => c.id === value)
-                        setTempCategoria(cat || null)
-                        setTempSubcategoria(null)
-                        setTempSegmento(null)
-                        setOpenCategoriaSelect(false)
-                      }}
-                      style={{ width: '100%' }}
-                      showSearch
-                      filterOption={(input, option) =>
-                        option.children.toLowerCase().includes(input.toLowerCase())
-                      }
-                      allowClear
-                      open={openCategoriaSelect}
-                      onDropdownVisibleChange={setOpenCategoriaSelect}
-                    >
-                      {hierarchy.categorias.map((cat) => (
-                        <Select.Option key={cat.id} value={cat.id}>
-                          {cat.nome}
-                        </Select.Option>
-                      ))}
-                    </Select>
-                  </div>
-
-                  {/* Subcategoria (2º nível) */}
-                  <div>
-                    <Text strong style={{ display: 'block', marginBottom: 8 }}>
-                      2. Subcategoria <Text type="secondary">(opcional)</Text>
-                    </Text>
-                    <Select
-                      placeholder={tempCategoria ? "Selecione a subcategoria" : "Selecione uma categoria primeiro"}
-                      value={tempSubcategoria?.id}
-                      onChange={(value) => {
-                        if (!tempCategoria) return
-                        const subcats = hierarchy.subcategorias[tempCategoria.nome] || []
-                        const subcat = subcats.find(s => s.id === value)
-                        setTempSubcategoria(subcat || null)
-                        setTempSegmento(null)
-                        setOpenSubcategoriaSelect(false)
-                      }}
-                      style={{ width: '100%' }}
-                      disabled={!tempCategoria}
-                      showSearch
-                      filterOption={(input, option) =>
-                        option.children.toLowerCase().includes(input.toLowerCase())
-                      }
-                      allowClear
-                      open={openSubcategoriaSelect}
-                      onDropdownVisibleChange={setOpenSubcategoriaSelect}
-                    >
-                      {tempCategoria && (hierarchy.subcategorias[tempCategoria.nome] || []).map((subcat) => (
-                        <Select.Option key={subcat.id} value={subcat.id}>
-                          {subcat.nome}
-                        </Select.Option>
-                      ))}
-                    </Select>
-                  </div>
-
-                  {/* Segmento (3º nível) */}
-                  <div>
-                    <Text strong style={{ display: 'block', marginBottom: 8 }}>
-                      3. Segmento <Text type="secondary">(opcional)</Text>
-                    </Text>
-                    <Select
-                      placeholder={tempSubcategoria ? "Selecione o segmento" : "Selecione uma subcategoria primeiro"}
-                      value={tempSegmento?.id}
-                      onChange={(value) => {
-                        if (!tempCategoria || !tempSubcategoria) return
-                        const key = `${tempCategoria.nome}|${tempSubcategoria.nome}`
-                        const segs = hierarchy.segmentos[key] || []
-                        const seg = segs.find(s => s.id === value)
-                        setTempSegmento(seg || null)
-                        setOpenSegmentoSelect(false)
-                      }}
-                      style={{ width: '100%' }}
-                      disabled={!tempSubcategoria}
-                      showSearch
-                      filterOption={(input, option) =>
-                        option.children.toLowerCase().includes(input.toLowerCase())
-                      }
-                      allowClear
-                      open={openSegmentoSelect}
-                      onDropdownVisibleChange={setOpenSegmentoSelect}
-                    >
-                      {tempCategoria && tempSubcategoria && (
-                        hierarchy.segmentos[`${tempCategoria.nome}|${tempSubcategoria.nome}`] || []
-                      ).map((seg) => (
-                        <Select.Option key={seg.id} value={seg.id}>
-                          {seg.nome}
-                        </Select.Option>
-                      ))}
-                    </Select>
-                  </div>
-
-                  <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    onClick={handleAdicionarCategoria}
-                    disabled={!tempCategoria}
-                    block
-                  >
-                    Adicionar Categoria
-                  </Button>
-                </Space>
-              </Card>
-
-              {/* Lista de Categorias Selecionadas */}
-              <div style={{ marginBottom: 16 }}>
-                <Text strong style={{ display: 'block', marginBottom: 8 }}>
-                  Categorias Selecionadas ({selectedCategorias.length})
-                </Text>
-                {selectedCategorias.length === 0 ? (
-                  <Alert
-                    message="Nenhuma categoria selecionada"
-                    description="Adicione pelo menos uma categoria para esta unidade turística."
-                    type="warning"
-                    showIcon
-                  />
-                ) : (
-                  <Space direction="vertical" style={{ width: '100%' }} size="small">
-                    {selectedCategorias.map((catId) => (
-                      <Card
-                        key={catId}
-                        size="small"
-                        style={{ backgroundColor: '#f0f9ff' }}
-                        extra={
-                          <Button
-                            type="link"
-                            danger
-                            size="small"
-                            icon={<DeleteOutlined />}
-                            onClick={() => handleRemoverCategoria(catId)}
-                          >
-                            Remover
-                          </Button>
-                        }
-                      >
-                        <Space>
-                          <TagsOutlined style={{ color: '#1890ff' }} />
-                          <Text>{getCategoriaLabel(catId)}</Text>
-                        </Space>
-                      </Card>
-                    ))}
-                  </Space>
-                )}
-              </div>
-
-              <Divider />
+              <Form.Item
+                label="Categorias"
+                name="categorias"
+                tooltip="Selecione uma ou mais categorias turísticas"
+              >
+                <Select
+                  mode="multiple"
+                  placeholder="Selecione as categorias"
+                  value={selectedCategorias}
+                  onChange={setSelectedCategorias}
+                  showSearch
+                  filterOption={(input, option) => {
+                    const categoria = categorias.find(c => c.id === option.value)
+                    if (!categoria) return false
+                    const searchText = `${categoria.nome} ${categoria.subcategoria || ''}`.toLowerCase()
+                    return searchText.includes(input.toLowerCase())
+                  }}
+                >
+                  {categorias.map((cat) => (
+                    <Select.Option key={cat.id} value={cat.id}>
+                      {cat.nome}{cat.subcategoria ? ` → ${cat.subcategoria}` : ''}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
 
               <Form.Item label="Serviços Oferecidos" name="descricao_servicos">
                 <TextArea
@@ -969,25 +677,13 @@ export default function UnidadesPage() {
               key="4"
             >
               <Form.Item label="Telefone" name="telefone">
-                <Input
-                  placeholder="(67) 3234-5678"
-                  onChange={(e) => {
-                    const formatted = formatPhone(e.target.value)
-                    form.setFieldValue('telefone', formatted)
-                  }}
-                />
+                <Input placeholder="(67) 3234-5678" />
               </Form.Item>
 
               <Form.Item label="WhatsApp">
                 <Space.Compact style={{ width: '100%' }}>
                   <Form.Item name="whatsapp" noStyle>
-                    <Input
-                      placeholder="(67) 99999-9999"
-                      onChange={(e) => {
-                        const formatted = formatPhone(e.target.value)
-                        form.setFieldValue('whatsapp', formatted)
-                      }}
-                    />
+                    <Input placeholder="(67) 99999-9999" />
                   </Form.Item>
                   <Button
                     icon={<WhatsAppOutlined />}
@@ -1142,7 +838,7 @@ export default function UnidadesPage() {
                           <Button
                             type="link"
                             size="small"
-                            onClick={() => window.open(ensureUrlProtocol(rede.url_perfil), '_blank')}
+                            onClick={() => window.open(rede.url_perfil, '_blank')}
                           >
                             Abrir
                           </Button>,

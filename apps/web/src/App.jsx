@@ -11,14 +11,12 @@ import MedicosPage from './pages/admin/MedicosPage'
 import EspecialidadesPage from './pages/admin/EspecialidadesPage'
 import EspecialidadesNormalizacaoPage from './pages/admin/EspecialidadesNormalizacaoPage'
 import IconesPage from './pages/admin/IconesPage'
-import GuiasPage from './pages/admin/GuiasPage'
 import BairrosPage from './pages/admin/BairrosPage'
 import OfertasEnsinoPage from './pages/admin/OfertasEnsinoPage'
 import CategoriasPage from './pages/admin/CategoriasPage'
 import UsersPage from './pages/admin/UsersPage'
 import AuditPage from './pages/admin/AuditPage'
 import ETLPage from './pages/admin/ETLPage'
-import AnalyticsPage from './pages/admin/AnalyticsPage'
 
 function App() {
   return (
@@ -47,11 +45,9 @@ function App() {
           <Route path="especialidades" element={<EspecialidadesPage />} />
           <Route path="especialidades-normalizacao" element={<EspecialidadesNormalizacaoPage />} />
           <Route path="icones" element={<IconesPage />} />
-          <Route path="guias" element={<GuiasPage />} />
           <Route path="bairros" element={<BairrosPage />} />
           <Route path="ofertas-ensino" element={<OfertasEnsinoPage />} />
           <Route path="categorias" element={<CategoriasPage />} />
-          <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="users" element={<SuperadminRoute><UsersPage /></SuperadminRoute>} />
           <Route path="audit" element={<SuperadminRoute><AuditPage /></SuperadminRoute>} />
           <Route path="etl" element={<SuperadminRoute><ETLPage /></SuperadminRoute>} />

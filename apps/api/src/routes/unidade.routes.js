@@ -24,42 +24,13 @@ router.get('/', asyncHandler(async (req, res) => {
 
   // Adicionar busca por texto
   if (search && search.trim()) {
-    const searchTerm = search.trim();
-
-    // Criar variações do termo de busca para encontrar "barco hotel", "barco-hotel", etc.
-    const searchVariations = new Set([
-      searchTerm, // Original: "barco hotel"
-      searchTerm.replace(/\s+/g, '-'), // Espaço → Hífen: "barco-hotel"
-      searchTerm.replace(/-/g, ' '), // Hífen → Espaço: "barco hotel"
-      searchTerm.replace(/[-\s]+/g, ''), // Sem separadores: "barcohotel"
-    ]);
-
-    // Criar array de condições OR para cada variação
-    where.OR = [];
-
-    searchVariations.forEach(variant => {
-      where.OR.push(
-        { nome: { contains: variant } },
-        { nome_fantasia: { contains: variant } },
-        { razao_social: { contains: variant } },
-        { endereco: { contains: variant } },
-        { setor: { contains: variant } },
-        { descricao_servicos: { contains: variant } },
-        // Busca em categorias relacionadas (subcategoria e segmento)
-        {
-          categorias: {
-            some: {
-              categoria: {
-                OR: [
-                  { subcategoria: { contains: variant } },
-                  { segmento: { contains: variant } },
-                ]
-              }
-            }
-          }
-        }
-      );
-    });
+    where.OR = [
+      { nome: { contains: search.trim() } },
+      { nome_fantasia: { contains: search.trim() } },
+      { razao_social: { contains: search.trim() } },
+      { endereco: { contains: search.trim() } },
+      { setor: { contains: search.trim() } },
+    ];
   }
 
   const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -220,7 +191,7 @@ router.post('/', authenticate, requireAdmin, asyncHandler(async (req, res) => {
     });
   }
 
-  await auditLog('CREATE', 'PROD_UnidadeTuristica', unidade.id, req.user.id, req.user.role);
+  auditLog('CREATE', 'PROD_UnidadeTuristica', unidade.id, req.user.id, req.user.role);
 
   logger.info('Unidade turística criada', {
     user_id: req.user.id,
@@ -336,7 +307,7 @@ router.put('/:id', authenticate, requireAdmin, asyncHandler(async (req, res) => 
     }
   }
 
-  await auditLog('UPDATE', 'PROD_UnidadeTuristica', unidade.id, req.user.id, req.user.role, { updateData });
+  auditLog('UPDATE', 'PROD_UnidadeTuristica', unidade.id, req.user.id, req.user.role, { updateData });
 
   logger.info('Unidade turística atualizada', {
     user_id: req.user.id,
@@ -372,7 +343,7 @@ router.delete('/:id', authenticate, requireAdmin, asyncHandler(async (req, res) 
     where: { id: parseInt(id) },
   });
 
-  await auditLog('DELETE', 'PROD_UnidadeTuristica', parseInt(id), req.user.id, req.user.role);
+  auditLog('DELETE', 'PROD_UnidadeTuristica', parseInt(id), req.user.id, req.user.role);
 
   logger.info('Unidade turística deletada', {
     user_id: req.user.id,

@@ -51,8 +51,3 @@ coverage/
 temp/
 .temp/
 nul
-
-# Arquivos gerados/importados
-Mapas_Tur*.xlsx
-import-segmentos-report*.json
-update-report*.json

@@ -30,8 +30,8 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 export const apiSlice = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Unidades', 'Categorias', 'Medicos', 'Especialidades', 'Staging', 'Users', 'Audit', 'ETL', 'Mapeamentos', 'Bairros', 'OfertasEnsino', 'Icones', 'Analytics', 'Guias'],
-  keepUnusedDataFor: 30, // Cache por 30 segundos (desenvolvimento)
+  tagTypes: ['Unidades', 'Categorias', 'Medicos', 'Especialidades', 'Staging', 'Users', 'Audit', 'ETL', 'Mapeamentos', 'Bairros', 'OfertasEnsino', 'Icones'],
+  keepUnusedDataFor: 300, // Cache por 5 minutos (300 segundos)
   endpoints: (builder) => ({
     // Auth
     login: builder.mutation({
@@ -171,11 +171,6 @@ export const apiSlice = createApi({
       providesTags: ['Categorias'],
     }),
 
-    getCategoriasHierarchy: builder.query({
-      query: () => '/categorias/hierarchy/admin',
-      providesTags: ['Categorias'],
-    }),
-
     getCategoriaById: builder.query({
       query: (id) => `/categorias/${id}`,
       providesTags: ['Categorias'],
@@ -184,24 +179,6 @@ export const apiSlice = createApi({
     createCategoria: builder.mutation({
       query: (data) => ({
         url: '/categorias',
-        method: 'POST',
-        body: data,
-      }),
-      invalidatesTags: ['Categorias', 'Unidades'],
-    }),
-
-    createSubcategoria: builder.mutation({
-      query: (data) => ({
-        url: '/categorias/subcategoria',
-        method: 'POST',
-        body: data,
-      }),
-      invalidatesTags: ['Categorias', 'Unidades'],
-    }),
-
-    createSegmento: builder.mutation({
-      query: (data) => ({
-        url: '/categorias/segmento',
         method: 'POST',
         body: data,
       }),
@@ -228,12 +205,6 @@ export const apiSlice = createApi({
     getCategoriasStats: builder.query({
       query: () => '/categorias/stats/usage',
       providesTags: ['Categorias'],
-    }),
-
-    // Unidades por Categoria
-    getUnidadesByCategoria: builder.query({
-      query: (categoriaId) => `/categorias/${categoriaId}/unidades`,
-      providesTags: ['Unidades'],
     }),
 
     getLastUpdate: builder.query({
@@ -525,99 +496,6 @@ export const apiSlice = createApi({
       }),
       invalidatesTags: ['Icones'],
     }),
-
-    // Analytics
-    getAccessStats: builder.query({
-      query: () => ({
-        url: '/analytics/access-stats',
-      }),
-      providesTags: ['Analytics'],
-    }),
-
-    getAnalyticsOverview: builder.query({
-      query: (params) => ({
-        url: '/analytics/overview',
-        params,
-      }),
-      providesTags: ['Analytics'],
-    }),
-
-    getPopularUnits: builder.query({
-      query: (params) => ({
-        url: '/analytics/popular-units',
-        params,
-      }),
-      providesTags: ['Analytics'],
-    }),
-
-    getSearchTerms: builder.query({
-      query: (params) => ({
-        url: '/analytics/search-terms',
-        params,
-      }),
-      providesTags: ['Analytics'],
-    }),
-
-    getConversionFunnel: builder.query({
-      query: (params) => ({
-        url: '/analytics/conversion-funnel',
-        params,
-      }),
-      providesTags: ['Analytics'],
-    }),
-
-    getAnalyticsTimeline: builder.query({
-      query: (params) => ({
-        url: '/analytics/timeline',
-        params,
-      }),
-      providesTags: ['Analytics'],
-    }),
-
-    // ========================================
-    // Guias Turísticos
-    // ========================================
-
-    // Público - Lista guias ativos
-    getGuias: builder.query({
-      query: () => ({ url: '/guias' }),
-      providesTags: ['Guias'],
-    }),
-
-    // Admin - Lista todos os guias
-    getAllGuias: builder.query({
-      query: () => ({ url: '/guias/admin/all' }),
-      providesTags: ['Guias'],
-    }),
-
-    // Admin - Criar guia
-    createGuia: builder.mutation({
-      query: (guia) => ({
-        url: '/guias/admin',
-        method: 'POST',
-        body: guia,
-      }),
-      invalidatesTags: ['Guias'],
-    }),
-
-    // Admin - Atualizar guia
-    updateGuia: builder.mutation({
-      query: ({ id, ...guia }) => ({
-        url: `/guias/admin/${id}`,
-        method: 'PUT',
-        body: guia,
-      }),
-      invalidatesTags: ['Guias'],
-    }),
-
-    // Admin - Deletar guia
-    deleteGuia: builder.mutation({
-      query: (id) => ({
-        url: `/guias/admin/${id}`,
-        method: 'DELETE',
-      }),
-      invalidatesTags: ['Guias'],
-    }),
   }),
 })
 
@@ -639,15 +517,11 @@ export const {
   // useDeleteOfertaEnsinoMutation, // DESATIVADO - migração para turismo
   useGetCategoriasQuery,
   useGetCategoriasGroupedQuery,
-  useGetCategoriasHierarchyQuery,
   useGetCategoriaByIdQuery,
   useCreateCategoriaMutation,
-  useCreateSubcategoriaMutation,
-  useCreateSegmentoMutation,
   useUpdateCategoriaMutation,
   useDeleteCategoriaMutation,
   useGetCategoriasStatsQuery,
-  useGetUnidadesByCategoriaQuery,
   useCreateUnidadeMutation,
   useUpdateUnidadeMutation,
   useDeleteUnidadeMutation,
@@ -685,15 +559,4 @@ export const {
   useUpdateIconeMutation,
   useDeleteIconeMutation,
   useReordenarIconesMutation,
-  useGetAccessStatsQuery,
-  useGetAnalyticsOverviewQuery,
-  useGetPopularUnitsQuery,
-  useGetSearchTermsQuery,
-  useGetConversionFunnelQuery,
-  useGetAnalyticsTimelineQuery,
-  useGetGuiasQuery,
-  useGetAllGuiasQuery,
-  useCreateGuiaMutation,
-  useUpdateGuiaMutation,
-  useDeleteGuiaMutation,
 } = apiSlice
