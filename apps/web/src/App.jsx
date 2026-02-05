@@ -5,6 +5,7 @@ import AdminLayout from './layouts/AdminLayout'
 import LoginPage from './pages/LoginPage'
 import MapPage from './pages/MapPage'
 import DashboardPage from './pages/admin/DashboardPage'
+import AnalyticsPage from './pages/admin/AnalyticsPage'
 import StagingPage from './pages/admin/StagingPage'
 import UnidadesPage from './pages/admin/UnidadesPage'
 import MedicosPage from './pages/admin/MedicosPage'
@@ -39,6 +40,7 @@ function App() {
         <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="staging" element={<StagingPage />} />
           <Route path="unidades" element={<UnidadesPage />} />
           <Route path="medicos" element={<MedicosPage />} />

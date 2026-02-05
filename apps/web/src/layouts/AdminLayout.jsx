@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { Layout, Menu, Button, Avatar, Dropdown, Drawer } from 'antd'
 import {
   DashboardOutlined,
+  BarChartOutlined,
   EnvironmentOutlined,
   MedicineBoxOutlined,
   TeamOutlined,
@@ -48,6 +49,7 @@ export default function AdminLayout() {
   
   const menuItems = [
     { key: '/admin/dashboard', icon: <DashboardOutlined />, label: 'Painel' },
+    { key: '/admin/analytics', icon: <BarChartOutlined />, label: 'Analytics' },
     { key: '/admin/unidades', icon: <EnvironmentOutlined />, label: 'Unidades Turísticas' },
     { key: '/admin/categorias', icon: <TagsOutlined />, label: 'Categorias' },
     { key: '/admin/icones', icon: <PictureOutlined />, label: 'Ícones' },
