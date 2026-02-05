@@ -367,9 +367,16 @@ router.get('/timeline', authenticate, requireAdmin, asyncHandler(async (req, res
     ORDER BY date ASC
   `;
 
+  // Converter BigInt para Number para serialização JSON
+  const serializedTimeline = timeline.map(row => ({
+    date: row.date,
+    event_type: row.event_type,
+    count: Number(row.count),
+  }));
+
   res.json({
     success: true,
-    data: timeline,
+    data: serializedTimeline,
   });
 }));
 
