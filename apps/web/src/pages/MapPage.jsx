@@ -21,6 +21,7 @@ import {
   BookOutlined,
   TagOutlined,
   FileTextOutlined,
+  CarOutlined,
 } from '@ant-design/icons'
 import L from 'leaflet'
 
@@ -49,6 +50,9 @@ const normalizeText = (text) => {
 }
 import { useGetUnidadesQuery, useGetLastUpdateQuery, useGetIconesQuery, useGetCategoriasGroupedQuery } from '../store/slices/apiSlice' 
 import MapLegend from '../components/MapLegend'
+import GuiasTuristicosModal from '../components/GuiasTuristicosModal'
+import HowToGetHereModal from '../components/HowToGetHereModal'
+import RotaBonitoCorumbaModal from '../components/RotaBonitoCorumbaModal'
 import 'leaflet/dist/leaflet.css'
 import { trackBusca, trackVisualizacaoUnidade, trackCliqueMapaUnidade, trackContatoUnidade, trackRedeSocialUnidade, trackFiltroMapa } from '../utils/analytics'
 
@@ -282,6 +286,9 @@ export default function MapPage() {
   const [especialidadeModalVisible, setEspecialidadeModalVisible] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [isZooming, setIsZooming] = useState(false)
+  const [guiasModalVisible, setGuiasModalVisible] = useState(false)
+  const [howToGetHereVisible, setHowToGetHereVisible] = useState(false)
+  const [rotaBonitoVisible, setRotaBonitoVisible] = useState(false)
 
   // Estados de busca
   const [searchType, setSearchType] = useState(null) // 'bairro', 'unidade'
@@ -1243,7 +1250,112 @@ export default function MapPage() {
                     )}
                   </Card>
 
-                  {/* Rodapé com informações da fonte de dados */}
+
+                  {/* Botão Como Chegar a Corumbá */}
+                  <Button
+                    type="primary"
+                    size="large"
+                    onClick={() => setHowToGetHereVisible(true)}
+                    style={{
+                      width: '100%',
+                      height: '60px',
+                      marginBottom: '16px',
+                      background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                      border: 'none',
+                      borderRadius: '12px',
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      boxShadow: '0 4px 15px rgba(24, 144, 255, 0.4)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '12px',
+                      transition: 'all 0.3s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-3px)';
+                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(24, 144, 255, 0.5)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 4px 15px rgba(24, 144, 255, 0.4)';
+                    }}
+                  >
+                    <span>✈️ 🚌 Como chegar a Corumbá</span>
+                  </Button>
+
+                  {/* Botão Rota Bonito - Corumbá */}
+                  <Button
+                    type="primary"
+                    size="large"
+                    onClick={() => setRotaBonitoVisible(true)}
+                    style={{
+                      width: '100%',
+                      height: '70px',
+                      marginBottom: '16px',
+                      background: 'linear-gradient(135deg, #2f54eb 0%, #1d39c4 100%)',
+                      border: 'none',
+                      borderRadius: '12px',
+                      fontSize: '15px',
+                      fontWeight: 'bold',
+                      boxShadow: '0 4px 15px rgba(47, 84, 235, 0.4)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '4px',
+                      transition: 'all 0.3s ease',
+                      padding: '12px',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-3px)';
+                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(47, 84, 235, 0.5)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 4px 15px rgba(47, 84, 235, 0.4)';
+                    }}
+                  >
+                    <span style={{ fontSize: '14px' }}>⛴️🐊🌿 Principal Rota Turística do MS</span>
+                    <span style={{ fontSize: '14px' }}>(outros acessos)</span>
+
+                  </Button>
+
+                  {/* Botão Guias Turísticos */}
+                  <Button
+                    type="primary"
+                    size="large"
+                    onClick={() => setGuiasModalVisible(true)}
+                    style={{
+                      width: '100%',
+                      height: '60px',
+                      marginTop: '24px',
+                      marginBottom: '16px',
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      border: 'none',
+                      borderRadius: '12px',
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '12px',
+                      transition: 'all 0.3s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-3px)';
+                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.5)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
+                    }}
+                  >
+                    <span>🧭 Procuro um Guia Turístico</span>
+                  </Button>
+
+                  {/* Rodapé */}
                   <div style={{
                     marginTop: '24px',
                     padding: '12px',
@@ -1424,7 +1536,24 @@ export default function MapPage() {
         </div>
 
 
-      </div>
+
+      {/* Modal de Guias Turísticos */}
+      <GuiasTuristicosModal
+        visible={guiasModalVisible}
+        onClose={() => setGuiasModalVisible(false)}
+      />
+
+      {/* Modal Como Chegar a Corumbá */}
+      <HowToGetHereModal
+        visible={howToGetHereVisible}
+        onClose={() => setHowToGetHereVisible(false)}
+      />
+
+      {/* Modal Rota Bonito - Corumbá */}
+      <RotaBonitoCorumbaModal
+        visible={rotaBonitoVisible}
+        onClose={() => setRotaBonitoVisible(false)}
+      />
     </>
   )
 }
