@@ -1534,8 +1534,7 @@ export default function MapPage() {
             }}
           />
         </div>
-
-
+      </div>
 
       {/* Modal de Guias Turísticos */}
       <GuiasTuristicosModal

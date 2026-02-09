@@ -17,6 +17,7 @@ import CategoriasPage from './pages/admin/CategoriasPage'
 import UsersPage from './pages/admin/UsersPage'
 import AuditPage from './pages/admin/AuditPage'
 import ETLPage from './pages/admin/ETLPage'
+import AnalyticsPage from './pages/admin/AnalyticsPage'
 
 function App() {
   return (
@@ -51,6 +52,7 @@ function App() {
           <Route path="users" element={<SuperadminRoute><UsersPage /></SuperadminRoute>} />
           <Route path="audit" element={<SuperadminRoute><AuditPage /></SuperadminRoute>} />
           <Route path="etl" element={<SuperadminRoute><ETLPage /></SuperadminRoute>} />
+          <Route path="analytics" element={<SuperadminRoute><AnalyticsPage /></SuperadminRoute>} />
         </Route>
 
         {/* 404 */}

@@ -264,28 +264,36 @@ export default function AnalyticsPage() {
                 title: 'Termo',
                 dataIndex: 'search_term',
                 key: 'search_term',
+                width: '35%',
               },
               {
                 title: 'Tipo',
                 dataIndex: 'search_type',
                 key: 'search_type',
+                width: '15%',
                 render: (type) => <Tag>{type}</Tag>,
               },
               {
                 title: 'Contagem',
                 dataIndex: 'count',
                 key: 'count',
+                width: '20%',
                 sorter: (a, b) => a.count - b.count,
                 defaultSortOrder: 'descend',
+                showSorterTooltip: true,
               },
               {
                 title: 'Última Busca',
                 dataIndex: 'last_searched',
                 key: 'last_searched',
+                width: '30%',
                 render: (date) => dayjs(date).format('DD/MM/YYYY HH:mm'),
+                sorter: (a, b) => dayjs(a.last_searched).unix() - dayjs(b.last_searched).unix(),
+                showSorterTooltip: true,
               },
             ]}
             pagination={{ pageSize: 10 }}
+            showSorterTooltip={true}
           />
         )}
       </Card>
