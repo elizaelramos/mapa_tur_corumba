@@ -53,7 +53,7 @@ router.post('/event', asyncHandler(async (req, res) => {
   const referrer = req.headers['referer'] || req.headers['referrer'];
 
   // Registrar evento
-  await prisma.aNALYTICS_Event.create({
+  await prisma.analytics_event.create({
     data: {
       session_id,
       event_type,
@@ -66,7 +66,7 @@ router.post('/event', asyncHandler(async (req, res) => {
 
   // Atualizar sessão agregada (upsert)
   const now = new Date();
-  await prisma.aNALYTICS_Session.upsert({
+  await prisma.analytics_session.upsert({
     where: { session_id },
     create: {
       session_id,
@@ -129,22 +129,22 @@ router.get('/access-stats', authenticate, requireAdmin, asyncHandler(async (req,
 
   // Contar sessões únicas por período
   const [today, thisWeek, thisMonth, thisYear] = await Promise.all([
-    prisma.aNALYTICS_Session.count({
+    prisma.analytics_session.count({
       where: {
         first_seen: { gte: startOfToday },
       },
     }),
-    prisma.aNALYTICS_Session.count({
+    prisma.analytics_session.count({
       where: {
         first_seen: { gte: startOfWeek },
       },
     }),
-    prisma.aNALYTICS_Session.count({
+    prisma.analytics_session.count({
       where: {
         first_seen: { gte: startOfMonth },
       },
     }),
-    prisma.aNALYTICS_Session.count({
+    prisma.analytics_session.count({
       where: {
         first_seen: { gte: startOfYear },
       },
@@ -174,17 +174,17 @@ router.get('/overview', authenticate, requireAdmin, asyncHandler(async (req, res
 
   // Estatísticas gerais
   const [totalSessions, totalEvents, avgSessionDuration] = await Promise.all([
-    prisma.aNALYTICS_Session.count({
+    prisma.analytics_session.count({
       where: {
         first_seen: { gte: startDate, lte: endDate },
       },
     }),
-    prisma.aNALYTICS_Event.count({
+    prisma.analytics_event.count({
       where: {
         created_at: { gte: startDate, lte: endDate },
       },
     }),
-    prisma.aNALYTICS_Session.aggregate({
+    prisma.analytics_session.aggregate({
       where: {
         first_seen: { gte: startDate, lte: endDate },
         duration_seconds: { not: null },
@@ -196,7 +196,7 @@ router.get('/overview', authenticate, requireAdmin, asyncHandler(async (req, res
   ]);
 
   // Eventos por tipo
-  const eventsByType = await prisma.aNALYTICS_Event.groupBy({
+  const eventsByType = await prisma.analytics_event.groupBy({
     by: ['event_type'],
     where: {
       created_at: { gte: startDate, lte: endDate },
@@ -230,7 +230,7 @@ router.get('/popular-units', authenticate, requireAdmin, asyncHandler(async (req
   const startDate = start_date ? new Date(start_date) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const endDate = end_date ? new Date(end_date) : new Date();
 
-  const popularUnits = await prisma.aNALYTICS_UnitStats.groupBy({
+  const popularUnits = await prisma.analytics_unit_stats.groupBy({
     by: ['unit_id'],
     where: {
       date: { gte: startDate, lte: endDate },
@@ -289,7 +289,7 @@ router.get('/popular-units', authenticate, requireAdmin, asyncHandler(async (req
 router.get('/search-terms', authenticate, requireAdmin, asyncHandler(async (req, res) => {
   const { limit = 50 } = req.query;
 
-  const searchTerms = await prisma.aNALYTICS_SearchStats.findMany({
+  const searchTerms = await prisma.analytics_search_stats.findMany({
     orderBy: {
       count: 'desc',
     },
@@ -319,13 +319,13 @@ router.get('/conversion-funnel', authenticate, requireAdmin, asyncHandler(async 
   const endDate = end_date ? new Date(end_date) : new Date();
 
   const [totalViews, totalContacts] = await Promise.all([
-    prisma.aNALYTICS_Event.count({
+    prisma.analytics_event.count({
       where: {
         event_type: 'UNIT_VIEW',
         created_at: { gte: startDate, lte: endDate },
       },
     }),
-    prisma.aNALYTICS_Event.count({
+    prisma.analytics_event.count({
       where: {
         event_type: 'CONTACT_CLICK',
         created_at: { gte: startDate, lte: endDate },
@@ -404,7 +404,7 @@ async function processUnitEvent(event_type, event_data) {
     else if (contactType === 'como_chegar') updateData.contacts_directions = { increment: 1 };
   }
 
-  await prisma.aNALYTICS_UnitStats.upsert({
+  await prisma.analytics_unit_stats.upsert({
     where: {
       unit_id_date: {
         unit_id: parseInt(unit_id),
@@ -414,9 +414,13 @@ async function processUnitEvent(event_type, event_data) {
     create: {
       unit_id: parseInt(unit_id),
       date: today,
+      updated_at: new Date(),
       ...Object.fromEntries(Object.entries(updateData).map(([k, v]) => [k, 1])),
     },
-    update: updateData,
+    update: {
+      ...updateData,
+      updated_at: new Date(),
+    },
   });
 }
 
@@ -424,7 +428,7 @@ async function processSearchEvent(event_data) {
   const { search_term, search_type } = event_data || {};
   if (!search_term) return;
 
-  await prisma.aNALYTICS_SearchStats.upsert({
+  await prisma.analytics_search_stats.upsert({
     where: {
       search_term_search_type: {
         search_term: search_term.toLowerCase().trim(),

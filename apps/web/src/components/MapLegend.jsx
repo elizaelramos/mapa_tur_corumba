@@ -68,7 +68,10 @@ export default function MapLegend({ iconesData, onIconClick, selectedIconUrl, un
     // Coletar URLs de ícones únicos das unidades (normalizando caminhos)
     const iconesUsados = new Set(
       unidades
-        .map(u => normalizePath(u.icone_url))
+        .map(u => {
+          const iconUrl = u.icone?.url || u.icone_url  // Priorizar objeto icone
+          return normalizePath(iconUrl)
+        })
         .filter(url => url && url.trim() !== '')
     )
 

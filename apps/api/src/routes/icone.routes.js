@@ -157,23 +157,54 @@ router.post('/upload', authenticate, requireAdmin, uploadIcon.single('icone'), a
 router.put('/:id', authenticate, requireAdmin, asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { nome, url, ordem, ativo } = req.body;
-  
+
+  // Se a URL está sendo atualizada, precisamos atualizar todas as unidades que usam o ícone
+  let unidadesAtualizadas = 0;
+  if (url !== undefined) {
+    // Buscar o ícone atual para obter a URL antiga
+    const iconeAtual = await prisma.pROD_Icone.findUnique({
+      where: { id: parseInt(id) },
+    });
+
+    if (iconeAtual && iconeAtual.url !== url) {
+      // NOVO: Atualizar via FK (mais robusto) - unidades com relacionamento
+      const resultFK = await prisma.pROD_UnidadeTuristica.updateMany({
+        where: { icone_id: parseInt(id) },
+        data: { icone_url: url }, // Trigger manterá sincronização
+      });
+      unidadesAtualizadas = resultFK.count;
+
+      // FALLBACK: Atualizar unidades antigas ainda usando icone_url direto
+      const resultLegacy = await prisma.pROD_UnidadeTuristica.updateMany({
+        where: {
+          icone_id: null,
+          icone_url: iconeAtual.url,
+        },
+        data: { icone_url: url },
+      });
+      unidadesAtualizadas += resultLegacy.count;
+
+      logger.info(`URL do ícone atualizada: ${iconeAtual.url} -> ${url} (${unidadesAtualizadas} unidades atualizadas: ${resultFK.count} via FK, ${resultLegacy.count} legacy)`);
+    }
+  }
+
   const updateData = {};
   if (nome !== undefined) updateData.nome = nome;
   if (url !== undefined) updateData.url = url;
   if (ordem !== undefined) updateData.ordem = parseInt(ordem);
   if (typeof ativo === 'boolean') updateData.ativo = ativo;
-  
+
   const icone = await prisma.pROD_Icone.update({
     where: { id: parseInt(id) },
     data: updateData,
   });
-  
+
   logger.info(`Ícone atualizado: ${icone.nome} (ID ${icone.id})`);
-  
+
   res.json({
     success: true,
     data: icone,
+    unidadesAtualizadas,
   });
 }));
 
@@ -196,9 +227,14 @@ router.delete('/:id', authenticate, requireAdmin, asyncHandler(async (req, res) 
     });
   }
 
-  // Verificar se há unidades turísticas usando este ícone
+  // Verificar se há unidades turísticas usando este ícone (tanto via FK quanto via URL)
   const unidadesUsando = await prisma.pROD_UnidadeTuristica.count({
-    where: { icone_url: icone.url },
+    where: {
+      OR: [
+        { icone_id: parseInt(id) }, // NOVO: Via FK
+        { icone_url: icone.url },    // Fallback: Via URL (compatibilidade)
+      ],
+    },
   });
 
   if (unidadesUsando > 0) {

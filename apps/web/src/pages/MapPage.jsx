@@ -173,8 +173,16 @@ const MapViewController = ({ selectedUnidade, filteredUnidades, selectedIconUrl 
   // Centralizar quando filtro de ícone é aplicado
   useEffect(() => {
     if (selectedIconUrl && filteredUnidades && filteredUnidades.length > 0) {
-      const validUnidades = filteredUnidades.filter(u => u.latitude && u.longitude)
-      
+      // Filtrar unidades com coordenadas válidas e dentro da área de Corumbá
+      // Área aproximada: -17 a -21 lat, -55 a -59 lng
+      const validUnidades = filteredUnidades.filter(u => {
+        if (!u.latitude || !u.longitude) return false
+        const lat = parseFloat(u.latitude)
+        const lng = parseFloat(u.longitude)
+        // Validar se está na área de Corumbá/Pantanal
+        return lat >= -21 && lat <= -17 && lng >= -59 && lng <= -55
+      })
+
       if (validUnidades.length === 0) return
 
       if (validUnidades.length === 1) {
@@ -298,6 +306,7 @@ export default function MapPage() {
   // Filtros de categoria
   const [selectedCategoriaNome, setSelectedCategoriaNome] = useState(null)
   const [selectedSubcategoriaId, setSelectedSubcategoriaId] = useState(null)
+  const [selectedOfertaId, setSelectedOfertaId] = useState(null)
 
   // Detectar mobile
   useEffect(() => {
@@ -317,7 +326,7 @@ export default function MapPage() {
     }
   }, []) // Executa apenas uma vez ao montar
 
-  const { data, isLoading, isError, error } = useGetUnidadesQuery(undefined, {
+  const { data, isLoading, isError, error } = useGetUnidadesQuery({ ativo: 'true', limit: 1000 }, {
     refetchOnMountOrArgChange: 300, // Refetch apenas se dados tiverem mais de 5 minutos
     refetchOnFocus: false, // Não refetch ao voltar para a aba
   })
@@ -389,7 +398,10 @@ export default function MapPage() {
     // Aplicar filtro por ícone (se selecionado) - normalizando URLs para evitar mismatch
     if (selectedIconUrl) {
       const selNorm = normalizePath(selectedIconUrl)
-      filtered = filtered.filter(unidade => normalizePath(unidade.icone_url) === selNorm)
+      filtered = filtered.filter(unidade => {
+        const unidadeIconUrl = unidade.icone?.url || unidade.icone_url
+        return normalizePath(unidadeIconUrl) === selNorm
+      })
     }
 
     // Aplicar filtro por categoria (subcategoria tem prioridade)
@@ -1064,6 +1076,7 @@ export default function MapPage() {
                                 trackFiltroMapa({ tipo: 'subcategoria', valor: sub ? `${selectedCategoriaNome} — ${sub.nome}` : selectedCategoriaNome })
                               }}
                               allowClear
+                              onClear={() => setSelectedSubcategoriaId(null)}
                               size="large"
                               style={{ width: '100%', marginBottom: '16px', borderRadius: '8px' }}
                               showSearch
@@ -1118,7 +1131,7 @@ export default function MapPage() {
                               option.children.toLowerCase().includes(input.toLowerCase())
                             }
                           >
-                            {unidades.map((unidade) => (
+                            {filteredUnidades.map((unidade) => (
                               <Select.Option key={unidade.id} value={unidade.id}>
                                 {unidade.nome}
                               </Select.Option>
@@ -1471,17 +1484,28 @@ export default function MapPage() {
             />
 
             {!isZooming && filteredUnidades.map((unidade) => {
+              // Validar coordenadas existentes e dentro da área de Corumbá
               if (!unidade.latitude || !unidade.longitude) {
                 console.error('Unidade sem coordenadas:', unidade);
                 return null;
               }
 
-              // Criar ícone customizado se a unidade tiver um icone_url válido
+              const lat = parseFloat(unidade.latitude)
+              const lng = parseFloat(unidade.longitude)
+
+              // Validar se está na área de Corumbá/Pantanal (-17 a -21 lat, -55 a -59 lng)
+              if (lat < -21 || lat > -17 || lng < -59 || lng > -55) {
+                console.warn('Unidade com coordenadas fora da área de Corumbá:', unidade.nome, lat, lng);
+                return null;
+              }
+
+              // Criar ícone customizado se a unidade tiver um ícone válido
               let customIcon = null;
-              if (unidade.icone_url && unidade.icone_url.trim() !== '') {
+              const iconUrl = unidade.icone?.url || unidade.icone_url; // Priorizar objeto icone
+              if (iconUrl && iconUrl.trim() !== '') {
                 try {
                   customIcon = L.icon({
-                    iconUrl: unidade.icone_url,
+                    iconUrl: iconUrl,
                     iconSize: [32, 48],
                     iconAnchor: [16, 48],
                     popupAnchor: [0, -48],

@@ -1,6 +1,3 @@
-// MAPATUR - Sistema Guia de Turismo de Corumbá (MS)
-// Prisma Schema Definition
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,97 +7,82 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ============================================================================
-// PRODUCTION TABLES - Unidades Turísticas
-// ============================================================================
-
 model PROD_UnidadeTuristica {
-  id                     Int                                  @id @default(autoincrement())
-
-  // Campos básicos (mantidos)
-  nome                   String                               @db.VarChar(255)
-  endereco               String?                              @db.VarChar(500)
-  id_bairro              Int?
-  latitude               Decimal                              @db.Decimal(10, 8) // NOT NULL - obrigatório para mapa
-  longitude              Decimal                              @db.Decimal(11, 8) // NOT NULL - obrigatório para mapa
-  telefone               String?                              @db.VarChar(100)
-  whatsapp               String?                              @db.VarChar(100)
-  email                  String?                              @db.VarChar(255)
-  horario_funcionamento  String?                              @db.Text
-  imagem_url             String?                              @db.VarChar(500)
-  icone_url              String?                              @db.VarChar(500)
-  ativo                  Boolean                              @default(true)
-  created_at             DateTime                             @default(now())
-  updated_at             DateTime                             @updatedAt
-
-  // NOVOS CAMPOS TURÍSTICOS
-  nome_fantasia          String?                              @db.VarChar(255)  // Nome comercial
-  razao_social           String?                              @db.VarChar(255)  // Nome empresarial
-  cnpj                   String?                              @db.VarChar(20)   // Cadastro
-  setor                  String?                              @db.VarChar(100)  // Ex: "AGÊNCIA VIAGENS"
-  descricao_servicos     String?                              @db.Text          // Campo "Serviço" da planilha
-  data_cadastro          DateTime?                                              // INICIO VIG
-  data_vencimento        DateTime?                                              // VENCIMENTO
-
-  // Relações
-  bairro                 PROD_Bairro?                         @relation(fields: [id_bairro], references: [id], onDelete: SetNull)
-  redes_sociais          PROD_UnidadeTuristica_RedeSocial[]
-  categorias             Junction_UnidadeTuristica_Categoria[]
+  id                    Int                                   @id @default(autoincrement())
+  nome                  String                                @db.VarChar(255)
+  nome_fantasia         String?                               @db.VarChar(255)
+  razao_social          String?                               @db.VarChar(255)
+  cnpj                  String?                               @db.VarChar(20)
+  setor                 String?                               @db.VarChar(100)
+  endereco              String?                               @db.VarChar(500)
+  id_bairro             Int?
+  latitude              Decimal                               @db.Decimal(10, 8)
+  longitude             Decimal                               @db.Decimal(11, 8)
+  telefone              String?                               @db.VarChar(100)
+  whatsapp              String?                               @db.VarChar(100)
+  email                 String?                               @db.VarChar(255)
+  horario_funcionamento String?                               @db.Text
+  descricao_servicos    String?                               @db.Text
+  imagem_url            String?                               @db.VarChar(500)
+  icone_id              Int?
+  icone_url             String?                               @db.VarChar(500)
+  data_cadastro         DateTime?
+  data_vencimento       DateTime?
+  ativo                 Boolean                               @default(true)
+  created_at            DateTime                              @default(now())
+  updated_at            DateTime                              @updatedAt
+  diretor_adjunto       String?                               @db.VarChar(255)
+  diretor_responsavel   String?                               @db.VarChar(255)
+  categorias            Junction_UnidadeTuristica_Categoria[]
+  icone                 PROD_Icone?                           @relation(fields: [icone_id], references: [id])
+  bairro                PROD_Bairro?                          @relation(fields: [id_bairro], references: [id])
+  redes_sociais         PROD_UnidadeTuristica_RedeSocial[]
 
   @@index([ativo])
   @@index([latitude, longitude])
   @@index([id_bairro])
+  @@index([icone_id])
   @@index([setor])
   @@map("prod_unidade_turistica")
 }
 
 model PROD_UnidadeTuristica_RedeSocial {
-  id          Int                      @id @default(autoincrement())
-  id_unidade  Int
-  nome_rede   String                   @db.VarChar(50)
-  url_perfil  String                   @db.VarChar(500)
-  created_at  DateTime                 @default(now())
-  updated_at  DateTime                 @updatedAt
-
-  unidade     PROD_UnidadeTuristica    @relation(fields: [id_unidade], references: [id], onDelete: Cascade)
+  id         Int                   @id @default(autoincrement())
+  id_unidade Int
+  nome_rede  String                @db.VarChar(50)
+  url_perfil String                @db.VarChar(500)
+  created_at DateTime              @default(now())
+  updated_at DateTime              @updatedAt
+  unidade    PROD_UnidadeTuristica @relation(fields: [id_unidade], references: [id], onDelete: Cascade)
 
   @@index([id_unidade])
   @@map("prod_unidade_turistica_redesocial")
 }
 
-// ============================================================================
-// CATEGORIAS TURÍSTICAS
-// ============================================================================
-
 model PROD_Categoria {
-  id            Int                                    @id @default(autoincrement())
-  nome          String                                 @db.VarChar(100)         // "Onde Passear", "Organize sua Viagem"
-  subcategoria  String?                                @db.VarChar(100)         // "Circuitos Culturais", "Afroturismo", etc.
-  ativo         Boolean                                @default(true)
-  ordem         Int                                    @default(0)
-  created_at    DateTime                               @default(now())
-  updated_at    DateTime                               @updatedAt
+  id           Int                                   @id @default(autoincrement())
+  nome         String                                @db.VarChar(100)
+  subcategoria String?                               @db.VarChar(100)
+  segmento     String?                               @db.VarChar(100)
+  ativo        Boolean                               @default(true)
+  ordem        Int                                   @default(0)
+  created_at   DateTime                              @default(now())
+  updated_at   DateTime                              @updatedAt
+  unidades     Junction_UnidadeTuristica_Categoria[]
 
-  // Relações
-  unidades      Junction_UnidadeTuristica_Categoria[]
-
-  @@unique([nome, subcategoria])  // Cada combinação categoria+subcategoria é única
+  @@unique([nome, subcategoria, segmento])
   @@index([nome])
   @@index([ativo])
+  @@index([subcategoria])
   @@map("prod_categoria")
 }
 
-// ============================================================================
-// JUNCTION TABLES - Relações N:N
-// ============================================================================
-
 model Junction_UnidadeTuristica_Categoria {
-  id_unidade     Int
-  id_categoria   Int
-  created_at     DateTime               @default(now())
-
-  unidade        PROD_UnidadeTuristica  @relation(fields: [id_unidade], references: [id], onDelete: Cascade)
-  categoria      PROD_Categoria         @relation(fields: [id_categoria], references: [id], onDelete: Cascade)
+  id_unidade   Int
+  id_categoria Int
+  created_at   DateTime              @default(now())
+  categoria    PROD_Categoria        @relation(fields: [id_categoria], references: [id], onDelete: Cascade)
+  unidade      PROD_UnidadeTuristica @relation(fields: [id_unidade], references: [id], onDelete: Cascade)
 
   @@id([id_unidade, id_categoria])
   @@index([id_unidade])
@@ -108,23 +90,17 @@ model Junction_UnidadeTuristica_Categoria {
   @@map("junction_unidade_categoria")
 }
 
-// ============================================================================
-// USER MANAGEMENT - Sistema de usuários e RBAC
-// ============================================================================
-
 model User {
-  id                Int                              @id @default(autoincrement())
-  username          String                           @unique @db.VarChar(50)
-  email             String                           @unique @db.VarChar(255)
-  password_hash     String                           @db.VarChar(255)
-  role              UserRole                         @default(admin)
-  ativo             Boolean                          @default(true)
-  created_at        DateTime                         @default(now())
-  updated_at        DateTime                         @updatedAt
-  last_login        DateTime?
-
-  // Relações
-  audit_logs        AUDIT_LOG[]
+  id            Int         @id @default(autoincrement())
+  username      String      @unique @db.VarChar(50)
+  email         String      @unique @db.VarChar(255)
+  password_hash String      @db.VarChar(255)
+  role          UserRole    @default(admin)
+  ativo         Boolean     @default(true)
+  created_at    DateTime    @default(now())
+  updated_at    DateTime    @updatedAt
+  last_login    DateTime?
+  audit_logs    AUDIT_LOG[]
 
   @@index([username])
   @@index([email])
@@ -132,28 +108,17 @@ model User {
   @@map("user")
 }
 
-enum UserRole {
-  admin
-  superadmin
-}
-
-// ============================================================================
-// AUDIT SYSTEM - Sistema de auditoria imutável
-// ============================================================================
-
 model AUDIT_LOG {
-  id                Int                              @id @default(autoincrement())
-  tabela            String                           @db.VarChar(100)
-  operacao          OperacaoAudit
-  registro_id       Int
-  valor_antigo      String?                          @db.Text // JSON
-  valor_novo        String?                          @db.Text // JSON
-  user_id           Int?
-  correlation_id    String?                          @db.VarChar(100)
-  timestamp         DateTime                         @default(now())
-
-  // Relações
-  user              User?                            @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  id             Int           @id @default(autoincrement())
+  tabela         String        @db.VarChar(100)
+  operacao       OperacaoAudit
+  registro_id    Int
+  valor_antigo   String?       @db.Text
+  valor_novo     String?       @db.Text
+  user_id        Int?
+  correlation_id String?       @db.VarChar(100)
+  timestamp      DateTime      @default(now())
+  user           User?         @relation(fields: [user_id], references: [id])
 
   @@index([tabela])
   @@index([operacao])
@@ -163,24 +128,12 @@ model AUDIT_LOG {
   @@map("audit_log")
 }
 
-enum OperacaoAudit {
-  INSERT
-  UPDATE
-  DELETE
-}
-
-// ============================================================================
-// BAIRROS - Gerenciamento de bairros de Corumbá
-// ============================================================================
-
 model PROD_Bairro {
-  id         Int                      @id @default(autoincrement())
-  nome       String                   @unique @db.VarChar(100)
-  ativo      Boolean                  @default(true)
-  created_at DateTime                 @default(now())
-  updated_at DateTime                 @updatedAt
-
-  // Relações
+  id         Int                     @id @default(autoincrement())
+  nome       String                  @unique @db.VarChar(100)
+  ativo      Boolean                 @default(true)
+  created_at DateTime                @default(now())
+  updated_at DateTime                @updatedAt
   unidades   PROD_UnidadeTuristica[]
 
   @@index([nome])
@@ -188,20 +141,142 @@ model PROD_Bairro {
   @@map("prod_bairro")
 }
 
-// ============================================================================
-// ÍCONES - Gerenciamento de ícones para tipos de unidades turísticas
-// ============================================================================
-
 model PROD_Icone {
-  id         Int      @id @default(autoincrement())
-  nome       String   @unique @db.VarChar(100) // Ex: Hotel, Restaurante, Agência
-  url        String   @db.VarChar(500)
-  ativo      Boolean  @default(true)
-  ordem      Int      @default(0)
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  id         Int                     @id @default(autoincrement())
+  nome       String                  @unique @db.VarChar(100)
+  url        String                  @db.VarChar(500)
+  ativo      Boolean                 @default(true)
+  ordem      Int                     @default(0)
+  created_at DateTime                @default(now())
+  updated_at DateTime                @updatedAt
+  unidades   PROD_UnidadeTuristica[]
 
   @@index([ativo])
   @@index([ordem])
   @@map("prod_icone")
+}
+
+model analytics_event {
+  id         BigInt                     @id @default(autoincrement())
+  session_id String                     @db.VarChar(100)
+  event_type analytics_event_event_type
+  event_data String                     @db.Text
+  user_agent String?                    @db.VarChar(500)
+  ip_hash    String?                    @db.VarChar(64)
+  referrer   String?                    @db.VarChar(500)
+  created_at DateTime                   @default(now())
+
+  @@index([created_at])
+  @@index([event_type, created_at])
+  @@index([event_type])
+  @@index([session_id])
+}
+
+model analytics_performance {
+  id           BigInt                            @id @default(autoincrement())
+  metric_type  analytics_performance_metric_type
+  metric_value Decimal                           @db.Decimal(10, 2)
+  metric_unit  String                            @db.VarChar(20)
+  page         String?                           @db.VarChar(255)
+  session_id   String?                           @db.VarChar(100)
+  created_at   DateTime                          @default(now())
+
+  @@index([created_at])
+  @@index([metric_type])
+}
+
+model analytics_search_stats {
+  id            BigInt   @id @default(autoincrement())
+  search_term   String   @db.VarChar(255)
+  search_type   String   @db.VarChar(50)
+  count         Int      @default(1)
+  last_searched DateTime @default(now())
+
+  @@unique([search_term, search_type])
+  @@index([count])
+  @@index([last_searched])
+}
+
+model analytics_session {
+  id               BigInt   @id @default(autoincrement())
+  session_id       String   @unique @db.VarChar(100)
+  page_views       Int      @default(0)
+  searches         Int      @default(0)
+  unit_views       Int      @default(0)
+  contacts         Int      @default(0)
+  first_seen       DateTime
+  last_seen        DateTime
+  duration_seconds Int?
+  user_agent       String?  @db.VarChar(500)
+  ip_hash          String?  @db.VarChar(64)
+
+  @@index([first_seen])
+  @@index([last_seen])
+}
+
+model analytics_unit_stats {
+  id                  BigInt   @id @default(autoincrement())
+  unit_id             Int
+  date                DateTime @db.Date
+  views               Int      @default(0)
+  map_clicks          Int      @default(0)
+  contacts_whatsapp   Int      @default(0)
+  contacts_phone      Int      @default(0)
+  contacts_email      Int      @default(0)
+  contacts_directions Int      @default(0)
+  social_clicks       Int      @default(0)
+  conversion_rate     Decimal? @db.Decimal(5, 2)
+  created_at          DateTime @default(now())
+  updated_at          DateTime
+
+  @@unique([unit_id, date])
+  @@index([conversion_rate])
+  @@index([date])
+  @@index([unit_id])
+  @@index([views])
+}
+
+model prod_guia_turistico {
+  id         Int      @id @default(autoincrement())
+  nome       String   @db.VarChar(255)
+  whatsapp   String   @db.VarChar(100)
+  idiomas    String   @db.VarChar(255)
+  foto_url   String?  @db.VarChar(500)
+  descricao  String?  @db.Text
+  ativo      Boolean  @default(true)
+  ordem      Int      @default(0)
+  created_at DateTime @default(now())
+  updated_at DateTime
+
+  @@index([ativo])
+  @@index([ordem])
+}
+
+enum UserRole {
+  admin
+  superadmin
+}
+
+enum OperacaoAudit {
+  INSERT
+  UPDATE
+  DELETE
+}
+
+enum analytics_performance_metric_type {
+  PAGE_LOAD_TIME
+  API_RESPONSE_TIME
+  ERROR_COUNT
+  NETWORK_LATENCY
+}
+
+enum analytics_event_event_type {
+  PAGE_VIEW
+  SEARCH
+  UNIT_VIEW
+  MAP_CLICK
+  CONTACT_CLICK
+  SOCIAL_CLICK
+  FILTER_APPLIED
+  ERROR
 }

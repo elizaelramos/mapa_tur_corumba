@@ -77,7 +77,8 @@ export default function UnidadesPage() {
   const [novaRedeSocial, setNovaRedeSocial] = useState({ nome_rede: '', url_perfil: '' })
   const [imageUrl, setImageUrl] = useState(null)
   const [uploading, setUploading] = useState(false)
-  const [selectedIcon, setSelectedIcon] = useState(null)
+  const [selectedIconId, setSelectedIconId] = useState(null)      // NOVO: Armazena ID do ícone
+  const [selectedIconUrl, setSelectedIconUrl] = useState(null)    // Para preview visual
   const [activeTab, setActiveTab] = useState('1')
   const [currentNome, setCurrentNome] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
@@ -144,7 +145,8 @@ export default function UnidadesPage() {
 
     // Set image and icon if available
     setImageUrl(unidade.imagem_url || null)
-    setSelectedIcon(unidade.icone_url || null)
+    setSelectedIconId(unidade.icone?.id || null)
+    setSelectedIconUrl(unidade.icone?.url || unidade.icone_url || null)
 
     // Set categorias if available
     if (unidade.categorias && Array.isArray(unidade.categorias)) {
@@ -229,7 +231,7 @@ export default function UnidadesPage() {
         ativo: values.ativo ?? true,
         categorias: selectedCategorias,
         imagem_url: imageUrl || null,
-        icone_url: selectedIcon || null,
+        icone_id: selectedIconId || null,  // NOVO: Envia ID ao invés de URL
       }
 
       let unidadeId
@@ -770,7 +772,10 @@ export default function UnidadesPage() {
                   {iconesData?.data?.map((icone) => (
                     <div
                       key={icone.id}
-                      onClick={() => setSelectedIcon(icone.url)}
+                      onClick={() => {
+                        setSelectedIconId(icone.id)
+                        setSelectedIconUrl(icone.url)
+                      }}
                       style={{
                         width: 80,
                         display: 'flex',
@@ -783,12 +788,12 @@ export default function UnidadesPage() {
                         style={{
                           width: 60,
                           height: 60,
-                          border: selectedIcon === icone.url ? '3px solid #1890ff' : '1px solid #d9d9d9',
+                          border: selectedIconId === icone.id ? '3px solid #1890ff' : '1px solid #d9d9d9',
                           borderRadius: 4,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          backgroundColor: selectedIcon === icone.url ? '#e6f7ff' : 'white',
+                          backgroundColor: selectedIconId === icone.id ? '#e6f7ff' : 'white',
                           marginBottom: 4,
                         }}
                       >
@@ -802,8 +807,8 @@ export default function UnidadesPage() {
                         style={{
                           fontSize: 11,
                           textAlign: 'center',
-                          color: selectedIcon === icone.url ? '#1890ff' : '#666',
-                          fontWeight: selectedIcon === icone.url ? 'bold' : 'normal',
+                          color: selectedIconId === icone.id ? '#1890ff' : '#666',
+                          fontWeight: selectedIconId === icone.id ? 'bold' : 'normal',
                           wordBreak: 'break-word',
                         }}
                       >
@@ -812,12 +817,15 @@ export default function UnidadesPage() {
                     </div>
                   ))}
                 </div>
-                {selectedIcon && (
+                {selectedIconId && (
                   <Button
                     danger
                     size="small"
                     style={{ marginTop: 8 }}
-                    onClick={() => setSelectedIcon(null)}
+                    onClick={() => {
+                      setSelectedIconId(null)
+                      setSelectedIconUrl(null)
+                    }}
                   >
                     Remover Ícone
                   </Button>

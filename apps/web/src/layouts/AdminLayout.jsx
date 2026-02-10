@@ -15,6 +15,7 @@ import {
   TagsOutlined,
   PictureOutlined,
   BookOutlined,
+  BarChartOutlined,
 } from '@ant-design/icons'
 import { logout } from '../store/slices/authSlice'
 
@@ -53,6 +54,7 @@ export default function AdminLayout() {
     { key: '/admin/icones', icon: <PictureOutlined />, label: 'Ícones' },
     { key: '/admin/bairros', icon: <EnvironmentOutlined />, label: 'Bairros' },
     ...(isSuperadmin ? [
+      { key: '/admin/analytics', icon: <BarChartOutlined />, label: 'Analytics' },
       { key: '/admin/users', icon: <UserOutlined />, label: 'Usuários' },
       { key: '/admin/audit', icon: <AuditOutlined />, label: 'Auditoria' },
     ] : []),

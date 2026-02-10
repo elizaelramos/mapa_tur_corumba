@@ -43,6 +43,7 @@ router.get('/', asyncHandler(async (req, res) => {
       include: {
         redes_sociais: true,
         bairro: true,
+        icone: true,
         categorias: {
           include: {
             categoria: true,
@@ -54,12 +55,16 @@ router.get('/', asyncHandler(async (req, res) => {
     prisma.pROD_UnidadeTuristica.count({ where }),
   ]);
 
-  // Transformar dados para incluir redes sociais, bairro e categorias
+  // Transformar dados para incluir redes sociais, bairro, ícone e categorias
   const unidadesFormatted = unidades.map(u => ({
     ...u,
     bairro: u.bairro?.nome || null,
     redes_sociais: u.redes_sociais,
     categorias: u.categorias?.map(c => c.categoria) || [],
+    // Compatibilidade: manter icone_url sincronizado
+    icone_url: u.icone?.url || u.icone_url || null,
+    // Novo: retornar objeto icone completo
+    icone: u.icone || null,
   }));
 
   res.json({
@@ -86,6 +91,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
     include: {
       redes_sociais: true,
       bairro: true,
+      icone: true,
       categorias: {
         include: {
           categoria: true,
@@ -108,6 +114,10 @@ router.get('/:id', asyncHandler(async (req, res) => {
       bairro: unidade.bairro?.nome || null,
       redes_sociais: unidade.redes_sociais,
       categorias: unidade.categorias?.map(c => c.categoria) || [],
+      // Compatibilidade: manter icone_url sincronizado
+      icone_url: unidade.icone?.url || unidade.icone_url || null,
+      // Novo: retornar objeto icone completo
+      icone: unidade.icone || null,
     },
   });
 }));
@@ -133,6 +143,7 @@ router.post('/', authenticate, requireAdmin, asyncHandler(async (req, res) => {
     horario_funcionamento,
     descricao_servicos,
     imagem_url,
+    icone_id,
     icone_url,
     data_cadastro,
     data_vencimento,
@@ -175,7 +186,10 @@ router.post('/', authenticate, requireAdmin, asyncHandler(async (req, res) => {
       horario_funcionamento,
       descricao_servicos,
       imagem_url,
-      icone_url,
+      // Priorizar icone_id (novo comportamento com FK)
+      ...(icone_id && { icone: { connect: { id: parseInt(icone_id) } } }),
+      // Fallback icone_url (compatibilidade temporária)
+      ...(!icone_id && icone_url && { icone_url }),
       data_cadastro: data_cadastro ? new Date(data_cadastro) : null,
       data_vencimento: data_vencimento ? new Date(data_vencimento) : null,
     },
@@ -228,6 +242,7 @@ router.put('/:id', authenticate, requireAdmin, asyncHandler(async (req, res) => 
     descricao_servicos,
     ativo,
     imagem_url,
+    icone_id,
     icone_url,
     data_cadastro,
     data_vencimento,
@@ -279,7 +294,19 @@ router.put('/:id', authenticate, requireAdmin, asyncHandler(async (req, res) => 
   if (descricao_servicos !== undefined) updateData.descricao_servicos = descricao_servicos;
   if (ativo !== undefined) updateData.ativo = ativo;
   if (imagem_url !== undefined) updateData.imagem_url = imagem_url;
-  if (icone_url !== undefined) updateData.icone_url = icone_url;
+
+  // Ícone: priorizar icone_id (novo comportamento), fallback icone_url (compatibilidade)
+  if (icone_id !== undefined) {
+    if (icone_id === null) {
+      updateData.icone = { disconnect: true };
+    } else {
+      updateData.icone = { connect: { id: parseInt(icone_id) } };
+    }
+  } else if (icone_url !== undefined) {
+    // Compatibilidade temporária: aceitar icone_url diretamente
+    updateData.icone_url = icone_url;
+  }
+
   if (data_cadastro !== undefined) updateData.data_cadastro = data_cadastro ? new Date(data_cadastro) : null;
   if (data_vencimento !== undefined) updateData.data_vencimento = data_vencimento ? new Date(data_vencimento) : null;
 
