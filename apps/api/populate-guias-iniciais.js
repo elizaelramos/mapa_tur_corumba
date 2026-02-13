@@ -57,7 +57,7 @@ const guiasIniciais = [
 
     for (const guiaData of guiasIniciais) {
       // Verificar se o guia já existe (por nome)
-      const existe = await prisma.pROD_GuiaTuristico.findFirst({
+      const existe = await prisma.PROD_GuiaTuristico.findFirst({
         where: { nome: guiaData.nome }
       });
 
@@ -68,7 +68,7 @@ const guiasIniciais = [
       }
 
       // Criar o guia
-      const guia = await prisma.pROD_GuiaTuristico.create({
+      const guia = await prisma.PROD_GuiaTuristico.create({
         data: {
           nome: guiaData.nome,
           whatsapp: guiaData.whatsapp,

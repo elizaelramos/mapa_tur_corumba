@@ -16,7 +16,7 @@ const router = express.Router();
  */
 router.get('/', async (req, res) => {
   try {
-    const guias = await prisma.pROD_GuiaTuristico.findMany({
+    const guias = await prisma.PROD_GuiaTuristico.findMany({
       where: { ativo: true },
       orderBy: [
         { ordem: 'asc' },
@@ -48,7 +48,7 @@ router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    const guia = await prisma.pROD_GuiaTuristico.findUnique({
+    const guia = await prisma.PROD_GuiaTuristico.findUnique({
       where: { id: parseInt(id) },
       select: {
         id: true,
@@ -83,7 +83,7 @@ router.get('/:id', async (req, res) => {
  */
 router.get('/admin/all', authenticate, requireAdmin, async (req, res) => {
   try {
-    const guias = await prisma.pROD_GuiaTuristico.findMany({
+    const guias = await prisma.PROD_GuiaTuristico.findMany({
       orderBy: [
         { ordem: 'asc' },
         { nome: 'asc' }
@@ -113,7 +113,7 @@ router.post('/admin', authenticate, requireAdmin, async (req, res) => {
       });
     }
 
-    const guia = await prisma.pROD_GuiaTuristico.create({
+    const guia = await prisma.PROD_GuiaTuristico.create({
       data: {
         nome,
         whatsapp,
@@ -153,7 +153,7 @@ router.put('/admin/:id', authenticate, requireAdmin, async (req, res) => {
     const { nome, whatsapp, idiomas, foto_url, descricao, ativo, ordem } = req.body;
 
     // Buscar guia atual para audit log
-    const guiaAntigo = await prisma.pROD_GuiaTuristico.findUnique({
+    const guiaAntigo = await prisma.PROD_GuiaTuristico.findUnique({
       where: { id: parseInt(id) }
     });
 
@@ -161,7 +161,7 @@ router.put('/admin/:id', authenticate, requireAdmin, async (req, res) => {
       return res.status(404).json({ error: 'Guia não encontrado' });
     }
 
-    const guiaAtualizado = await prisma.pROD_GuiaTuristico.update({
+    const guiaAtualizado = await prisma.PROD_GuiaTuristico.update({
       where: { id: parseInt(id) },
       data: {
         nome,
@@ -204,7 +204,7 @@ router.delete('/admin/:id', authenticate, requireAdmin, async (req, res) => {
     const { id } = req.params;
 
     // Buscar guia para audit log
-    const guia = await prisma.pROD_GuiaTuristico.findUnique({
+    const guia = await prisma.PROD_GuiaTuristico.findUnique({
       where: { id: parseInt(id) }
     });
 
@@ -212,7 +212,7 @@ router.delete('/admin/:id', authenticate, requireAdmin, async (req, res) => {
       return res.status(404).json({ error: 'Guia não encontrado' });
     }
 
-    await prisma.pROD_GuiaTuristico.delete({
+    await prisma.PROD_GuiaTuristico.delete({
       where: { id: parseInt(id) }
     });
 

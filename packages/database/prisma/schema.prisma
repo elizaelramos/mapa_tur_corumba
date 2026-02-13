@@ -236,7 +236,7 @@ model analytics_unit_stats {
   @@index([views])
 }
 
-model prod_guia_turistico {
+model PROD_GuiaTuristico {
   id         Int      @id @default(autoincrement())
   nome       String   @db.VarChar(255)
   whatsapp   String   @db.VarChar(100)
@@ -250,6 +250,7 @@ model prod_guia_turistico {
 
   @@index([ativo])
   @@index([ordem])
+  @@map("prod_guia_turistico")
 }
 
 enum UserRole {

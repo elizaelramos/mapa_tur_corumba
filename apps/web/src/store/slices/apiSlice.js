@@ -176,9 +176,37 @@ export const apiSlice = createApi({
       providesTags: ['Categorias'],
     }),
 
+    getCategoriasHierarchy: builder.query({
+      query: () => '/categorias/hierarchy/admin',
+      providesTags: ['Categorias'],
+    }),
+
+    getUnidadesByCategoria: builder.query({
+      query: (id) => `/categorias/${id}/unidades`,
+      providesTags: ['Categorias', 'Unidades'],
+    }),
+
     createCategoria: builder.mutation({
       query: (data) => ({
         url: '/categorias',
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['Categorias', 'Unidades'],
+    }),
+
+    createSubcategoria: builder.mutation({
+      query: (data) => ({
+        url: '/categorias/subcategoria',
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['Categorias', 'Unidades'],
+    }),
+
+    createSegmento: builder.mutation({
+      query: (data) => ({
+        url: '/categorias/segmento',
         method: 'POST',
         body: data,
       }),
@@ -560,7 +588,11 @@ export const {
   useGetCategoriasQuery,
   useGetCategoriasGroupedQuery,
   useGetCategoriaByIdQuery,
+  useGetCategoriasHierarchyQuery,
+  useGetUnidadesByCategoriaQuery,
   useCreateCategoriaMutation,
+  useCreateSubcategoriaMutation,
+  useCreateSegmentoMutation,
   useUpdateCategoriaMutation,
   useDeleteCategoriaMutation,
   useGetCategoriasStatsQuery,
