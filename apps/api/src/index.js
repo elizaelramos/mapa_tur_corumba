@@ -46,6 +46,7 @@ const publicLimiter = rateLimit({
   message: { success: false, error: 'Muitas requisições. Tente novamente mais tarde.' },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { trustProxy: false }, // Desabilitar validação de trust proxy
   // Pular requisições autenticadas (admins não devem ser limitados)
   skip: (req) => {
     // Se tiver token de autenticação válido, não aplicar rate limit
@@ -60,6 +61,7 @@ const loginLimiter = rateLimit({
   message: { success: false, error: 'Muitas tentativas de login. Tente novamente em 15 minutos.' },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { trustProxy: false }, // Desabilitar validação de trust proxy
 });
 
 // Rate limiter específico para analytics (mais permissivo)
@@ -69,6 +71,7 @@ const analyticsLimiter = rateLimit({
   message: { success: false, error: 'Limite de eventos excedido' },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { trustProxy: false }, // Desabilitar validação de trust proxy
 });
 
 // Security

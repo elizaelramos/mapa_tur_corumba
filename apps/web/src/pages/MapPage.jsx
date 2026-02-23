@@ -48,7 +48,7 @@ const normalizeText = (text) => {
     .replace(/[\u0300-\u036f]/g, '')
     .trim()
 }
-import { useGetUnidadesQuery, useGetLastUpdateQuery, useGetIconesQuery, useGetCategoriasGroupedQuery } from '../store/slices/apiSlice' 
+import { useGetUnidadesQuery, useGetLastUpdateQuery, useGetIconesQuery, useGetCategoriasGroupedQuery, useGetCategoriasHierarchyQuery } from '../store/slices/apiSlice' 
 import MapLegend from '../components/MapLegend'
 import GuiasTuristicosModal from '../components/GuiasTuristicosModal'
 import HowToGetHereModal from '../components/HowToGetHereModal'
@@ -306,6 +306,7 @@ export default function MapPage() {
   // Filtros de categoria
   const [selectedCategoriaNome, setSelectedCategoriaNome] = useState(null)
   const [selectedSubcategoriaId, setSelectedSubcategoriaId] = useState(null)
+  const [selectedSegmentoId, setSelectedSegmentoId] = useState(null) // 3º nível (segmento)
   const [selectedOfertaId, setSelectedOfertaId] = useState(null)
 
   // Detectar mobile
@@ -339,6 +340,10 @@ export default function MapPage() {
   })
   const { data: categoriasGroupedData } = useGetCategoriasGroupedQuery(undefined, {
     refetchOnMountOrArgChange: 300, // Refetch categorias após 5 minutos
+    refetchOnFocus: false,
+  })
+  const { data: categoriasHierarchyData } = useGetCategoriasHierarchyQuery(undefined, {
+    refetchOnMountOrArgChange: 300, // Refetch hierarchy após 5 minutos
     refetchOnFocus: false,
   })
 
@@ -404,8 +409,13 @@ export default function MapPage() {
       })
     }
 
-    // Aplicar filtro por categoria (subcategoria tem prioridade)
-    if (selectedSubcategoriaId) {
+    // Aplicar filtro por categoria (segmento tem prioridade máxima, depois subcategoria, depois categoria)
+    if (selectedSegmentoId) {
+      const segId = Number(selectedSegmentoId)
+      filtered = filtered.filter(unidade =>
+        unidade.categorias?.some(cat => cat.id === segId)
+      )
+    } else if (selectedSubcategoriaId) {
       const subId = Number(selectedSubcategoriaId)
       filtered = filtered.filter(unidade =>
         unidade.categorias?.some(cat => cat.id === subId)
@@ -453,7 +463,7 @@ export default function MapPage() {
       }
       return true
     })
-  }, [unidades, searchType, searchValue, searchText, selectedIconUrl, selectedCategoriaNome, selectedSubcategoriaId])
+  }, [unidades, searchType, searchValue, searchText, selectedIconUrl, selectedCategoriaNome, selectedSubcategoriaId, selectedSegmentoId])
 
   // Calcular estatísticas de busca por texto
   const searchStats = useMemo(() => {
@@ -487,6 +497,7 @@ export default function MapPage() {
     setSelectedOfertaId(null)
     setSelectedCategoriaNome(null)
     setSelectedSubcategoriaId(null)
+    setSelectedSegmentoId(null)
   }
 
   if (isLoading) {
@@ -977,11 +988,12 @@ export default function MapPage() {
                           const newValue = e.target.value
                           setSearchText(newValue)
                           // Limpar filtros de select quando começar a digitar
-                          if (newValue && (searchType || searchValue || selectedCategoriaNome || selectedSubcategoriaId)) {
+                          if (newValue && (searchType || searchValue || selectedCategoriaNome || selectedSubcategoriaId || selectedSegmentoId)) {
                             setSearchType(null)
                             setSearchValue(null)
                             setSelectedCategoriaNome(null)
                             setSelectedSubcategoriaId(null)
+                            setSelectedSegmentoId(null)
                           }
                         }}
                         onPressEnter={(e) => {
@@ -1023,6 +1035,7 @@ export default function MapPage() {
                           // Aplicar filtro automático: limpar outros filtros e aplicar categoria
                           setSelectedCategoriaNome(value)
                           setSelectedSubcategoriaId(null)
+                          setSelectedSegmentoId(null)
                           setSearchText('')
                           setSearchType(null)
                           setSearchValue(null)
@@ -1039,7 +1052,7 @@ export default function MapPage() {
                         }}
 
                         allowClear
-                        onClear={() => { setSelectedCategoriaNome(null); setSelectedSubcategoriaId(null); }}
+                        onClear={() => { setSelectedCategoriaNome(null); setSelectedSubcategoriaId(null); setSelectedSegmentoId(null); }}
                         size="large"
                         style={{
                           width: '100%',
@@ -1070,13 +1083,14 @@ export default function MapPage() {
                                 setSearchValue(null)
                                 setSelectedOfertaId(null)
                                 setSelectedIconUrl(null)
+                                setSelectedSegmentoId(null) // Limpar segmento ao mudar subcategoria
 
                                 setSelectedSubcategoriaId(value)
                                 const sub = group.subcategorias.find(s => s.id === value)
                                 trackFiltroMapa({ tipo: 'subcategoria', valor: sub ? `${selectedCategoriaNome} — ${sub.nome}` : selectedCategoriaNome })
                               }}
                               allowClear
-                              onClear={() => setSelectedSubcategoriaId(null)}
+                              onClear={() => { setSelectedSubcategoriaId(null); setSelectedSegmentoId(null); }}
                               size="large"
                               style={{ width: '100%', marginBottom: '16px', borderRadius: '8px' }}
                               showSearch
@@ -1084,6 +1098,54 @@ export default function MapPage() {
                             >
                               {group.subcategorias.map(sub => (
                                 <Select.Option key={sub.id} value={sub.id}>{sub.nome}</Select.Option>
+                              ))}
+                            </Select>
+                          )
+                        })()
+                      )}
+
+                      {/* Se selecionou subcategoria, abrir seleção de segmentos (3º nível) */}
+                      {selectedCategoriaNome && selectedSubcategoriaId && (
+                        (() => {
+                          const group = categoriasGrouped.find(g => g.nome === selectedCategoriaNome)
+                          const subcategoria = group?.subcategorias.find(s => s.id === selectedSubcategoriaId)
+
+                          if (!subcategoria) return null
+
+                          // Buscar segmentos usando a chave "Categoria|Subcategoria"
+                          const segmentosKey = `${selectedCategoriaNome}|${subcategoria.nome}`
+                          const segmentos = categoriasHierarchyData?.data?.segmentos?.[segmentosKey] || []
+
+                          if (segmentos.length === 0) return null
+
+                          return (
+                            <Select
+                              placeholder="Selecione um segmento (opcional)"
+                              value={selectedSegmentoId}
+                              onChange={(value) => {
+                                // Aplicar filtro automático: limpar outros filtros e aplicar segmento
+                                setSearchText('')
+                                setSearchType(null)
+                                setSearchValue(null)
+                                setSelectedOfertaId(null)
+                                setSelectedIconUrl(null)
+
+                                setSelectedSegmentoId(value)
+                                const segmento = segmentos.find(s => s.id === value)
+                                trackFiltroMapa({
+                                  tipo: 'segmento',
+                                  valor: segmento ? `${selectedCategoriaNome} — ${subcategoria.nome} — ${segmento.nome}` : subcategoria.nome
+                                })
+                              }}
+                              allowClear
+                              onClear={() => setSelectedSegmentoId(null)}
+                              size="large"
+                              style={{ width: '100%', marginBottom: '16px', borderRadius: '8px' }}
+                              showSearch
+                              filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}
+                            >
+                              {segmentos.map(segmento => (
+                                <Select.Option key={segmento.id} value={segmento.id}>{segmento.nome}</Select.Option>
                               ))}
                             </Select>
                           )
@@ -1110,6 +1172,7 @@ export default function MapPage() {
                               setSearchText('')
                               setSelectedCategoriaNome(null)
                               setSelectedSubcategoriaId(null)
+                              setSelectedSegmentoId(null)
                               setSelectedOfertaId(null)
                               setSelectedIconUrl(null)
 
@@ -1231,9 +1294,23 @@ export default function MapPage() {
                           <div style={{ fontSize: '13px', color: '#333', marginTop: '8px' }}>
                             Filtrando por categoria: <Tag color="gold" style={{ marginLeft: '8px' }}>{selectedCategoriaNome}</Tag>
                             {selectedSubcategoriaId && (
-                              <Tag color="orange" style={{ marginLeft: '8px' }}>
-                                {categoriasGrouped.find(c => c.nome === selectedCategoriaNome)?.subcategorias.find(s => s.id === selectedSubcategoriaId)?.nome}
-                              </Tag>
+                              <>
+                                <Tag color="orange" style={{ marginLeft: '8px' }}>
+                                  {categoriasGrouped.find(c => c.nome === selectedCategoriaNome)?.subcategorias.find(s => s.id === selectedSubcategoriaId)?.nome}
+                                </Tag>
+                                {selectedSegmentoId && (() => {
+                                  const group = categoriasGrouped.find(c => c.nome === selectedCategoriaNome)
+                                  const subcategoria = group?.subcategorias.find(s => s.id === selectedSubcategoriaId)
+                                  const segmentosKey = `${selectedCategoriaNome}|${subcategoria?.nome}`
+                                  const segmentos = categoriasHierarchyData?.data?.segmentos?.[segmentosKey] || []
+                                  const segmento = segmentos.find(seg => seg.id === selectedSegmentoId)
+                                  return segmento ? (
+                                    <Tag color="red" style={{ marginLeft: '8px' }}>
+                                      {segmento.nome}
+                                    </Tag>
+                                  ) : null
+                                })()}
+                              </>
                             )}
                           </div>
                         )}
@@ -1548,7 +1625,10 @@ export default function MapPage() {
               if (!isDeselecting) {
                 const icone = iconesData?.data?.find(i => i.url === iconUrl)
                 const selNorm = normalizePath(iconUrl)
-                const resultados = unidades.filter(u => normalizePath(u.icone_url) === selNorm).length
+                const resultados = unidades.filter(u => {
+                  const unidadeIconUrl = u.icone?.url || u.icone_url
+                  return normalizePath(unidadeIconUrl) === selNorm
+                }).length
                 trackFiltroMapa({
                   tipoFiltro: 'icone',
                   valorFiltro: icone?.nome || 'Ícone customizado',

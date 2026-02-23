@@ -10,7 +10,7 @@ module.exports = {
       max_memory_restart: '500M',
       env: {
         NODE_ENV: 'production',
-        API_PORT: 8008,
+        API_PORT: 8010,
       },
       error_file: './apps/api/logs/pm2-error.log',
       out_file: './apps/api/logs/pm2-out.log',
