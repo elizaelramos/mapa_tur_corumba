@@ -42,15 +42,41 @@ function errorHandler(err, req, res, next) {
       validationErrors: err.array(),
     });
   }
-  
+
+  // Erros de conexão com o banco de dados (servidor caído/indisponível)
+  // Prisma: P1000 (auth), P1001 (não alcançável), P1002 (timeout),
+  // P1008 (operação expirou), P1017 (conexão fechada) ou falha de inicialização.
+  // A mensagem original expõe host/porta/string de conexão, então NUNCA
+  // deve ser repassada ao cliente — devolvemos algo amigável.
+  const dbErrorCodes = ['P1000', 'P1001', 'P1002', 'P1008', 'P1017'];
+  const isDbConnectionError =
+    dbErrorCodes.includes(err.code) ||
+    err.name === 'PrismaClientInitializationError' ||
+    err.name === 'PrismaClientRustPanicError';
+
+  if (isDbConnectionError) {
+    return res.status(503).json({
+      success: false,
+      error: 'Serviço temporariamente indisponível. Tente novamente em alguns instantes.',
+    });
+  }
+
   // Erro genérico
   const statusCode = err.statusCode || 500;
-  const message = err.message || 'Internal server error';
-  
+  const isDev = process.env.NODE_ENV === 'development';
+
+  // Em produção, erros 500 (não previstos) não devem expor a mensagem interna,
+  // que pode conter detalhes da stack/infraestrutura. Erros operacionais
+  // (statusCode < 500 definido explicitamente) mantêm sua mensagem.
+  const message =
+    statusCode >= 500 && !isDev
+      ? 'Ocorreu um erro interno. Tente novamente mais tarde.'
+      : err.message || 'Internal server error';
+
   res.status(statusCode).json({
     success: false,
     error: message,
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+    ...(isDev && { stack: err.stack }),
   });
 }
 

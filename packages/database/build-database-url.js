@@ -23,8 +23,16 @@ function buildDatabaseUrl() {
   
   // URL encode da senha para evitar problemas com caracteres especiais
   const encodedPassword = encodeURIComponent(password);
-  
-  return `mysql://${user}:${encodedPassword}@${host}:${port}/${database}`;
+
+  // Parâmetros do pool de conexões do Prisma
+  // connection_limit: máximo de conexões simultâneas por processo. O padrão do Prisma
+  //   (CPUs físicas * 2 + 1) mantém muitas conexões ociosas (Sleep) no MySQL compartilhado.
+  //   Fixamos um teto menor para reduzir a pressão de conexões ociosas.
+  // pool_timeout: segundos que o Prisma aguarda por uma conexão livre antes de falhar.
+  const connectionLimit = process.env.DB_CONNECTION_LIMIT || '5';
+  const poolTimeout = process.env.DB_POOL_TIMEOUT || '10';
+
+  return `mysql://${user}:${encodedPassword}@${host}:${port}/${database}?connection_limit=${connectionLimit}&pool_timeout=${poolTimeout}`;
 }
 
 // Exportar para uso em outros scripts
