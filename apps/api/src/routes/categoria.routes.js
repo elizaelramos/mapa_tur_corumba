@@ -284,9 +284,9 @@ router.delete('/:id', authenticate, requireAdmin, asyncHandler(async (req, res) 
 
 /**
  * GET /api/categorias/stats/usage
- * Retorna estatísticas de uso das categorias
+ * Retorna estatísticas de uso das categorias (requer autenticação admin)
  */
-router.get('/stats/usage', asyncHandler(async (req, res) => {
+router.get('/stats/usage', authenticate, requireAdmin, asyncHandler(async (req, res) => {
   const categorias = await prisma.pROD_Categoria.findMany({
     where: { ativo: true },
     include: {
