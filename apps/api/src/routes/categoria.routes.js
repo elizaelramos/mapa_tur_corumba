@@ -109,11 +109,11 @@ router.get('/:id', asyncHandler(async (req, res) => {
 }));
 
 /**
- * GET /api/categorias/grouped/list
- * Lista categorias agrupadas por nome principal (útil para filtros)
- * Hierarquia de 3 níveis: Categoria > Subcategoria > Segmento
+ * Monta a lista de categorias agrupadas por nome principal (útil para filtros).
+ * Hierarquia de 3 níveis: Categoria > Subcategoria > Segmento.
+ * Considera apenas categorias ativas e com unidades vinculadas.
  */
-router.get('/grouped/list', asyncHandler(async (req, res) => {
+const montarCategoriasAgrupadas = async () => {
   const categorias = await prisma.pROD_Categoria.findMany({
     where: { ativo: true },
     orderBy: [
@@ -167,23 +167,18 @@ router.get('/grouped/list', asyncHandler(async (req, res) => {
   }, {});
 
   // Transformar objeto de subcategorias em array
-  const result = Object.values(grouped).map(cat => ({
+  return Object.values(grouped).map(cat => ({
     nome: cat.nome,
     subcategorias: Object.values(cat.subcategorias)
   }));
-
-  res.json({
-    success: true,
-    data: result,
-  });
-}));
+};
 
 /**
- * GET /api/categorias/hierarchy/admin
- * Retorna hierarquia completa para interface administrativa (Miller Columns)
- * Inclui contagem de unidades e status ativo/inativo
+ * Monta a hierarquia completa de categorias (Miller Columns).
+ * Inclui contagem de unidades e status ativo/inativo, e normaliza nomes.
+ * Diferente de montarCategoriasAgrupadas, inclui também categorias inativas.
  */
-router.get('/hierarchy/admin', asyncHandler(async (req, res) => {
+const montarHierarquiaCategorias = async () => {
   const categorias = await prisma.pROD_Categoria.findMany({
     orderBy: [
       { ordem: 'asc' },
@@ -311,9 +306,53 @@ router.get('/hierarchy/admin', asyncHandler(async (req, res) => {
     }, {})
   };
 
+  return result;
+};
+
+/**
+ * GET /api/categorias/grouped/list
+ * Lista categorias agrupadas por nome principal (útil para filtros)
+ */
+router.get('/grouped/list', asyncHandler(async (req, res) => {
   res.json({
     success: true,
-    data: result,
+    data: await montarCategoriasAgrupadas(),
+  });
+}));
+
+/**
+ * GET /api/categorias/hierarchy/admin
+ * Retorna hierarquia completa para interface administrativa (Miller Columns)
+ */
+router.get('/hierarchy/admin', asyncHandler(async (req, res) => {
+  res.json({
+    success: true,
+    data: await montarHierarquiaCategorias(),
+  });
+}));
+
+/**
+ * GET /api/categorias/mapa/bootstrap
+ * Entrega em UMA resposta tudo que o mapa público precisa de categorias.
+ *
+ * Existe para reduzir o número de requisições na abertura do mapa: antes o
+ * frontend chamava /grouped/list e /hierarchy/admin separadamente. Menos
+ * requisições por visita significa muito mais visitas cabendo no rate limit,
+ * o que importa especialmente para redes atrás de NAT, onde vários usuários
+ * compartilham o mesmo IP de origem.
+ *
+ * Caminho com dois segmentos de propósito: a rota '/:id' é declarada antes e
+ * capturaria qualquer caminho de segmento único.
+ */
+router.get('/mapa/bootstrap', asyncHandler(async (req, res) => {
+  const [grouped, hierarchy] = await Promise.all([
+    montarCategoriasAgrupadas(),
+    montarHierarquiaCategorias(),
+  ]);
+
+  res.json({
+    success: true,
+    data: { grouped, hierarchy },
   });
 }));
 

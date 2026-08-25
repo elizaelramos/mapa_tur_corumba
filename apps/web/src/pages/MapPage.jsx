@@ -48,7 +48,7 @@ const normalizeText = (text) => {
     .replace(/[\u0300-\u036f]/g, '')
     .trim()
 }
-import { useGetUnidadesQuery, useGetLastUpdateQuery, useGetIconesQuery, useGetCategoriasGroupedQuery, useGetCategoriasHierarchyQuery } from '../store/slices/apiSlice' 
+import { useGetUnidadesQuery, useGetLastUpdateQuery, useGetIconesQuery, useGetCategoriasMapaBootstrapQuery } from '../store/slices/apiSlice' 
 import MapLegend from '../components/MapLegend'
 import GuiasTuristicosModal from '../components/GuiasTuristicosModal'
 import HowToGetHereModal from '../components/HowToGetHereModal'
@@ -327,10 +327,17 @@ export default function MapPage() {
     }
   }, []) // Executa apenas uma vez ao montar
 
-  const { data, isLoading, isError, error } = useGetUnidadesQuery({ ativo: 'true', limit: 1000 }, {
+  const { data, isLoading, isError, error, refetch } = useGetUnidadesQuery({ ativo: 'true', limit: 1000 }, {
     refetchOnMountOrArgChange: 300, // Refetch apenas se dados tiverem mais de 5 minutos
     refetchOnFocus: false, // Não refetch ao voltar para a aba
   })
+
+  // Detalhes técnicos da falha ficam apenas no console e somente em desenvolvimento
+  useEffect(() => {
+    if (isError && import.meta.env.DEV) {
+      console.error('[MapPage] Falha ao carregar unidades:', error)
+    }
+  }, [isError, error])
   const { data: lastUpdateData } = useGetLastUpdateQuery(undefined, {
     refetchOnMountOrArgChange: 300, // Refetch apenas após 5 minutos
   })
@@ -338,19 +345,18 @@ export default function MapPage() {
     refetchOnMountOrArgChange: 300, // Refetch ícones após 5 minutos
     refetchOnFocus: false, // Não refetch ao voltar para a aba
   })
-  const { data: categoriasGroupedData } = useGetCategoriasGroupedQuery(undefined, {
+  // Agrupamento e hierarquia vêm juntos em uma única requisição, para reduzir
+  // o número de chamadas disparadas na abertura do mapa
+  const { data: categoriasMapaData } = useGetCategoriasMapaBootstrapQuery(undefined, {
     refetchOnMountOrArgChange: 300, // Refetch categorias após 5 minutos
-    refetchOnFocus: false,
-  })
-  const { data: categoriasHierarchyData } = useGetCategoriasHierarchyQuery(undefined, {
-    refetchOnMountOrArgChange: 300, // Refetch hierarchy após 5 minutos
     refetchOnFocus: false,
   })
 
   // Extrair dados antes dos early returns
   const unidades = data?.data || []
   const lastUpdate = lastUpdateData?.data?.lastUpdate || null
-  const categoriasGrouped = categoriasGroupedData?.data || []
+  const categoriasGrouped = categoriasMapaData?.data?.grouped || []
+  const categoriasHierarchy = categoriasMapaData?.data?.hierarchy || null
   
   // Extrair bairros únicos das unidades (não precisa query separada)
   const bairros = useMemo(() => {
@@ -512,26 +518,21 @@ export default function MapPage() {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', padding: '20px' }}>
         <Alert
-          message="Erro ao Carregar Dados das Unidades"
+          message="Não foi possível carregar o mapa"
           description={
             <>
-              <p>Não foi possível buscar os dados das unidades. Verifique se o servidor da API (backend) está rodando corretamente na porta 8010.</p>
-              <strong>Detalhes do erro:</strong>
-              <pre style={{
-                marginTop: '10px',
-                color: 'red',
-                textAlign: 'left',
-                background: '#fff0f0',
-                padding: '10px',
-                borderRadius: '4px',
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-all',
-              }}>
-                {JSON.stringify(error, null, 2)}
-              </pre>
+              <p style={{ marginBottom: 8 }}>
+                Estamos com uma instabilidade temporária para buscar as informações das unidades.
+              </p>
+              <p style={{ marginBottom: 16 }}>
+                Tente novamente em alguns instantes. Se o problema continuar, entre em contato com o suporte.
+              </p>
+              <Button type="primary" onClick={() => refetch()}>
+                Tentar novamente
+              </Button>
             </>
           }
-          type="error"
+          type="warning"
           showIcon
         />
       </div>
@@ -1114,7 +1115,7 @@ export default function MapPage() {
 
                           // Buscar segmentos usando a chave "Categoria|Subcategoria"
                           const segmentosKey = `${selectedCategoriaNome}|${subcategoria.nome}`
-                          const segmentos = categoriasHierarchyData?.data?.segmentos?.[segmentosKey] || []
+                          const segmentos = categoriasHierarchy?.segmentos?.[segmentosKey] || []
 
                           if (segmentos.length === 0) return null
 
@@ -1302,7 +1303,7 @@ export default function MapPage() {
                                   const group = categoriasGrouped.find(c => c.nome === selectedCategoriaNome)
                                   const subcategoria = group?.subcategorias.find(s => s.id === selectedSubcategoriaId)
                                   const segmentosKey = `${selectedCategoriaNome}|${subcategoria?.nome}`
-                                  const segmentos = categoriasHierarchyData?.data?.segmentos?.[segmentosKey] || []
+                                  const segmentos = categoriasHierarchy?.segmentos?.[segmentosKey] || []
                                   const segmento = segmentos.find(seg => seg.id === selectedSegmentoId)
                                   return segmento ? (
                                     <Tag color="red" style={{ marginLeft: '8px' }}>
