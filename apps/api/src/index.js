@@ -33,26 +33,92 @@ const app = express();
 const PORT = process.env.API_PORT || 8008;
 
 // Trust proxy - Necessário quando atrás de um proxy reverso (nginx)
-app.set('trust proxy', true);
+// IMPORTANTE: usar o número exato de proxies (1 = apenas o nginx local) em vez de "true".
+// Com "true" o Express confia na cadeia inteira de X-Forwarded-For, que o cliente pode
+// forjar, permitindo burlar o rate limit. Com 1, o IP considerado é o que o nginx
+// realmente enxergou, e não pode ser falsificado pelo cliente.
+app.set('trust proxy', 1);
 
 // ============================================================================
 // MIDDLEWARE
 // ============================================================================
 
+// ----------------------------------------------------------------------------
+// Isenção de rate limit para redes confiáveis
+// ----------------------------------------------------------------------------
+// Motivo: usuários atrás de NAT corporativo (ex.: rede interna da Prefeitura)
+// chegam todos com o MESMO IP de origem. Como o rate limit é por IP, a organização
+// inteira divide uma única cota e o limite estoura em minutos, derrubando a API
+// só para quem está na rede interna — enquanto usuários externos, cada um com seu
+// IP, nunca chegam perto do limite.
+//
+// Faixas privadas já vêm isentas por padrão. Se a rede interna sair por um IP
+// PÚBLICO de NAT, adicione-o em RATE_LIMIT_WHITELIST no .env, separado por vírgula.
+// Aceita IP isolado ou CIDR. Ex.: RATE_LIMIT_WHITELIST=200.100.50.10,45.4.16.0/22
+const FAIXAS_ISENTAS_PADRAO = [
+  '127.0.0.0/8',
+  '10.0.0.0/8',
+  '172.16.0.0/12',
+  '192.168.0.0/16',
+];
+
+const faixasIsentas = [
+  ...FAIXAS_ISENTAS_PADRAO,
+  ...(process.env.RATE_LIMIT_WHITELIST || '')
+    .split(',')
+    .map((v) => v.trim())
+    .filter(Boolean),
+];
+
+// Converte IPv4 (aceitando o formato IPv6-mapeado ::ffff:a.b.c.d) em inteiro 32 bits
+const ipv4ParaInt = (ip) => {
+  if (!ip) return null;
+  const limpo = String(ip).replace(/^::ffff:/i, '').trim();
+  const partes = limpo.split('.');
+  if (partes.length !== 4) return null;
+  let total = 0;
+  for (const parte of partes) {
+    const octeto = Number(parte);
+    if (!Number.isInteger(octeto) || octeto < 0 || octeto > 255) return null;
+    total = total * 256 + octeto;
+  }
+  return total;
+};
+
+const ipDentroDaFaixa = (ip, faixa) => {
+  const [base, bitsTexto] = faixa.split('/');
+  const ipInt = ipv4ParaInt(ip);
+  const baseInt = ipv4ParaInt(base);
+  if (ipInt === null || baseInt === null) return false;
+  const bits = bitsTexto === undefined ? 32 : Number(bitsTexto);
+  if (!Number.isInteger(bits) || bits < 0 || bits > 32) return false;
+  if (bits === 0) return true;
+  const mascara = (0xffffffff << (32 - bits)) >>> 0;
+  return (ipInt & mascara) === (baseInt & mascara);
+};
+
+const isRedeIsenta = (req) => {
+  const ip = req.ip;
+  return faixasIsentas.some((faixa) => ipDentroDaFaixa(ip, faixa));
+};
+
+const isRequisicaoAutenticada = (req) =>
+  Boolean(req.headers.authorization && req.headers.authorization.startsWith('Bearer '));
+
 // Rate Limiting
 // Limiter específico para rotas públicas (mapa público)
+//
+// Abrir o mapa dispara várias chamadas de uma vez, então o teto precisa ser um
+// múltiplo confortável disso. Ajustável por RATE_LIMIT_PUBLIC_MAX no .env.
 const publicLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 200, // 200 requisições por IP para usuários públicos
+  max: Number(process.env.RATE_LIMIT_PUBLIC_MAX) || 1000,
   message: { success: false, error: 'Muitas requisições. Tente novamente mais tarde.' },
   standardHeaders: true,
   legacyHeaders: false,
   validate: { trustProxy: false }, // Desabilitar validação de trust proxy
-  // Pular requisições autenticadas (admins não devem ser limitados)
-  skip: (req) => {
-    // Se tiver token de autenticação válido, não aplicar rate limit
-    return req.headers.authorization && req.headers.authorization.startsWith('Bearer ');
-  },
+  // Não limitar admins autenticados nem redes internas/confiáveis
+  skip: (req) => isRequisicaoAutenticada(req) || isRedeIsenta(req),
 });
 
 const loginLimiter = rateLimit({
@@ -68,11 +134,13 @@ const loginLimiter = rateLimit({
 // Rate limiter específico para analytics (mais permissivo)
 const analyticsLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minuto
-  max: 100, // 100 eventos por minuto por IP
+  max: Number(process.env.RATE_LIMIT_ANALYTICS_MAX) || 300,
   message: { success: false, error: 'Limite de eventos excedido' },
   standardHeaders: true,
   legacyHeaders: false,
   validate: { trustProxy: false }, // Desabilitar validação de trust proxy
+  // Mesma razão do publicLimiter: sob NAT a organização inteira dividiria uma cota
+  skip: (req) => isRedeIsenta(req),
 });
 
 // Security

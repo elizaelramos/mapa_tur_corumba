@@ -181,6 +181,13 @@ export const apiSlice = createApi({
       providesTags: ['Categorias'],
     }),
 
+    // Entrega agrupamento + hierarquia em uma única requisição.
+    // Usado pelo mapa público para reduzir chamadas na abertura da página.
+    getCategoriasMapaBootstrap: builder.query({
+      query: () => '/categorias/mapa/bootstrap',
+      providesTags: ['Categorias'],
+    }),
+
     getUnidadesByCategoria: builder.query({
       query: (id) => `/categorias/${id}/unidades`,
       providesTags: ['Categorias', 'Unidades'],
@@ -587,6 +594,7 @@ export const {
   // useDeleteOfertaEnsinoMutation, // DESATIVADO - migração para turismo
   useGetCategoriasQuery,
   useGetCategoriasGroupedQuery,
+  useGetCategoriasMapaBootstrapQuery,
   useGetCategoriaByIdQuery,
   useGetCategoriasHierarchyQuery,
   useGetUnidadesByCategoriaQuery,
